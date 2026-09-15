@@ -1,0 +1,134 @@
+/*
+ * Shared keyframes and animation utilities (CSS only).
+ * Stagger children with style={{ '--i': index }}.
+ */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pop {
+  0% { opacity: 0; transform: scale(0.4); }
+  60% { opacity: 1; transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(34, 179, 94, 0.55); }
+  100% { box-shadow: 0 0 0 16px rgba(34, 179, 94, 0); }
+}
+
+@keyframes urgency {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes grow-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes grow-y {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes unlock {
+  0% { transform: scale(1) rotate(0); }
+  25% { transform: scale(1.1) rotate(-12deg); }
+  50% { transform: scale(1.1) rotate(10deg); }
+  75% { transform: scale(0.6); opacity: 1; }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(242, 179, 0, 0); }
+  50% { box-shadow: 0 0 0 6px rgba(242, 179, 0, 0.25); }
+}
+
+@keyframes row-flash {
+  0% { background-color: var(--gold-100); }
+  100% { background-color: var(--green-50); }
+}
+
+@keyframes leaf-fall {
+  0% { opacity: 0; transform: translate3d(0, -20px, 0) rotate(0); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--drift, 40px), 260px, 0) rotate(var(--turn, 320deg)); }
+}
+
+@keyframes float-up {
+  0% { opacity: 0; transform: translateY(8px); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-36px); }
+}
+
+.anim-fade-up {
+  animation: fade-up var(--duration-slow) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+.anim-fade-in {
+  animation: fade-in var(--duration-base) ease both;
+}
+
+.anim-scale-in {
+  animation: scale-in var(--duration-base) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 50ms);
+}
+
+.anim-pop {
+  animation: pop 520ms var(--ease-spring) both;
+  animation-delay: calc(var(--i, 0) * 120ms);
+}
+
+.anim-shake {
+  animation: shake 420ms ease;
+}
+
+.page-transition {
+  animation: fade-up 360ms var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
+}

@@ -1,0 +1,87 @@
+/*
+ * AgriCore design tokens.
+ * Proposal NFR (Usability & Aesthetics): white content cards, soft neutral canvases,
+ * clear emerald-green action triggers.
+ */
+:root {
+  /* Greens */
+  --green-950: #06281a;
+  --green-900: #0b3a22;
+  --green-800: #0e4d2c;
+  --green-700: #0f7a3a;
+  --green-600: #15924a;
+  --green-500: #22b35e;
+  --green-400: #4cc97f;
+  --green-200: #b9ebcb;
+  --green-100: #dcf5e4;
+  --green-50: #effaf2;
+
+  /* Neutrals */
+  --canvas: #f4f6f1;
+  --surface: #ffffff;
+  --surface-muted: #f8faf6;
+  --border: #e2e8df;
+  --border-strong: #cfd8cb;
+  --text: #16261c;
+  --text-muted: #5a6b60;
+  --text-subtle: #8a978e;
+
+  /* Feedback */
+  --amber-600: #c46f05;
+  --amber-500: #e89a0c;
+  --amber-100: #fdf0d2;
+  --red-600: #c9302c;
+  --red-500: #e5484d;
+  --red-100: #fde4e3;
+  --blue-600: #2463d1;
+  --blue-100: #e0ebfd;
+  --gold-500: #f2b300;
+  --gold-100: #fff4cc;
+  --silver-400: #a9b4bf;
+  --bronze-400: #d08b52;
+
+  /* Type */
+  --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+
+  /* Shape */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-full: 999px;
+
+  --shadow-sm: 0 1px 2px rgba(16, 40, 24, 0.06);
+  --shadow-md: 0 4px 14px rgba(16, 40, 24, 0.08);
+  --shadow-lg: 0 14px 40px rgba(16, 40, 24, 0.16);
+  --focus-ring: 0 0 0 3px rgba(34, 179, 94, 0.35);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 140ms;
+  --duration-base: 240ms;
+  --duration-slow: 520ms;
+
+  /* Layout */
+  --sidebar-width: 248px;
+  --sidebar-rail: 76px;
+  --topbar-height: 64px;
+  --content-max: 1280px;
+}
