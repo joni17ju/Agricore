@@ -146,7 +146,13 @@ export default function LoginPage() {
               <p>No backend yet — pick an account to sign in instantly. Any password works on the form above.</p>
               <div className="login-demo__list">
                 {(demoAccounts.data ?? []).map((account) => (
-                  <button key={account._id} type="button" className="login-demo__account" onClick={() => handleDemo(account._id)}>
+                  <button
+                    key={account._id}
+                    type="button"
+                    className="login-demo__account"
+                    title={`${ROLE_LABELS[account.role]} — ${account.firstName} ${account.lastName}`}
+                    onClick={() => handleDemo(account._id)}
+                  >
                     <Icon name={DEMO_ICONS[account.role]} size={17} />
                     <span>
                       <strong>{ROLE_LABELS[account.role]}</strong>
