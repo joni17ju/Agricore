@@ -63,25 +63,3 @@ export function SearchInput({ value, onChange, placeholder = 'Search…', label 
     </label>
   );
 }
-
-/** Large two-option selector used for role selection (Figs 12–15). */
-export function ChoiceCards({ options, value, onChange, name }) {
-  return (
-    <div className="choice-cards" role="radiogroup" aria-label={name}>
-      {options.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          role="radio"
-          aria-checked={value === option.value}
-          className={`choice-card ${value === option.value ? 'is-selected' : ''}`}
-          onClick={() => onChange(option.value)}
-        >
-          {option.icon && <Icon name={option.icon} size={20} />}
-          <strong>{option.label}</strong>
-          {option.description && <span>{option.description}</span>}
-        </button>
-      ))}
-    </div>
-  );
-}

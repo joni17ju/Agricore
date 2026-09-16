@@ -310,26 +310,6 @@
 .inline-select { min-width: 170px; }
 .inline-select .input { min-height: 42px; background: var(--surface); }
 
-.choice-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-3); }
-.choice-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: var(--space-3);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface-muted);
-  text-align: center;
-  transition: border-color var(--duration-fast) ease, background-color var(--duration-fast) ease, transform var(--duration-fast) ease;
-}
-.choice-card .icon { color: var(--text-subtle); margin-bottom: 2px; }
-.choice-card span { font-size: var(--text-xs); color: var(--text-muted); }
-.choice-card:hover { border-color: var(--green-400); }
-.choice-card:active { transform: scale(0.98); }
-.choice-card.is-selected { border-color: var(--green-600); background: var(--green-50); box-shadow: 0 0 0 3px rgba(34, 179, 94, 0.15); }
-.choice-card.is-selected .icon { color: var(--green-700); }
-
 /* ───────── Tabs ───────── */
 .tabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow-x: auto; max-width: 100%; }
 .tabs__tab {
