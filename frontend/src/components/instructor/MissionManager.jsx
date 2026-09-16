@@ -1,5 +1,5 @@
 /**
- * Mission level and module quiz management for instructors.
+ * Mission level management for instructors.
  * Common fields are edited with a form; the game-specific content of a level
  * (spots, targets, tactics, …) is edited as structured JSON.
  */
@@ -9,12 +9,12 @@ import { GAME_TYPE_INFO } from '../../constants/gameTypes.js';
 import { createMission, deleteMission, updateMission } from '../../services/missionService.js';
 import { missionCode } from '../../utils/format.js';
 import Button, { IconButton } from '../common/Button.jsx';
-import { EmptyState, StatusPill } from '../common/Display.jsx';
+import { EmptyState } from '../common/Display.jsx';
 import { TextArea, TextInput } from '../common/Form.jsx';
 import Icon from '../common/Icon.jsx';
 import Modal, { ConfirmDialog } from '../common/Modal.jsx';
 
-const COMMON_KEYS = ['kind', 'title', 'instructions', 'timeLimitSeconds'];
+const COMMON_KEYS = ['title', 'instructions', 'timeLimitSeconds'];
 
 function splitScenario(scenarioData) {
   const content = Object.fromEntries(Object.entries(scenarioData).filter(([key]) => !COMMON_KEYS.includes(key)));
@@ -121,7 +121,6 @@ function MissionEditorModal({ mission, lesson, templateMission, onClose, onSaved
       return;
     }
     const scenarioData = {
-      kind: 'game',
       title: form.title,
       instructions: form.instructions,
       ...(form.timeLimitSeconds && { timeLimitSeconds: Number(form.timeLimitSeconds) }),
@@ -181,115 +180,3 @@ function MissionEditorModal({ mission, lesson, templateMission, onClose, onSaved
   );
 }
 
-const LETTERS = ['A', 'B', 'C', 'D'];
-
-/** Structured editor for a module quiz's questions. */
-export function QuizEditorModal({ quiz, module, isOpen, onClose, onSaved }) {
-  const toast = useToast();
-  const [questions, setQuestions] = useState([]);
-  const [maxXP, setMaxXP] = useState('');
-  const [error, setError] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    if (isOpen && quiz) {
-      setQuestions(structuredClone(quiz.scenarioData.questions));
-      setMaxXP(String(quiz.maxXP));
-      setError('');
-    }
-  }, [isOpen, quiz]);
-
-  const updateQuestion = (index, changes) => {
-    setQuestions((items) => items.map((q, i) => (i === index ? { ...q, ...changes } : q)));
-  };
-
-  const addQuestion = () => {
-    const id = `q${Date.now().toString(36)}`;
-    setQuestions((items) => [
-      ...items,
-      { id, prompt: '', options: LETTERS.map((l) => ({ id: l.toLowerCase(), text: '' })), correctOptionId: 'a', explanation: '' },
-    ]);
-  };
-
-  const save = async () => {
-    if (questions.some((q) => !q.prompt.trim() || q.options.some((o) => !o.text.trim()))) {
-      setError('Every question needs a prompt and four answer options.');
-      return;
-    }
-    if (questions.length === 0) {
-      setError('A quiz needs at least one question.');
-      return;
-    }
-    setIsSaving(true);
-    try {
-      await updateMission(quiz._id, { maxXP, scenarioData: { ...quiz.scenarioData, questions } });
-      toast.success('Quiz saved.');
-      onSaved();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  if (!quiz) return null;
-
-  return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={`Module ${module.moduleNumber} Quiz`}
-      description="Students unlock this quiz after clearing every topic in the module."
-      size="lg"
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button icon="save" onClick={save} isLoading={isSaving}>Save quiz</Button>
-        </>
-      }
-    >
-      <div className="stack">
-        {error && <div className="form-error"><Icon name="alert" size={16} /> {error}</div>}
-        <div style={{ maxWidth: 200 }}>
-          <TextInput label="Max XP" type="number" value={maxXP} onChange={(e) => setMaxXP(e.target.value)} />
-        </div>
-        {questions.map((question, index) => (
-          <fieldset key={question.id} className="quiz-editor__question">
-            <legend>
-              Question {index + 1}
-              <IconButton icon="trash" label="Remove question" size="sm" variant="danger" onClick={() => setQuestions((items) => items.filter((_, i) => i !== index))} />
-            </legend>
-            <TextInput label="Prompt" value={question.prompt} onChange={(e) => updateQuestion(index, { prompt: e.target.value })} />
-            <div className="quiz-editor__options">
-              {question.options.map((option, optionIndex) => (
-                <label key={option.id} className={`quiz-editor__option ${question.correctOptionId === option.id ? 'is-correct' : ''}`}>
-                  <input
-                    type="radio"
-                    name={`correct-${question.id}`}
-                    checked={question.correctOptionId === option.id}
-                    onChange={() => updateQuestion(index, { correctOptionId: option.id })}
-                    aria-label={`Mark option ${LETTERS[optionIndex]} correct`}
-                  />
-                  <span>{LETTERS[optionIndex]}</span>
-                  <input
-                    className="input"
-                    value={option.text}
-                    onChange={(e) =>
-                      updateQuestion(index, {
-                        options: question.options.map((o) => (o.id === option.id ? { ...o, text: e.target.value } : o)),
-                      })
-                    }
-                    placeholder={`Option ${LETTERS[optionIndex]}`}
-                  />
-                </label>
-              ))}
-            </div>
-            <TextInput label="Explanation" value={question.explanation} onChange={(e) => updateQuestion(index, { explanation: e.target.value })} />
-          </fieldset>
-        ))}
-        <Button variant="soft" icon="plus" onClick={addQuestion}>Add question</Button>
-        <StatusPill tone="blue" icon="info">Pass mark: 70%</StatusPill>
-      </div>
-    </Modal>
-  );
-}

@@ -15,7 +15,7 @@ import { sanitizeHtml } from '../../components/common/SafeHtml.jsx';
 import Tabs from '../../components/common/Tabs.jsx';
 import CurriculumTree from '../../components/instructor/CurriculumTree.jsx';
 import MediaManager from '../../components/instructor/MediaManager.jsx';
-import { MissionManager, QuizEditorModal } from '../../components/instructor/MissionManager.jsx';
+import { MissionManager } from '../../components/instructor/MissionManager.jsx';
 import RichTextEditor from '../../components/instructor/RichTextEditor.jsx';
 import { gameIcon } from '../../components/student/CourseMap.jsx';
 
@@ -47,7 +47,7 @@ export default function ManageModulesPage() {
     <div className="page">
       <PageHeader
         title="Manage Modules"
-        subtitle="The five syllabus modules are fixed. Edit their lessons, media, missions and quizzes."
+        subtitle="The five syllabus modules are fixed. Edit their lessons, media and mission levels."
         actions={<Button icon="plus" onClick={() => setAddLessonOpen(true)}>Add New Lesson</Button>}
       />
 
@@ -213,10 +213,9 @@ function LessonWorkspace({ moduleEntry, lessonEntry, onChanged, onDeleted, toast
 }
 
 function ModuleWorkspace({ moduleEntry, onChanged, onSelectLesson, toast }) {
-  const { module, lessons, quiz } = moduleEntry;
+  const { module, lessons } = moduleEntry;
   const [title, setTitle] = useState(module.title);
   const [isSaving, setIsSaving] = useState(false);
-  const [quizOpen, setQuizOpen] = useState(false);
   const info = GAME_TYPE_INFO[module.gameType];
 
   const saveTitle = async () => {
@@ -266,27 +265,7 @@ function ModuleWorkspace({ moduleEntry, onChanged, onSelectLesson, toast }) {
           ))}
         </ul>
 
-        {quiz && (
-          <div className="quiz-card">
-            <span className="quiz-card__icon"><Icon name="clipboard" size={24} /></span>
-            <div className="quiz-card__text">
-              <h3>{quiz.scenarioData.title}</h3>
-              <p className="text-sm text-muted">{quiz.scenarioData.questions.length} questions · {quiz.maxXP} XP</p>
-            </div>
-            <Button size="sm" icon="edit" onClick={() => setQuizOpen(true)}>Edit Quiz</Button>
-          </div>
-        )}
       </div>
-      <QuizEditorModal
-        quiz={quiz}
-        module={module}
-        isOpen={quizOpen}
-        onClose={() => setQuizOpen(false)}
-        onSaved={() => {
-          setQuizOpen(false);
-          onChanged();
-        }}
-      />
     </Card>
   );
 }

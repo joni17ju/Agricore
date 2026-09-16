@@ -18,7 +18,6 @@ import IdentificationGame from '../../components/missions/identification/Identif
 import MatchingGame from '../../components/missions/matching/MatchingGame.jsx';
 import DragDropGame from '../../components/missions/dragdrop/DragDropGame.jsx';
 import StrategyGame from '../../components/missions/strategy/StrategyGame.jsx';
-import QuizGame from '../../components/missions/quiz/QuizGame.jsx';
 
 /** Each module's game type has its own, separate game component. */
 const GAMES = {
@@ -56,9 +55,8 @@ export default function MissionPlayPage() {
   }
 
   const { mission, module, lesson, totalLevels, totalXP, bestScore } = data;
-  const isQuiz = mission.scenarioData.kind === 'quiz';
-  const Game = isQuiz ? QuizGame : GAMES[module.gameType];
-  const howTo = HOW_TO_PLAY[isQuiz ? 'quiz' : module.gameType];
+  const Game = GAMES[module.gameType];
+  const howTo = HOW_TO_PLAY[module.gameType];
 
   const start = () => {
     startedAt.current = Date.now();
@@ -88,7 +86,7 @@ export default function MissionPlayPage() {
   };
 
   return (
-    <div className={`mission-page mission-page--${isQuiz ? 'quiz' : module.gameType}`}>
+    <div className={`mission-page mission-page--${module.gameType}`}>
       <header className="mission-topbar">
         <Link to={`/student/modules/${module._id}`} className="mission-topbar__back" aria-label="Leave mission">
           <Icon name="arrow-left" size={20} />
@@ -97,7 +95,9 @@ export default function MissionPlayPage() {
         <nav className="mission-topbar__crumbs" aria-label="Breadcrumb">
           <span className="hide-sm">Principles of Crop Protection I</span>
           <Icon name="chevron-right" size={14} className="hide-sm" />
-          <strong>Module {module.moduleNumber}: {module.title}</strong>
+          <span className="hide-sm">Module {module.moduleNumber}: {module.title}</span>
+          <Icon name="chevron-right" size={14} className="hide-sm" />
+          <strong>{lesson.title}</strong>
         </nav>
         <div className="mission-topbar__right">
           <XPPill xp={result?.totalXP ?? totalXP} prefix="" />
@@ -109,16 +109,16 @@ export default function MissionPlayPage() {
         {phase === 'intro' && (
           <section className="mission-intro anim-scale-in">
             <div className="mission-intro__badge">
-              <Icon name={isQuiz ? 'clipboard' : gameIcon(module.gameType)} size={36} />
+              <Icon name={gameIcon(module.gameType)} size={36} />
             </div>
             <span className="page-header__eyebrow">
-              {missionCode(module, mission)} · {isQuiz ? 'Module Quiz' : `${GAME_TYPE_INFO[module.gameType].label} Game`}
+              {missionCode(module, mission)} · {GAME_TYPE_INFO[module.gameType].label} Game
             </span>
             <h1>{mission.scenarioData.title}</h1>
             <p className="text-muted">{mission.scenarioData.instructions}</p>
 
             <div className="mission-intro__facts">
-              {!isQuiz && <StatusPill tone="blue" icon="layers">Level {mission.levelNumber} of {totalLevels}</StatusPill>}
+              <StatusPill tone="blue" icon="layers">Level {mission.levelNumber} of {totalLevels}</StatusPill>
               <StatusPill tone="gold" icon="star">Up to {mission.maxXP} XP</StatusPill>
               {mission.scenarioData.timeLimitSeconds && (
                 <StatusPill tone="amber" icon="timer">{formatClock(mission.scenarioData.timeLimitSeconds)} countdown</StatusPill>
@@ -136,9 +136,7 @@ export default function MissionPlayPage() {
             </ol>
 
             <div className="mission-intro__actions">
-              {!isQuiz && (
-                <Button variant="secondary" icon="book" to={`/student/lessons/${lesson._id}`}>Review Topic</Button>
-              )}
+              <Button variant="secondary" icon="book" to={`/student/lessons/${lesson._id}`}>Review Topic</Button>
               <Button size="lg" icon="play" onClick={start}>{bestScore !== null ? 'Play Again' : 'Start Mission'}</Button>
             </div>
           </section>

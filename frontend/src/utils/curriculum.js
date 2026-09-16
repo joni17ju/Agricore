@@ -5,13 +5,11 @@
  *
  * Rules
  * - Module 1 is open. Module N opens when Module N-1 is cleared.
- * - A module is cleared when all its lessons are completed AND its quiz is passed.
+ * - A module is cleared when all of its lessons are completed.
  * - Inside an open module, Lesson 1 is open; Lesson N opens when Lesson N-1 is completed.
  * - A lesson is completed when its progress record says so, or when every mission
  *   level of the lesson has a passed attempt.
- * - The module quiz opens once every lesson in the module is completed.
  */
-import { MISSION_KINDS } from '../constants/gameTypes.js';
 import { LESSON_STATE, PROGRESS_STATUS } from '../constants/rules.js';
 import { getBestAttemptsByMission } from './gamification.js';
 
@@ -25,19 +23,10 @@ export function getModuleLessons(lessons, moduleId) {
   return lessons.filter((lesson) => lesson.moduleId === moduleId).sort(byNumber('lessonNumber'));
 }
 
-export function isQuiz(mission) {
-  return mission.scenarioData?.kind === MISSION_KINDS.QUIZ;
-}
-
 export function getLessonGameMissions(missions, lessonId) {
   return missions
-    .filter((mission) => mission.lessonId === lessonId && !isQuiz(mission))
+    .filter((mission) => mission.lessonId === lessonId)
     .sort(byNumber('levelNumber'));
-}
-
-export function getModuleQuiz(missions, moduleLessons) {
-  const lessonIds = new Set(moduleLessons.map((lesson) => lesson._id));
-  return missions.find((mission) => isQuiz(mission) && lessonIds.has(mission.lessonId)) ?? null;
 }
 
 /** All game missions of a module in level order. */
@@ -97,15 +86,7 @@ export function buildStudentCurriculum({ modules, lessons, missions, attempts, p
     const completedLessons = lessonEntries.filter((entry) => entry.state === LESSON_STATE.COMPLETED).length;
     const allLessonsCompleted = completedLessons === moduleLessons.length;
 
-    const quizMission = getModuleQuiz(missions, moduleLessons);
-    let quiz = null;
-    if (quizMission) {
-      quiz = describeMission(quizMission);
-      if (!moduleUnlocked || !allLessonsCompleted) quiz.state = LESSON_STATE.LOCKED;
-      else quiz.state = quiz.isPassed ? LESSON_STATE.COMPLETED : LESSON_STATE.AVAILABLE;
-    }
-
-    const isCleared = moduleUnlocked && allLessonsCompleted && (!quiz || quiz.isPassed);
+    const isCleared = moduleUnlocked && allLessonsCompleted;
     const totalLevels = lessonEntries.reduce((sum, entry) => sum + entry.totalLevels, 0);
     const passedLevels = lessonEntries.reduce((sum, entry) => sum + entry.passedLevels, 0);
 
@@ -122,7 +103,6 @@ export function buildStudentCurriculum({ modules, lessons, missions, attempts, p
       state,
       isCleared,
       lessons: lessonEntries,
-      quiz,
       completedLessons,
       totalLessons: moduleLessons.length,
       passedLevels,
@@ -134,7 +114,7 @@ export function buildStudentCurriculum({ modules, lessons, missions, attempts, p
 
 /**
  * The next thing the student should do: the first unpassed mission level of the
- * first open lesson, or an open quiz. Returns null when everything is cleared.
+ * first open lesson. Returns null when everything is cleared.
  */
 export function findNextStep(curriculum) {
   for (const moduleEntry of curriculum) {
@@ -145,9 +125,6 @@ export function findNextStep(curriculum) {
         return { type: level ? 'mission' : 'lesson', module: moduleEntry.module, lesson: lessonEntry.lesson, mission: level?.mission ?? null };
       }
     }
-    if (moduleEntry.quiz?.state === LESSON_STATE.AVAILABLE) {
-      return { type: 'quiz', module: moduleEntry.module, lesson: null, mission: moduleEntry.quiz.mission };
-    }
   }
   return null;
 }
@@ -155,7 +132,6 @@ export function findNextStep(curriculum) {
 /** Whether the student may open a lesson or play a mission right now. */
 export function canAccessMission(curriculum, missionId) {
   for (const moduleEntry of curriculum) {
-    if (moduleEntry.quiz?.mission._id === missionId) return moduleEntry.quiz.state !== LESSON_STATE.LOCKED;
     for (const lessonEntry of moduleEntry.lessons) {
       if (lessonEntry.levels.some((level) => level.mission._id === missionId)) {
         return lessonEntry.state !== LESSON_STATE.LOCKED;

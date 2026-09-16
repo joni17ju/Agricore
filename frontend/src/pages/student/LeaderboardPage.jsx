@@ -81,7 +81,7 @@ export default function LeaderboardPage() {
             )}
             <Card title="How ranking works" icon="info" className="anim-fade-up" style={{ '--i': 1 }}>
               <p className="text-sm text-muted">
-                Students are ranked by XP earned from missions and quizzes. Replaying a mission only adds XP when you beat your
+                Students are ranked by XP earned from missions. Replaying a mission only adds XP when you beat your
                 previous best score.
               </p>
             </Card>

@@ -3,7 +3,7 @@
  * All functions are pure and take already-loaded records.
  */
 import { MASTERY_BANDS, PERFORMANCE_RULES, PERFORMANCE_STATUS } from '../constants/rules.js';
-import { countCompletedLessons, isQuiz } from './curriculum.js';
+import { countCompletedLessons } from './curriculum.js';
 import {
   calculateLevel,
   calculateStreak,
@@ -62,11 +62,9 @@ export function computeStudentMetrics({ attempts, curriculum, missionsById, now 
     if (!mission) continue;
     weightedSum += attempt.score * mission.maxXP;
     weightTotal += mission.maxXP;
-    if (!isQuiz(mission)) {
-      const scores = lessonScores.get(mission.lessonId) ?? [];
-      scores.push(attempt.score);
-      lessonScores.set(mission.lessonId, scores);
-    }
+    const scores = lessonScores.get(mission.lessonId) ?? [];
+    scores.push(attempt.score);
+    lessonScores.set(mission.lessonId, scores);
   }
 
   let bestLesson = null;
@@ -122,7 +120,7 @@ export function determinePerformanceStatus(metrics, sectionAverageProgress) {
  */
 export function computeLessonMastery({ lessons, missions, attempts }) {
   const lessonByMission = new Map(
-    missions.filter((mission) => !isQuiz(mission)).map((mission) => [mission._id, mission.lessonId]),
+    missions.map((mission) => [mission._id, mission.lessonId]),
   );
 
   // Best score per student per mission, grouped by lesson.

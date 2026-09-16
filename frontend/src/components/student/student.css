@@ -300,12 +300,6 @@ a.module-card:hover .module-card__chevron { transform: translateX(4px); }
 .topic-card__status.is-locked { color: var(--text-subtle); font-weight: 500; }
 .topic-card__actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 
-.quiz-card { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4) var(--space-5); border-radius: var(--radius-lg); border: 1.5px solid var(--green-200); background: linear-gradient(90deg, var(--green-50), var(--surface)); flex-wrap: wrap; }
-.quiz-card--locked { border-style: dashed; border-color: var(--border-strong); background: #f1f3ef; }
-.quiz-card__icon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--green-700); color: #fff; }
-.quiz-card--locked .quiz-card__icon { background: #c7cec8; }
-.quiz-card__text { flex: 1; min-width: 200px; }
-.quiz-card h3 { font-size: var(--text-md); }
 
 /* ───────── Lesson viewer ───────── */
 .lesson-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: var(--space-5); align-items: start; }

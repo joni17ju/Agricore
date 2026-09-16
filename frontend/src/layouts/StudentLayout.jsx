@@ -13,7 +13,6 @@ const NAV_GROUPS = [
       { to: '/student', label: 'Dashboard', icon: 'dashboard', end: true },
       { to: '/student/modules', label: 'Modules', icon: 'book' },
       { to: '/student/missions', label: 'Mission', icon: 'target' },
-      { to: '/student/quizzes', label: 'Quiz', icon: 'clipboard' },
     ],
   },
   {

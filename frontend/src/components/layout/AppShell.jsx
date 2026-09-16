@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Fragment, useEffect, useState } from 'react';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { BreadcrumbProvider, useBreadcrumbTrail } from '../../context/BreadcrumbContext.jsx';
 import { ROLE_LABELS } from '../../constants/roles.js';
 import { Avatar, Logo } from '../common/Display.jsx';
 import { IconButton } from '../common/Button.jsx';
@@ -12,11 +13,20 @@ import Icon from '../common/Icon.jsx';
  *
  * @param {{ label: string, items: { to: string, label: string, icon: string, end?: boolean }[] }[]} navGroups
  */
-export default function AppShell({ navGroups, topbarRight, homePath, outletContext }) {
+export default function AppShell(props) {
+  return (
+    <BreadcrumbProvider>
+      <AppShellInner {...props} />
+    </BreadcrumbProvider>
+  );
+}
+
+function AppShellInner({ navGroups, topbarRight, homePath, outletContext }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const pageTrail = useBreadcrumbTrail();
 
   useEffect(() => {
     setIsDrawerOpen(false);
@@ -27,6 +37,9 @@ export default function AppShell({ navGroups, topbarRight, homePath, outletConte
   const current = [...items]
     .sort((a, b) => b.to.length - a.to.length)
     .find((item) => (item.end ? location.pathname === item.to : location.pathname.startsWith(item.to)));
+
+  // A page can extend the breadcrumb (e.g. into a lesson); otherwise show the nav item.
+  const crumbs = pageTrail.length > 0 ? pageTrail : current ? [{ label: current.label }] : [];
 
   const handleLogout = async () => {
     await logout();
@@ -85,12 +98,16 @@ export default function AppShell({ navGroups, topbarRight, homePath, outletConte
           <IconButton icon="menu" label="Open menu" className="topbar__menu" onClick={() => setIsDrawerOpen(true)} />
           <nav className="topbar__crumbs" aria-label="Breadcrumb">
             <span className="topbar__course">Principles of Crop Protection I</span>
-            {current && (
-              <>
+            {crumbs.map((crumb, index) => (
+              <Fragment key={crumb.label}>
                 <Icon name="chevron-right" size={14} />
-                <span className="topbar__page">{current.label}</span>
-              </>
-            )}
+                {crumb.to && index < crumbs.length - 1 ? (
+                  <Link to={crumb.to} className="topbar__crumb">{crumb.label}</Link>
+                ) : (
+                  <span className="topbar__page">{crumb.label}</span>
+                )}
+              </Fragment>
+            ))}
           </nav>
           <div className="topbar__right">{topbarRight}</div>
         </header>

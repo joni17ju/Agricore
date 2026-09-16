@@ -47,7 +47,7 @@ export default function StudentHistoryModal({ instructorId, studentId, onClose }
                   value={entry.totalLevels ? (entry.passedLevels / entry.totalLevels) * 100 : 0}
                   size="sm"
                   tone="dark"
-                  label={`Module ${entry.module.moduleNumber}: ${entry.passedLevels}/${entry.totalLevels} missions · quiz ${entry.quizBestScore !== null ? `${entry.quizBestScore}%` : '—'}`}
+                  label={`Module ${entry.module.moduleNumber}: ${entry.passedLevels}/${entry.totalLevels} missions`}
                   showValue
                 />
               ))}

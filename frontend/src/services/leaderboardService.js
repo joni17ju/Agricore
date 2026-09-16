@@ -23,7 +23,6 @@ function filterAttempts(attempts, { period, moduleId }, now) {
     if (!moduleId) throw new ServiceError('Choose a module.');
     const { lessons, missions } = getCourse();
     const lessonIds = new Set(getModuleLessons(lessons, moduleId).map((l) => l._id));
-    // Game levels and the module quiz both count toward module XP.
     const missionIds = new Set(missions.filter((m) => lessonIds.has(m.lessonId)).map((m) => m._id));
     return attempts.filter((a) => missionIds.has(a.missionId));
   }

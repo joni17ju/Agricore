@@ -1,8 +1,7 @@
 /**
- * Missions (game levels and module quizzes) and mission attempts.
+ * Mission levels and mission attempts.
  */
 import { BADGES_BY_CODE } from '../constants/badges.js';
-import { MISSION_KINDS } from '../constants/gameTypes.js';
 import { PROGRESS_STATUS, LESSON_STATE } from '../constants/rules.js';
 import { evaluateNewBadges } from '../utils/badgeRules.js';
 import {
@@ -12,7 +11,6 @@ import {
   getLessonGameMissions,
   getModuleGameMissions,
   getModuleLessons,
-  isQuiz,
 } from '../utils/curriculum.js';
 import { calculateLevel, calculateTotalXP, calculateXpAward, rankStudentsByXP } from '../utils/gamification.js';
 import { scoreMission } from '../utils/scoring.js';
@@ -94,7 +92,6 @@ export function listStudentMissions(studentId) {
       levels: moduleEntry.lessons.flatMap((lessonEntry) =>
         lessonEntry.levels.map((level) => ({ ...level, lesson: lessonEntry.lesson, state: lessonEntry.state })),
       ),
-      quiz: moduleEntry.quiz,
     }));
   });
 }
@@ -168,12 +165,10 @@ export function submitAttempt({ studentId, missionId, answers, timeSpentSeconds 
     });
 
     // Progress: the lesson is in progress, or completed once every level is passed.
-    if (!isQuiz(mission)) {
-      const afterAttempt = buildStudentCurriculum({ ...course, ...getStudentActivity(studentId) });
-      const { lessonEntry } = lessonEntryFor(afterAttempt, lesson._id);
-      const allPassed = lessonEntry.levels.every((level) => level.isPassed);
-      saveLessonProgress(studentId, lesson._id, allPassed ? PROGRESS_STATUS.COMPLETED : PROGRESS_STATUS.IN_PROGRESS);
-    }
+    const afterAttempt = buildStudentCurriculum({ ...course, ...getStudentActivity(studentId) });
+    const { lessonEntry } = lessonEntryFor(afterAttempt, lesson._id);
+    const allPassed = lessonEntry.levels.every((level) => level.isPassed);
+    saveLessonProgress(studentId, lesson._id, allPassed ? PROGRESS_STATUS.COMPLETED : PROGRESS_STATUS.IN_PROGRESS);
 
     const after = getStudentActivity(studentId);
     const curriculumAfter = buildStudentCurriculum({ ...course, ...after });
@@ -227,7 +222,6 @@ export function submitAttempt({ studentId, missionId, answers, timeSpentSeconds 
       newBadges: newCodes.map((code) => BADGES_BY_CODE[code]),
       lessonCompleted: lessonBefore?.state !== LESSON_STATE.COMPLETED && lessonAfter?.state === LESSON_STATE.COMPLETED,
       moduleCleared: !moduleBefore.isCleared && moduleAfter.isCleared,
-      quizUnlocked: moduleBefore.quiz?.state === LESSON_STATE.LOCKED && moduleAfter.quiz?.state === LESSON_STATE.AVAILABLE,
       unlockedLessons,
       unlockedModule:
         nextModuleAfter && moduleAfter.isCleared && !moduleBefore.isCleared ? nextModuleAfter.module : null,
@@ -244,7 +238,6 @@ function validateMissionInput({ maxXP, scenarioData }) {
   }
   if (scenarioData !== undefined) {
     if (!scenarioData || typeof scenarioData !== 'object') throw new ServiceError('Mission content is missing.');
-    if (!Object.values(MISSION_KINDS).includes(scenarioData.kind)) throw new ServiceError('Unknown mission kind.');
     if (!scenarioData.title?.trim()) throw new ServiceError('Mission title is required.');
   }
 }
@@ -255,9 +248,6 @@ export function createMission({ lessonId, maxXP, scenarioData }) {
     const lesson = db.findById('lessons', lessonId);
     if (!lesson) throw new ServiceError('Lesson not found.', 404);
     validateMissionInput({ maxXP, scenarioData });
-    if (scenarioData.kind === MISSION_KINDS.QUIZ) {
-      throw new ServiceError('Each module already has one quiz. Edit the existing quiz instead.', 409);
-    }
     const mission = db.insert('missions', {
       lessonId,
       levelNumber: Number.MAX_SAFE_INTEGER,
@@ -271,11 +261,8 @@ export function createMission({ lessonId, maxXP, scenarioData }) {
 
 export function updateMission(missionId, { maxXP, scenarioData }) {
   return request(() => {
-    const mission = requireMission(missionId);
+    requireMission(missionId);
     validateMissionInput({ maxXP, scenarioData });
-    if (scenarioData && scenarioData.kind !== mission.scenarioData.kind) {
-      throw new ServiceError('A mission cannot be changed between game and quiz.');
-    }
     return db.update('missions', missionId, {
       ...(maxXP !== undefined && { maxXP: Number(maxXP) }),
       ...(scenarioData !== undefined && { scenarioData }),
@@ -283,11 +270,10 @@ export function updateMission(missionId, { maxXP, scenarioData }) {
   });
 }
 
-/** Delete a mission level and its attempts. Module quizzes cannot be deleted. */
+/** Delete a mission level and its attempts. */
 export function deleteMission(missionId) {
   return request(() => {
     const mission = requireMission(missionId);
-    if (isQuiz(mission)) throw new ServiceError('Module quizzes cannot be deleted.', 409);
     const lesson = db.findById('lessons', mission.lessonId);
     const removedAttempts = db.removeWhere('missionAttempts', (a) => a.missionId === missionId);
     db.remove('missions', missionId);

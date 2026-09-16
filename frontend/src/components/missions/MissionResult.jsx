@@ -11,14 +11,14 @@ const LEAVES = Array.from({ length: 14 }, (_, i) => i);
 function nextStepLink(nextStep) {
   if (!nextStep) return null;
   if (nextStep.mission) {
-    return { to: `/student/missions/${nextStep.mission._id}/play`, label: nextStep.type === 'quiz' ? 'Take Module Quiz' : 'Next Level' };
+    return { to: `/student/missions/${nextStep.mission._id}/play`, label: 'Next Level' };
   }
   return { to: `/student/lessons/${nextStep.lesson._id}`, label: 'Next Topic' };
 }
 
 /** Result screen after a mission attempt: score, XP, badges, unlocks and feedback. */
 export default function MissionResult({ result, answers, mission, module, onRetry }) {
-  const { isPassed, score, xpEarned, totalXP, level, leveledUp, newBadges, unlockedLessons, unlockedModule, quizUnlocked, moduleCleared, rankBefore, rankAfter } = result;
+  const { isPassed, score, xpEarned, totalXP, level, leveledUp, newBadges, unlockedLessons, unlockedModule, moduleCleared, rankBefore, rankAfter } = result;
   const feedback = describeFeedback({ gameType: module.gameType, scenarioData: mission.scenarioData, breakdown: result.breakdown, answers });
   const next = nextStepLink(result.nextStep);
   const rankImproved = rankBefore && rankAfter && rankAfter < rankBefore;
@@ -72,18 +72,12 @@ export default function MissionResult({ result, answers, mission, module, onRetr
         </div>
       </section>
 
-      {(unlockedModule || quizUnlocked || unlockedLessons.length > 0) && (
+      {(unlockedModule || unlockedLessons.length > 0) && (
         <section className="mission-result__unlocks">
           {unlockedModule && (
             <div className="unlock-banner anim-pop" style={{ '--i': 1 }}>
               <span className="unlock-banner__icon"><Icon name="unlock" size={20} /></span>
               <span>Module {unlockedModule.moduleNumber}: <strong>{unlockedModule.title}</strong> unlocked!</span>
-            </div>
-          )}
-          {quizUnlocked && (
-            <div className="unlock-banner anim-pop" style={{ '--i': 2 }}>
-              <span className="unlock-banner__icon"><Icon name="clipboard" size={20} /></span>
-              <span>Module {module.moduleNumber} Quiz unlocked</span>
             </div>
           )}
           {unlockedLessons.map((lesson, index) => (

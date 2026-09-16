@@ -15,7 +15,6 @@ import ModulesPage from '../pages/student/ModulesPage.jsx';
 import ModuleDetailPage from '../pages/student/ModuleDetailPage.jsx';
 import LessonViewerPage from '../pages/student/LessonViewerPage.jsx';
 import MissionsPage from '../pages/student/MissionsPage.jsx';
-import QuizzesPage from '../pages/student/QuizzesPage.jsx';
 import MissionPlayPage from '../pages/student/MissionPlayPage.jsx';
 import LeaderboardPage from '../pages/student/LeaderboardPage.jsx';
 import ProfilePage from '../pages/student/ProfilePage.jsx';
@@ -49,7 +48,6 @@ export default function AppRouter() {
           <Route path="modules/:moduleId" element={<ModuleDetailPage />} />
           <Route path="lessons/:lessonId" element={<LessonViewerPage />} />
           <Route path="missions" element={<MissionsPage />} />
-          <Route path="quizzes" element={<QuizzesPage />} />
           <Route path="leaderboard" element={<LeaderboardPage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>

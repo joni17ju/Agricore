@@ -63,7 +63,6 @@ export function getLessonForStudent(studentId, lessonId) {
     );
     const index = allLessons.findIndex((entry) => entry.lesson._id === lessonId);
     const entry = allLessons[index];
-    const moduleEntry = curriculum.find((item) => item.module._id === entry.module._id);
     const next = allLessons[index + 1];
 
     return {
@@ -73,7 +72,6 @@ export function getLessonForStudent(studentId, lessonId) {
       levels: entry.levels,
       previousLesson: allLessons[index - 1]?.lesson ?? null,
       nextLesson: next && next.state !== LESSON_STATE.LOCKED ? next.lesson : null,
-      moduleQuiz: moduleEntry.quiz,
     };
   });
 }
@@ -109,18 +107,6 @@ function buildObjectives({ curriculum, attempts, streak, now }) {
       xpReward: null,
       lessonId: nextStep.lesson._id,
       isDone: false,
-    });
-  }
-
-  const currentModule = curriculum.find((entry) => entry.state !== LESSON_STATE.LOCKED && !entry.isCleared);
-  if (currentModule?.quiz) {
-    objectives.push({
-      id: 'module-quiz',
-      label: `Score 80%+ on the Module ${currentModule.module.moduleNumber} Quiz`,
-      xpReward: currentModule.quiz.mission.maxXP,
-      missionId: currentModule.quiz.mission._id,
-      isLocked: currentModule.quiz.state === LESSON_STATE.LOCKED,
-      isDone: (currentModule.quiz.bestScore ?? 0) >= 80,
     });
   }
 

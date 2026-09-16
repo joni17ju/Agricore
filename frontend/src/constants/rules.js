@@ -5,7 +5,7 @@
  * can be tuned (or moved to the backend) without touching any calculation code.
  */
 
-/** Minimum score (0–100) for a mission or quiz attempt to count as passed. */
+/** Minimum score (0–100) for a mission attempt to count as passed. */
 export const PASSING_SCORE = 70;
 
 /** XP needed per level. Level 1 starts at 0 XP. */

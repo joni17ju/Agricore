@@ -18,7 +18,8 @@ import progress from '../data/progress.js';
 import { MOCK_LATENCY_MS, MOCK_SEED_ANCHOR_DAY } from '../constants/rules.js';
 import { addDays, calendarDaysBetween } from '../utils/dates.js';
 
-const STORAGE_KEY = 'agricore.mockdb.v1';
+/** Bump this when the seed data shape changes so saved demo data is rebuilt. */
+const STORAGE_KEY = 'agricore.mockdb.v2';
 
 const ID_PREFIXES = {
   users: 'usr',

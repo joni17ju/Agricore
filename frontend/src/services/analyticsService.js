@@ -13,7 +13,7 @@ import {
   determinePerformanceStatus,
   findBlindspots,
 } from '../utils/analytics.js';
-import { buildStudentCurriculum, isQuiz } from '../utils/curriculum.js';
+import { buildStudentCurriculum } from '../utils/curriculum.js';
 import { isBlank } from '../utils/validation.js';
 import { db, request } from './mockDb.js';
 import {
@@ -160,13 +160,12 @@ export function getStudentPerformanceDetail(instructorId, studentId) {
         totalLessons: entry.totalLessons,
         passedLevels: entry.passedLevels,
         totalLevels: entry.totalLevels,
-        quizBestScore: entry.quiz?.bestScore ?? null,
       })),
       attempts: [...attempts]
         .sort((a, b) => b.attemptedAt.localeCompare(a.attemptedAt))
         .map((attempt) => {
           const mission = course.missionsById.get(attempt.missionId);
-          return { attempt, mission, isQuiz: mission ? isQuiz(mission) : false, ...(mission ? getMissionContext(mission, course) : {}) };
+          return { attempt, mission, ...(mission ? getMissionContext(mission, course) : {}) };
         }),
       badges: student.earnedBadges.map((badge) => ({ ...BADGES_BY_CODE[badge.code], earnedAt: badge.earnedAt })),
     };
@@ -191,7 +190,7 @@ export function getAdminOverview() {
       studentsWithoutSection: count((u) => u.role === ROLES.STUDENT && !db.findById('sections', u.sectionId)),
       modules: db.all('modules').length,
       lessons: db.all('lessons').length,
-      missions: db.find('missions', (m) => !isQuiz(m)).length,
+      missions: db.all('missions').length,
     };
   });
 }

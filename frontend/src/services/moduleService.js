@@ -4,7 +4,7 @@
  * created or deleted.
  */
 import { isBlank } from '../utils/validation.js';
-import { getLessonGameMissions, getModuleLessons, getModuleQuiz, sortModules } from '../utils/curriculum.js';
+import { getLessonGameMissions, getModuleLessons, sortModules } from '../utils/curriculum.js';
 import { db, request, ServiceError } from './mockDb.js';
 import { getCourse } from './serviceContext.js';
 
@@ -54,7 +54,6 @@ export function getCourseStructure() {
           lesson,
           missions: getLessonGameMissions(missions, lesson._id),
         })),
-        quiz: getModuleQuiz(missions, moduleLessons),
       };
     });
   });

@@ -76,7 +76,7 @@ export function CurrentModuleCard({ moduleEntry, nextStep, index = 0 }) {
             <Button variant="soft" icon="check" to={`/student/modules/${module._id}`}>Module cleared</Button>
           ) : (
             <Button icon="play" to={resumeTo}>
-              {nextStep?.type === 'quiz' ? 'Take Module Quiz' : nextStep?.mission ? 'Resume Mission' : 'Continue Learning'}
+              {nextStep?.mission ? 'Resume Mission' : 'Continue Learning'}
             </Button>
           )}
         </div>

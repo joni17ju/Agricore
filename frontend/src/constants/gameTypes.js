@@ -10,12 +10,6 @@ export const GAME_TYPES = Object.freeze({
   STRATEGY_MANAGEMENT: 'strategy-management',
 });
 
-/** Mission kinds stored in `missions.scenarioData.kind`. */
-export const MISSION_KINDS = Object.freeze({
-  GAME: 'game',
-  QUIZ: 'quiz',
-});
-
 export const GAME_TYPE_INFO = Object.freeze({
   [GAME_TYPES.DECISION_MAKING]: {
     label: 'Decision-Making',

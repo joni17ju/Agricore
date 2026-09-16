@@ -4,31 +4,16 @@
  * for live feedback while playing.
  *
  * Answer shapes:
- *   quiz                 { selections: { [questionId]: optionId } }
  *   decision-making      { choices: { [scenarioId]: choiceId } }
  *   identification       { marks: [{ x, y }], pathogenGuesses: [optionId, ...] }
  *   matching             { selections: { [columnKey]: optionId }, timeRemainingSeconds }
  *   drag-and-drop        { placements: { [targetId]: labelId } }
  *   strategy-management  { pestId, tacticIds: [tacticId, ...] }
  */
-import { GAME_TYPES, MISSION_KINDS } from '../constants/gameTypes.js';
+import { GAME_TYPES } from '../constants/gameTypes.js';
 import { getEnvironmentalGrade, isPassingScore } from './gamification.js';
 
 const clampScore = (value) => Math.max(0, Math.min(100, Math.round(value)));
-
-// ── Quiz ──
-function scoreQuiz(scenarioData, { selections = {} }) {
-  const results = scenarioData.questions.map((question) => ({
-    questionId: question.id,
-    selectedOptionId: selections[question.id] ?? null,
-    isCorrect: selections[question.id] === question.correctOptionId,
-  }));
-  const correct = results.filter((result) => result.isCorrect).length;
-  return {
-    score: clampScore((correct / scenarioData.questions.length) * 100),
-    breakdown: { correct, total: scenarioData.questions.length, results },
-  };
-}
 
 // ── Module 1: Decision-Making ──
 function scoreDecisionMaking(scenarioData, { choices = {} }) {
@@ -189,7 +174,7 @@ const SCORERS = {
  * @returns {{ score: number, isPassed: boolean, breakdown: object }}
  */
 export function scoreMission({ gameType, scenarioData, answers }) {
-  const scorer = scenarioData.kind === MISSION_KINDS.QUIZ ? scoreQuiz : SCORERS[gameType];
+  const scorer = SCORERS[gameType];
   if (!scorer) throw new Error(`No scorer for game type "${gameType}"`);
   const { score, breakdown } = scorer(scenarioData, answers ?? {});
   return { score, isPassed: isPassingScore(score), breakdown };

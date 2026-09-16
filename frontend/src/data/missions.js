@@ -4,9 +4,7 @@
  *
  * - Every lesson has one or more mission levels. `levelNumber` counts across the
  *   whole module (Module 2 = Levels 1–8, as in the proposal mockup).
- * - `scenarioData.kind` is 'game' for a mission level or 'quiz' for the end-of-module
- *   quiz. Quizzes attach to the last lesson of the module and have `levelNumber: null`.
- * - The rest of `scenarioData` depends on the module's gameType:
+ * - `scenarioData` depends on the module's gameType:
  *     decision-making      → scenarios[] with 3 decision cards each
  *     identification       → specimen, symptomSpots[], pathogenOptions[]
  *     matching             → target pest, columns[] (classification, damage, tactic), timer
@@ -27,7 +25,6 @@ const module1Missions = [
     levelNumber: 1,
     maxXP: 100,
     scenarioData: {
-      kind: 'game',
       title: 'Global Harvest Challenge',
       instructions: 'Read the situation, then tap the decision card you think is best.',
       scenarios: [
@@ -110,7 +107,6 @@ const module1Missions = [
     levelNumber: 2,
     maxXP: 100,
     scenarioData: {
-      kind: 'game',
       title: 'Protect the Harvest',
       instructions: 'Choose the action that best shows the role of crop protection.',
       scenarios: [
@@ -190,7 +186,6 @@ const module1Missions = [
     levelNumber: 3,
     maxXP: 100,
     scenarioData: {
-      kind: 'game',
       title: 'Friend or Pest?',
       instructions: 'Decide whether each organism is a pest and what to do.',
       scenarios: [
@@ -269,7 +264,6 @@ const module1Missions = [
     levelNumber: 4,
     maxXP: 100,
     scenarioData: {
-      kind: 'game',
       title: 'Spray or Wait?',
       instructions: 'Use the economic threshold to make the right call.',
       scenarios: [
@@ -350,7 +344,6 @@ const module1Missions = [
     levelNumber: 5,
     maxXP: 100,
     scenarioData: {
-      kind: 'game',
       title: 'Assemble the Expert Team',
       instructions: 'Pick the discipline best suited to each problem.',
       scenarios: [
@@ -434,7 +427,6 @@ const module2Missions = [
     levelNumber: 1,
     maxXP: 150,
     scenarioData: {
-      kind: 'game',
       title: 'Spots on the Peanut Leaf',
       instructions:
         'Zoom in to inspect the unhealthy leaf. Mark every symptom with a red circle, then identify the pathogen.',
@@ -462,7 +454,6 @@ const module2Missions = [
     levelNumber: 2,
     maxXP: 150,
     scenarioData: {
-      kind: 'game',
       title: 'Yellowing Rice Leaves',
       instructions: 'Mark the lesions, then decide whether the cause is fungal, bacterial, viral or abiotic.',
       host: 'Rice',
@@ -490,7 +481,6 @@ const module2Missions = [
     levelNumber: 3,
     maxXP: 150,
     scenarioData: {
-      kind: 'game',
       title: 'Mottled Pepper Leaves',
       instructions: 'Inspect the mottled areas, mark them, and identify the cause.',
       host: 'Pepper',
@@ -517,7 +507,6 @@ const module2Missions = [
     levelNumber: 4,
     maxXP: 150,
     scenarioData: {
-      kind: 'game',
       title: 'White Powder on Cucumber',
       instructions: 'Find where the pathogen is reproducing on the leaf surface, then identify it.',
       host: 'Cucumber',
@@ -545,7 +534,6 @@ const module2Missions = [
     levelNumber: 5,
     maxXP: 150,
     scenarioData: {
-      kind: 'game',
       title: 'Dark Lesions on Mango',
       instructions: 'Mark the lesions that can spread new spores by rain splash, then identify the pathogen.',
       host: 'Mango',
@@ -572,7 +560,6 @@ const module2Missions = [
     levelNumber: 6,
     maxXP: 150,
     scenarioData: {
-      kind: 'game',
       title: 'Blight After the Rains',
       instructions:
         'After a week of cool, humid weather, tomato plants are collapsing. Mark the symptoms and identify the pathogen.',
@@ -601,7 +588,6 @@ const module2Missions = [
     levelNumber: 7,
     maxXP: 150,
     scenarioData: {
-      kind: 'game',
       title: 'Pustules Across the Cornfield',
       instructions: 'Mark the pustules that release wind-borne spores, then identify the disease.',
       host: 'Corn',
@@ -629,7 +615,6 @@ const module2Missions = [
     levelNumber: 8,
     maxXP: 150,
     scenarioData: {
-      kind: 'game',
       title: 'The Resistant Variety Fails',
       instructions:
         'A "blast-resistant" rice variety now shows lesions. Mark them and identify the pathogen that overcame the resistance.',
@@ -673,7 +658,6 @@ const module3Missions = [
     levelNumber: 1,
     maxXP: 150,
     scenarioData: {
-      kind: 'game',
       title: 'Crown Damage on Coconut',
       instructions: 'Identify the pest, then match its classification, damage type and management tactic.',
       timeLimitSeconds: 60,
@@ -729,7 +713,6 @@ const module3Missions = [
     levelNumber: 2,
     maxXP: 150,
     scenarioData: {
-      kind: 'game',
       title: 'Curling Okra Leaves',
       instructions: 'Identify the pest, then match its classification, damage type and management tactic.',
       timeLimitSeconds: 55,
@@ -785,7 +768,6 @@ const module3Missions = [
     levelNumber: 3,
     maxXP: 150,
     scenarioData: {
-      kind: 'game',
       title: 'Cut Tillers in the Paddy',
       instructions: 'Identify the pest, then match its classification, damage type and management tactic.',
       timeLimitSeconds: 50,
@@ -841,7 +823,6 @@ const module3Missions = [
     levelNumber: 4,
     maxXP: 150,
     scenarioData: {
-      kind: 'game',
       title: 'Empty Grains at Ripening',
       instructions: 'Identify the pest, then match its classification, damage type and management tactic.',
       timeLimitSeconds: 45,
@@ -897,7 +878,6 @@ const module3Missions = [
     levelNumber: 5,
     maxXP: 150,
     scenarioData: {
-      kind: 'game',
       title: 'Ragged Corn Whorls',
       instructions:
         'Identify the pest, then match its classification, damage type and the natural-enemy tactic that manages it.',
@@ -958,7 +938,6 @@ const module4Missions = [
     levelNumber: 1,
     maxXP: 200,
     scenarioData: {
-      kind: 'game',
       title: 'Goosegrass Morphology',
       instructions: 'Drag each structural label onto its flashing target zone on the weed, then verify.',
       timeLimitSeconds: 90,
@@ -992,7 +971,6 @@ const module4Missions = [
     levelNumber: 2,
     maxXP: 200,
     scenarioData: {
-      kind: 'game',
       title: 'Sedges Have Edges',
       instructions: 'Label the structures that identify this weed as a sedge.',
       timeLimitSeconds: 90,
@@ -1026,7 +1004,6 @@ const module4Missions = [
     levelNumber: 3,
     maxXP: 200,
     scenarioData: {
-      kind: 'game',
       title: 'A Spiny Broadleaf',
       instructions: 'Label the structures that identify this broadleaf weed.',
       timeLimitSeconds: 80,
@@ -1060,7 +1037,6 @@ const module4Missions = [
     levelNumber: 4,
     maxXP: 200,
     scenarioData: {
-      kind: 'game',
       title: 'The Invading Hagonoy',
       instructions: 'Label the features used to recognize this invasive weed.',
       timeLimitSeconds: 80,
@@ -1094,7 +1070,6 @@ const module4Missions = [
     levelNumber: 5,
     maxXP: 200,
     scenarioData: {
-      kind: 'game',
       title: 'Clogged Irrigation Canal',
       instructions: 'Label the structures that let this invasive aquatic weed float and spread.',
       timeLimitSeconds: 75,
@@ -1132,7 +1107,6 @@ const module5Missions = [
     levelNumber: 1,
     maxXP: 250,
     scenarioData: {
-      kind: 'game',
       title: 'Tunnels in the Tomato Leaves',
       instructions: 'Diagnose the pest from the field clues, then deploy 2 control tactics that save the crop.',
       guideMessage: 'IPM strategy needed! Perform diagnosis and select tactics.',
@@ -1201,7 +1175,6 @@ const module5Missions = [
     levelNumber: 2,
     maxXP: 250,
     scenarioData: {
-      kind: 'game',
       title: 'Hopperburn in the Rice Field',
       instructions: 'Diagnose the pest, then choose 2 tactics that follow IPM principles.',
       guideMessage: 'Patches of rice are drying up. Remember: avoid causing resurgence!',
@@ -1271,7 +1244,6 @@ const module5Missions = [
     levelNumber: 3,
     maxXP: 250,
     scenarioData: {
-      kind: 'game',
       title: 'Wilted Eggplant Shoots',
       instructions: 'Diagnose the pest, then pick the 2 tactics that best combine without harming the environment.',
       guideMessage: 'Shoots are wilting and fruits have holes. What is causing it?',
@@ -1340,7 +1312,6 @@ const module5Missions = [
     levelNumber: 4,
     maxXP: 250,
     scenarioData: {
-      kind: 'game',
       title: 'Season Plan for the Cornfield',
       instructions: 'Diagnose the pest, then plan 2 tactics that keep the environmental score at A+.',
       guideMessage: 'Plan your program! Neighbors planted weeks apart, so pests keep moving in.',
@@ -1406,382 +1377,12 @@ const module5Missions = [
   },
 ];
 
-// ───────────────────────── End-of-module quizzes ─────────────────────────
-const quizMissions = [
-  {
-    _id: 'mis_q1',
-    lessonId: 'les_1_5',
-    levelNumber: null,
-    maxXP: 200,
-    scenarioData: {
-      kind: 'quiz',
-      title: 'Module 1 Quiz: Introduction to Crop Protection',
-      instructions: 'Answer all questions. You need 70% to pass.',
-      questions: [
-        {
-          id: 'q1',
-          prompt: 'Which statement best defines a pest?',
-          options: [
-            { id: 'a', text: 'Any insect found on a crop' },
-            { id: 'b', text: 'Any organism that injures plants or plant products' },
-            { id: 'c', text: 'Only organisms that cause plant diseases' },
-            { id: 'd', text: 'Any wild animal near a farm' },
-          ],
-          correctOptionId: 'b',
-          explanation: 'Pests include pathogens, arthropods, weeds, vertebrates and more — defined by the injury they cause.',
-        },
-        {
-          id: 'q2',
-          prompt: 'The economic threshold is set…',
-          options: [
-            { id: 'a', text: 'above the economic injury level' },
-            { id: 'b', text: 'equal to the general equilibrium position' },
-            { id: 'c', text: 'below the economic injury level' },
-            { id: 'd', text: 'at zero pests' },
-          ],
-          correctOptionId: 'c',
-          explanation: 'The ET is below the EIL so that control can start before losses become economic.',
-        },
-        {
-          id: 'q3',
-          prompt: 'Which is an indirect loss caused by pests?',
-          options: [
-            { id: 'a', text: 'Holes in harvested fruit' },
-            { id: 'b', text: 'Reduced grain yield' },
-            { id: 'c', text: 'Cost of pesticides and control' },
-            { id: 'd', text: 'Rotten tubers in storage' },
-          ],
-          correctOptionId: 'c',
-          explanation: 'Indirect losses include control costs, lower prices and harm to health or the environment.',
-        },
-        {
-          id: 'q4',
-          prompt: 'Which discipline studies plant-parasitic nematodes?',
-          options: [
-            { id: 'a', text: 'Acarology' },
-            { id: 'b', text: 'Nematology' },
-            { id: 'c', text: 'Entomology' },
-            { id: 'd', text: 'Mycology' },
-          ],
-          correctOptionId: 'b',
-          explanation: 'Nematology is the study of nematodes.',
-        },
-        {
-          id: 'q5',
-          prompt: 'Why is reducing crop losses important for food supply?',
-          options: [
-            { id: 'a', text: 'It increases food available without clearing more land' },
-            { id: 'b', text: 'It reduces the need for farmers' },
-            { id: 'c', text: 'It removes the need for storage' },
-            { id: 'd', text: 'It eliminates all pests permanently' },
-          ],
-          correctOptionId: 'a',
-          explanation: 'Saving what is already planted adds food supply without expanding farmland.',
-        },
-      ],
-    },
-  },
-  {
-    _id: 'mis_q2',
-    lessonId: 'les_2_5',
-    levelNumber: null,
-    maxXP: 200,
-    scenarioData: {
-      kind: 'quiz',
-      title: 'Module 2 Quiz: Plant Pathology',
-      instructions: 'Answer all questions. You need 70% to pass.',
-      questions: [
-        {
-          id: 'q1',
-          prompt: 'Fungal spores visible on a leaf are an example of a…',
-          options: [
-            { id: 'a', text: 'symptom' },
-            { id: 'b', text: 'sign' },
-            { id: 'c', text: 'injury' },
-            { id: 'd', text: 'abiotic disorder' },
-          ],
-          correctOptionId: 'b',
-          explanation: 'Signs are the pathogen itself; symptoms are the plant’s reaction.',
-        },
-        {
-          id: 'q2',
-          prompt: 'Which is an abiotic cause of plant disease?',
-          options: [
-            { id: 'a', text: 'Xanthomonas oryzae' },
-            { id: 'b', text: 'Cucumber mosaic virus' },
-            { id: 'c', text: 'Nutrient deficiency' },
-            { id: 'd', text: 'Phytophthora infestans' },
-          ],
-          correctOptionId: 'c',
-          explanation: 'Nutrient deficiencies are non-living (abiotic) causes and do not spread between plants.',
-        },
-        {
-          id: 'q3',
-          prompt: 'In the disease cycle, dissemination refers to…',
-          options: [
-            { id: 'a', text: 'entry of the pathogen into the host' },
-            { id: 'b', text: 'spread of inoculum to new plants' },
-            { id: 'c', text: 'survival between seasons' },
-            { id: 'd', text: 'appearance of symptoms' },
-          ],
-          correctOptionId: 'b',
-          explanation: 'Dissemination is the spread of the pathogen by wind, water, insects, tools or people.',
-        },
-        {
-          id: 'q4',
-          prompt: 'The three sides of the disease triangle are…',
-          options: [
-            { id: 'a', text: 'host, pathogen, environment' },
-            { id: 'b', text: 'soil, water, sunlight' },
-            { id: 'c', text: 'farmer, crop, market' },
-            { id: 'd', text: 'spore, mycelium, fruiting body' },
-          ],
-          correctOptionId: 'a',
-          explanation: 'Disease needs a susceptible host, a virulent pathogen and a favorable environment.',
-        },
-        {
-          id: 'q5',
-          prompt: 'A resistant rice variety suddenly becomes susceptible to blast. The most likely reason is…',
-          options: [
-            { id: 'a', text: 'the variety forgot its resistance' },
-            { id: 'b', text: 'a new pathogen race developed or arrived' },
-            { id: 'c', text: 'too much sunlight' },
-            { id: 'd', text: 'the field had no weeds' },
-          ],
-          correctOptionId: 'b',
-          explanation: 'Pathogen variability produces new races that can overcome host resistance.',
-        },
-      ],
-    },
-  },
-  {
-    _id: 'mis_q3',
-    lessonId: 'les_3_3',
-    levelNumber: null,
-    maxXP: 200,
-    scenarioData: {
-      kind: 'quiz',
-      title: 'Module 3 Quiz: Agricultural Entomology',
-      instructions: 'Answer all questions. You need 70% to pass.',
-      questions: [
-        {
-          id: 'q1',
-          prompt: 'How many legs do adult mites have?',
-          options: [
-            { id: 'a', text: 'Four' },
-            { id: 'b', text: 'Six' },
-            { id: 'c', text: 'Eight' },
-            { id: 'd', text: 'Ten' },
-          ],
-          correctOptionId: 'c',
-          explanation: 'Adult mites (Acari) have eight legs; insects have six.',
-        },
-        {
-          id: 'q2',
-          prompt: 'Aphids and planthoppers belong to which order?',
-          options: [
-            { id: 'a', text: 'Coleoptera' },
-            { id: 'b', text: 'Hemiptera' },
-            { id: 'c', text: 'Lepidoptera' },
-            { id: 'd', text: 'Orthoptera' },
-          ],
-          correctOptionId: 'b',
-          explanation: 'Hemiptera have piercing-sucking mouthparts.',
-        },
-        {
-          id: 'q3',
-          prompt: 'The Trap Barrier System (TBS) is used to manage…',
-          options: [
-            { id: 'a', text: 'aphids' },
-            { id: 'b', text: 'rice field rats' },
-            { id: 'c', text: 'leaf miners' },
-            { id: 'd', text: 'powdery mildew' },
-          ],
-          correctOptionId: 'b',
-          explanation: 'TBS combines a plastic barrier with traps to catch rats.',
-        },
-        {
-          id: 'q4',
-          prompt: 'Trichogramma wasps are examples of…',
-          options: [
-            { id: 'a', text: 'predators' },
-            { id: 'b', text: 'parasitoids' },
-            { id: 'c', text: 'entomopathogens' },
-            { id: 'd', text: 'vertebrate pests' },
-          ],
-          correctOptionId: 'b',
-          explanation: 'Trichogramma lay their eggs inside pest eggs, killing them — they are egg parasitoids.',
-        },
-        {
-          id: 'q5',
-          prompt: 'Ragged leaf holes with frass usually indicate insects with…',
-          options: [
-            { id: 'a', text: 'chewing mouthparts' },
-            { id: 'b', text: 'piercing-sucking mouthparts' },
-            { id: 'c', text: 'rasping-sucking mouthparts' },
-            { id: 'd', text: 'no mouthparts' },
-          ],
-          correctOptionId: 'a',
-          explanation: 'Chewing insects such as caterpillars and beetles leave holes and frass.',
-        },
-      ],
-    },
-  },
-  {
-    _id: 'mis_q4',
-    lessonId: 'les_4_3',
-    levelNumber: null,
-    maxXP: 200,
-    scenarioData: {
-      kind: 'quiz',
-      title: 'Module 4 Quiz: Weed Science',
-      instructions: 'Answer all questions. You need 70% to pass.',
-      questions: [
-        {
-          id: 'q1',
-          prompt: '"Sedges have edges" refers to their…',
-          options: [
-            { id: 'a', text: 'serrated leaves' },
-            { id: 'b', text: 'triangular stems' },
-            { id: 'c', text: 'spiny flowers' },
-            { id: 'd', text: 'sharp roots' },
-          ],
-          correctOptionId: 'b',
-          explanation: 'Sedges have solid, triangular stems.',
-        },
-        {
-          id: 'q2',
-          prompt: 'Which structure is usually present in grasses but absent in sedges?',
-          options: [
-            { id: 'a', text: 'Ligule' },
-            { id: 'b', text: 'Leaf blade' },
-            { id: 'c', text: 'Roots' },
-            { id: 'd', text: 'Flowers' },
-          ],
-          correctOptionId: 'a',
-          explanation: 'Most grasses have a ligule at the junction of blade and sheath; sedges do not.',
-        },
-        {
-          id: 'q3',
-          prompt: 'The critical period of weed competition is…',
-          options: [
-            { id: 'a', text: 'the time just before harvest' },
-            { id: 'b', text: 'the stage when weeds must be controlled to prevent yield loss' },
-            { id: 'c', text: 'the time weeds produce seed' },
-            { id: 'd', text: 'the fallow period' },
-          ],
-          correctOptionId: 'b',
-          explanation: 'Weed control during the critical period protects yield most effectively.',
-        },
-        {
-          id: 'q4',
-          prompt: 'Perennial weeds are hard to control mainly because they…',
-          options: [
-            { id: 'a', text: 'live only one season' },
-            { id: 'b', text: 'spread by rhizomes, tubers or stolons as well as seeds' },
-            { id: 'c', text: 'never flower' },
-            { id: 'd', text: 'grow only in water' },
-          ],
-          correctOptionId: 'b',
-          explanation: 'Underground vegetative structures regrow after the top growth is removed.',
-        },
-        {
-          id: 'q5',
-          prompt: 'Which is an invasive aquatic weed in the Philippines?',
-          options: [
-            { id: 'a', text: 'Goosegrass' },
-            { id: 'b', text: 'Spiny amaranth' },
-            { id: 'c', text: 'Water hyacinth' },
-            { id: 'd', text: 'Purple nutsedge' },
-          ],
-          correctOptionId: 'c',
-          explanation: 'Water hyacinth clogs rivers and irrigation canals.',
-        },
-      ],
-    },
-  },
-  {
-    _id: 'mis_q5',
-    lessonId: 'les_5_4',
-    levelNumber: null,
-    maxXP: 200,
-    scenarioData: {
-      kind: 'quiz',
-      title: 'Module 5 Quiz: Integrated Pest Management',
-      instructions: 'Answer all questions. You need 70% to pass.',
-      questions: [
-        {
-          id: 'q1',
-          prompt: 'In IPM, pesticides should be used…',
-          options: [
-            { id: 'a', text: 'on a fixed weekly calendar' },
-            { id: 'b', text: 'as a last resort, when thresholds are exceeded' },
-            { id: 'c', text: 'never under any condition' },
-            { id: 'd', text: 'before any monitoring is done' },
-          ],
-          correctOptionId: 'b',
-          explanation: 'IPM uses pesticides only when justified, preferring selective products.',
-        },
-        {
-          id: 'q2',
-          prompt: 'Crop rotation and sanitation are examples of which tactic category?',
-          options: [
-            { id: 'a', text: 'Cultural' },
-            { id: 'b', text: 'Biological' },
-            { id: 'c', text: 'Chemical' },
-            { id: 'd', text: 'Regulatory' },
-          ],
-          correctOptionId: 'a',
-          explanation: 'Cultural tactics change farm practices to make conditions less favorable to pests.',
-        },
-        {
-          id: 'q3',
-          prompt: 'Uniform damage along one edge of a field most likely suggests…',
-          options: [
-            { id: 'a', text: 'a spreading fungal disease' },
-            { id: 'b', text: 'an abiotic cause such as herbicide drift' },
-            { id: 'c', text: 'an insect outbreak' },
-            { id: 'd', text: 'a viral epidemic' },
-          ],
-          correctOptionId: 'b',
-          explanation: 'Uniform patterns along rows or edges often point to non-living causes.',
-        },
-        {
-          id: 'q4',
-          prompt: 'Pest resurgence after spraying happens mainly because…',
-          options: [
-            { id: 'a', text: 'natural enemies were killed' },
-            { id: 'b', text: 'the crop grew faster' },
-            { id: 'c', text: 'weeds were removed' },
-            { id: 'd', text: 'the weather became dry' },
-          ],
-          correctOptionId: 'a',
-          explanation: 'Broad-spectrum sprays remove natural enemies, allowing pests to rebound.',
-        },
-        {
-          id: 'q5',
-          prompt: 'The final step of a pest management program is to…',
-          options: [
-            { id: 'a', text: 'plant the crop' },
-            { id: 'b', text: 'buy pesticides' },
-            { id: 'c', text: 'evaluate results and improve the plan' },
-            { id: 'd', text: 'stop monitoring' },
-          ],
-          correctOptionId: 'c',
-          explanation: 'Evaluation closes the loop so the next season’s program improves.',
-        },
-      ],
-    },
-  },
-];
-
 const missions = [
   ...module1Missions,
   ...module2Missions,
   ...module3Missions,
   ...module4Missions,
   ...module5Missions,
-  ...quizMissions,
 ];
 
 export default missions;

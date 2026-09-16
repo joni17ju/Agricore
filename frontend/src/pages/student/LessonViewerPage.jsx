@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { useBreadcrumb } from '../../context/BreadcrumbContext.jsx';
 import { LESSON_STATE } from '../../constants/rules.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
@@ -12,13 +13,16 @@ import { ErrorState, LoadingState, PageHeader, StatusPill } from '../../componen
 import Icon from '../../components/common/Icon.jsx';
 import SafeHtml from '../../components/common/SafeHtml.jsx';
 import MediaAsset from '../../components/illustrations/MediaAsset.jsx';
-import { LearnPracticeApply, QuizCard, gameIcon } from '../../components/student/CourseMap.jsx';
+import { LearnPracticeApply, gameIcon } from '../../components/student/CourseMap.jsx';
 
 export default function LessonViewerPage() {
   const { lessonId } = useParams();
   const { user } = useAuth();
   const { data, error, isLoading, reload } = useAsync(() => getLessonForStudent(user._id, lessonId), [user._id, lessonId]);
   useDocumentTitle(data?.lesson.title ?? 'Lesson');
+  useBreadcrumb(
+    data ? [{ label: 'Modules', to: '/student/modules' }, { label: data.lesson.title }] : null,
+  );
 
   useEffect(() => {
     markLessonViewed(user._id, lessonId).catch(() => {});
@@ -27,10 +31,9 @@ export default function LessonViewerPage() {
   if (isLoading) return <LoadingState label="Loading lesson…" />;
   if (error) return <ErrorState error={error} onRetry={reload} backTo="/student/modules" />;
 
-  const { lesson, module, levels, state, previousLesson, nextLesson, moduleQuiz } = data;
+  const { lesson, module, levels, state, previousLesson, nextLesson } = data;
   const allPassed = levels.length > 0 && levels.every((level) => level.isPassed);
   const nextLevel = levels.find((level) => !level.isPassed);
-  const isLastLesson = moduleQuiz?.mission.lessonId === lesson._id;
 
   return (
     <div className="page">
@@ -96,7 +99,6 @@ export default function LessonViewerPage() {
               </Button>
             )}
           </Card>
-          {isLastLesson && <QuizCard quiz={moduleQuiz} module={module} index={2} />}
         </aside>
       </div>
     </div>

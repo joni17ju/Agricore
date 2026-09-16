@@ -10,7 +10,7 @@ import { getStudentModule } from '../../services/progressService.js';
 import { ErrorState, LoadingState, PageHeader } from '../../components/common/Display.jsx';
 import Icon from '../../components/common/Icon.jsx';
 import { ProgressBar } from '../../components/common/Progress.jsx';
-import { QuizCard, StatePill, TopicCard, gameIcon } from '../../components/student/CourseMap.jsx';
+import { StatePill, TopicCard, gameIcon } from '../../components/student/CourseMap.jsx';
 
 export default function ModuleDetailPage() {
   const { moduleId } = useParams();
@@ -65,8 +65,6 @@ export default function ModuleDetailPage() {
           />
         ))}
       </div>
-
-      <QuizCard quiz={entry.quiz} module={module} index={entry.lessons.length + 1} />
     </div>
   );
 }

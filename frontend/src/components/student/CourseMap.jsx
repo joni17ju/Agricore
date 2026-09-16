@@ -108,12 +108,6 @@ export function ModuleMapCard({ entry, index, playUnlock }) {
           <div className="module-card__meta">
             <span title="Topics cleared"><Icon name="book" size={14} /> {entry.completedLessons}/{entry.totalLessons}</span>
             <span title="Missions cleared"><Icon name="target" size={14} /> {entry.passedLevels}/{entry.totalLevels}</span>
-            {entry.quiz && (
-              <span title={`Module quiz ${entry.quiz.isPassed ? 'passed' : entry.quiz.state === LESSON_STATE.LOCKED ? 'locked' : 'open'}`}>
-                <Icon name={entry.quiz.isPassed ? 'check-circle' : entry.quiz.state === LESSON_STATE.LOCKED ? 'lock' : 'clipboard'} size={14} />
-                Quiz
-              </span>
-            )}
             {!isLocked && <Icon name="chevron-right" size={18} className="module-card__chevron" />}
           </div>
         </div>
@@ -179,36 +173,12 @@ export function TopicCard({ entry, module, index, playUnlock }) {
   );
 }
 
-export function QuizCard({ quiz, module, index }) {
-  if (!quiz) return null;
-  const isLocked = quiz.state === LESSON_STATE.LOCKED;
-  return (
-    <article className={`quiz-card quiz-card--${quiz.state} anim-fade-up`} style={{ '--i': index }}>
-      <span className="quiz-card__icon"><Icon name={isLocked ? 'lock' : 'clipboard'} size={24} /></span>
-      <div className="quiz-card__text">
-        <h3>{quiz.mission.scenarioData.title}</h3>
-        <p className="text-sm text-muted">
-          {isLocked
-            ? 'Clear every topic in this module to unlock the quiz.'
-            : `${quiz.mission.scenarioData.questions.length} questions · pass with 70% · +${quiz.mission.maxXP} XP`}
-        </p>
-      </div>
-      {quiz.bestScore !== null && <StatusPill tone={quiz.isPassed ? 'green' : 'amber'}>Best {quiz.bestScore}%</StatusPill>}
-      {!isLocked && (
-        <Button size="sm" variant={quiz.isPassed ? 'secondary' : 'primary'} icon={quiz.isPassed ? 'refresh' : 'play'} to={`/student/missions/${quiz.mission._id}/play`}>
-          {quiz.isPassed ? 'Retake' : `Take ${missionCode(module, quiz.mission)}`}
-        </Button>
-      )}
-    </article>
-  );
-}
-
 /** Learn → Practice → Apply indicator (Proposal §1.1). */
 export function LearnPracticeApply({ active = 'learn', completed = [] }) {
   const steps = [
     { key: 'learn', label: 'Learn', hint: 'Study the topic', icon: 'book' },
     { key: 'practice', label: 'Practice', hint: 'Play the mission', icon: 'target' },
-    { key: 'apply', label: 'Apply', hint: 'Module quiz', icon: 'clipboard' },
+    { key: 'apply', label: 'Apply', hint: 'Clear every level', icon: 'shield' },
   ];
   return (
     <ol className="lpa">

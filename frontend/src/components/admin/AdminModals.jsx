@@ -163,7 +163,7 @@ export function SectionFormModal({ isOpen, section, instructors, onClose, onSubm
     >
       <div className="stack">
         <ErrorBanner error={error} />
-        <TextInput label="Section name" value={form.sectionName} onChange={update('sectionName')} placeholder="BSA 3-D" required />
+        <TextInput label="Section name" value={form.sectionName} onChange={update('sectionName')} placeholder="BSA 1-D" required />
         {!isEdit && (
           <SelectInput
             label="Instructor (optional)"

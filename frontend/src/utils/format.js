@@ -37,10 +37,9 @@ export function greeting(date = new Date()) {
   return 'Good evening';
 }
 
-/** "Mission 3.2" for game levels, "Module 3 Quiz" for quizzes. */
+/** "Mission 3.2" — module number and level number. */
 export function missionCode(module, mission) {
   if (!module || !mission) return 'Mission';
-  if (mission.scenarioData?.kind === 'quiz') return `Module ${module.moduleNumber} Quiz`;
   return `Mission ${module.moduleNumber}.${mission.levelNumber}`;
 }
 

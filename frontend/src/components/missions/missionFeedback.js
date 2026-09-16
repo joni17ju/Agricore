@@ -4,18 +4,6 @@
  */
 import { GAME_TYPES } from '../../constants/gameTypes.js';
 
-function quizFeedback(scenarioData, breakdown) {
-  return breakdown.results.map((result, index) => {
-    const question = scenarioData.questions.find((q) => q.id === result.questionId);
-    const correct = question.options.find((o) => o.id === question.correctOptionId);
-    return {
-      ok: result.isCorrect,
-      title: `Q${index + 1}. ${question.prompt}`,
-      detail: result.isCorrect ? question.explanation : `Correct answer: ${correct.text}. ${question.explanation}`,
-    };
-  });
-}
-
 function decisionFeedback(scenarioData, breakdown) {
   return breakdown.results.map((result, index) => {
     const scenario = scenarioData.scenarios.find((s) => s.id === result.scenarioId);
@@ -105,7 +93,6 @@ function strategyFeedback(scenarioData, breakdown, answers) {
 }
 
 export function describeFeedback({ gameType, scenarioData, breakdown, answers }) {
-  if (scenarioData.kind === 'quiz') return quizFeedback(scenarioData, breakdown);
   switch (gameType) {
     case GAME_TYPES.DECISION_MAKING:
       return decisionFeedback(scenarioData, breakdown);
@@ -124,7 +111,6 @@ export function describeFeedback({ gameType, scenarioData, breakdown, answers })
 
 /** Short "how to play" bullets for the mission intro screen. */
 export const HOW_TO_PLAY = {
-  quiz: ['Read each question and choose one answer.', 'Check your answer to see the explanation.', 'Score 70% or higher to pass the module.'],
   [GAME_TYPES.DECISION_MAKING]: [
     'Read the crisis scenario presented by the guide.',
     'Tap one of the three decision cards.',

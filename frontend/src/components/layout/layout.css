@@ -65,7 +65,9 @@
 .topbar__menu { display: none; }
 .topbar__crumbs { display: flex; align-items: center; gap: var(--space-2); min-width: 0; font-size: var(--text-sm); color: var(--text-muted); }
 .topbar__course { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.topbar__page { font-weight: 600; color: var(--text); white-space: nowrap; }
+.topbar__page { font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar__crumb { color: var(--text-muted); white-space: nowrap; }
+.topbar__crumb:hover { color: var(--green-700); }
 .topbar__right { margin-left: auto; display: flex; align-items: center; gap: var(--space-3); }
 .topbar__streak { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; font-size: var(--text-sm); color: var(--amber-600); }
 
