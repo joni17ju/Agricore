@@ -152,49 +152,95 @@ a.objectives__row:hover { text-decoration: none; border-color: var(--green-400);
 .weekly-chart__label { font-size: var(--text-xs); color: var(--text-muted); font-weight: 600; }
 .weekly-chart__col.is-today .weekly-chart__label { color: var(--green-800); }
 
-/* ───────── Module map ───────── */
-.module-path { position: relative; display: flex; flex-direction: column; gap: var(--space-4); }
-.module-path::before { content: ''; position: absolute; left: 39px; top: 30px; bottom: 30px; width: 3px; border-radius: 3px; background: repeating-linear-gradient(to bottom, var(--green-200) 0 10px, transparent 10px 18px); }
+/* ───────── Module grid (course modules page) ─────────
+   3 cards per row on desktop, 2 on tablet, 1 on mobile. */
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+@media (max-width: 1080px) { .module-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 680px) { .module-grid { grid-template-columns: 1fr; gap: var(--space-4); } }
+
 .module-card {
   position: relative;
   display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-5) var(--space-4) var(--space-4);
+  flex-direction: column;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
   box-shadow: var(--shadow-sm);
+  overflow: hidden;
   transition: transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base) ease, border-color var(--duration-base) ease;
 }
-a.module-card:hover { text-decoration: none; transform: translateX(4px); box-shadow: var(--shadow-md); border-color: var(--green-400); }
+a.module-card:hover { text-decoration: none; transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--green-400); }
+a.module-card:active { transform: translateY(-1px); }
 .module-card--locked { background: #f1f3ef; color: var(--text-muted); box-shadow: none; }
 .module-card--locked h3 { color: var(--text-muted); }
 .module-card--in-progress { border-color: var(--green-400); box-shadow: 0 0 0 3px rgba(34, 179, 94, 0.12); }
-.module-card__node { position: relative; z-index: 1; }
-.module-card__number { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; font-weight: 800; font-size: var(--text-lg); color: #fff; background: var(--green-700); border: 4px solid var(--surface); box-shadow: 0 0 0 2px var(--green-200); }
+
+/* Cover: every card crops its image to the same 16:9 area. */
+.module-card__cover { position: relative; aspect-ratio: 16 / 9; background: var(--green-50); overflow: hidden; }
+.module-card__image { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.module-card__image--fallback {
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(135deg, var(--green-500), var(--green-800));
+}
+.module-card__image--fallback.tint-2 { background: linear-gradient(135deg, #3fb375, var(--green-900)); }
+.module-card__image--fallback.tint-3 { background: linear-gradient(135deg, #63bf6a, var(--green-800)); }
+.module-card__image--fallback.tint-4 { background: linear-gradient(135deg, #2fa86c, #0c5b34); }
+.module-card__image--fallback.tint-5 { background: linear-gradient(135deg, #57c08a, var(--green-950)); }
+a.module-card:hover .module-card__image { transform: scale(1.04); }
+.module-card__image { transition: transform var(--duration-slow) var(--ease-out); }
+.module-card__veil { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; background: rgba(14, 40, 25, 0.55); backdrop-filter: grayscale(0.4); }
+.module-card__number {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: var(--text-md);
+  color: #fff;
+  background: var(--green-700);
+  border: 3px solid var(--surface);
+  box-shadow: var(--shadow-sm);
+}
 .module-card__number--completed { background: var(--green-600); }
 .module-card__number--in-progress { background: var(--amber-500); animation: pulse-ring 2s ease-out infinite; }
-.module-card__number--locked { background: #c7cec8; box-shadow: 0 0 0 2px #dde2dc; }
-.module-card__content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.module-card__top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
-.module-card__eyebrow { font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--green-700); }
+.module-card__number--locked { background: #c7cec8; }
+.module-card__state { position: absolute; top: 10px; right: 10px; }
+.module-card__state .pill { background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(2px); }
+
+.module-card__content { flex: 1; display: flex; flex-direction: column; gap: 6px; padding: var(--space-4); min-width: 0; }
+.module-card__eyebrow { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--green-700); }
 .module-card--locked .module-card__eyebrow { color: var(--text-subtle); }
 .module-card h3 { font-size: var(--text-lg); }
-.module-card__game { display: flex; align-items: center; gap: 6px; font-size: var(--text-sm); color: var(--green-800); font-weight: 600; flex-wrap: wrap; }
-.module-card__game .text-subtle { color: var(--text-subtle); font-weight: 400; }
-.module-card--locked .module-card__game { color: var(--text-subtle); }
-.module-card__progress { display: flex; flex-direction: column; gap: 4px; max-width: 460px; }
-.module-card__lock-note { display: flex; align-items: center; gap: 6px; font-size: var(--text-xs); color: var(--text-subtle); }
-.module-card__chevron { color: var(--green-600); transition: transform var(--duration-base) ease; }
+.module-card__desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.module-card__progress { display: flex; flex-direction: column; gap: 8px; margin-top: auto; padding-top: var(--space-3); }
+.module-card__meta { display: flex; align-items: center; gap: var(--space-3); font-size: var(--text-xs); font-weight: 600; color: var(--text-muted); }
+.module-card__meta > span { display: inline-flex; align-items: center; gap: 4px; }
+.module-card__meta .icon { color: var(--green-600); }
+.module-card--locked .module-card__meta .icon { color: var(--text-subtle); }
+.module-card__chevron { margin-left: auto; color: var(--green-600); transition: transform var(--duration-base) ease; }
 a.module-card:hover .module-card__chevron { transform: translateX(4px); }
-@media (max-width: 640px) {
-  .module-path::before { left: 31px; }
-  .module-card { padding: var(--space-3); gap: var(--space-3); }
-  .module-card__number { width: 40px; height: 40px; font-size: var(--text-md); }
-  .module-card__game .text-subtle, .module-card__chevron { display: none; }
+.module-card__lock-note { display: flex; align-items: center; gap: 6px; padding-top: var(--space-2); font-size: var(--text-xs); color: var(--text-subtle); }
+@media (max-width: 680px) {
   .module-card h3 { font-size: var(--text-md); }
+  .module-card__content { padding: var(--space-3); }
 }
 
 .is-unlocking { animation: unlock-glow 1.6s ease both; }

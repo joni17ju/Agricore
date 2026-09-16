@@ -2,6 +2,7 @@
  * Course map pieces: module cards (linear, locked path), topic cards
  * (Proposal Fig 17) and the Learn → Practice → Apply step indicator.
  */
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { GAME_TYPE_INFO } from '../../constants/gameTypes.js';
 import { LESSON_STATE } from '../../constants/rules.js';
@@ -44,6 +45,40 @@ export function UnlockBurst({ play }) {
   );
 }
 
+/**
+ * Cover image for a module card.
+ * Drop your own file at: frontend/public/images/modules/module-<n>-cover.jpg
+ * While a file is missing, a soft green gradient with the module's game icon
+ * is shown so the grid keeps its shape.
+ */
+function ModuleCover({ module, isLocked }) {
+  const [hasImage, setHasImage] = useState(true);
+  const source = `/images/modules/module-${module.moduleNumber}-cover.jpg`;
+
+  return (
+    <>
+      {hasImage ? (
+        <img
+          className="module-card__image"
+          src={source}
+          alt=""
+          loading="lazy"
+          onError={() => setHasImage(false)}
+        />
+      ) : (
+        <span className={`module-card__image module-card__image--fallback tint-${module.moduleNumber}`}>
+          <Icon name={gameIcon(module.gameType)} size={34} />
+        </span>
+      )}
+      {isLocked && (
+        <span className="module-card__veil">
+          <Icon name="lock" size={26} />
+        </span>
+      )}
+    </>
+  );
+}
+
 export function ModuleMapCard({ entry, index, playUnlock }) {
   const { module, state } = entry;
   const isLocked = state === LESSON_STATE.LOCKED;
@@ -51,33 +86,40 @@ export function ModuleMapCard({ entry, index, playUnlock }) {
 
   const body = (
     <>
-      <div className="module-card__node">
+      <div className="module-card__cover">
+        <ModuleCover module={module} isLocked={isLocked} />
         <span className={`module-card__number module-card__number--${state}`}>
-          {state === LESSON_STATE.COMPLETED ? <Icon name="check" size={22} strokeWidth={2.8} /> : isLocked ? <Icon name="lock" size={20} /> : module.moduleNumber}
+          {state === LESSON_STATE.COMPLETED ? <Icon name="check" size={18} strokeWidth={2.8} /> : isLocked ? <Icon name="lock" size={15} /> : module.moduleNumber}
         </span>
+        <span className="module-card__state"><StatePill state={state} /></span>
+        <UnlockBurst play={playUnlock} />
       </div>
+
       <div className="module-card__content">
-        <div className="module-card__top">
-          <span className="module-card__eyebrow">Module {module.moduleNumber}</span>
-          <StatePill state={state} />
-        </div>
+        <span className="module-card__eyebrow">
+          <Icon name={gameIcon(module.gameType)} size={13} />
+          Module {module.moduleNumber} · {info.label}
+        </span>
         <h3>{module.title}</h3>
-        <div className="module-card__game">
-          <Icon name={gameIcon(module.gameType)} size={16} />
-          <span>{info.label}</span>
-          <span className="text-subtle">· {info.shortDescription}</span>
-        </div>
+        <p className="module-card__desc">{info.shortDescription}</p>
+
         <div className="module-card__progress">
-          <ProgressBar value={entry.progressPercent} size="sm" tone={state === LESSON_STATE.COMPLETED ? 'green' : 'green'} />
-          <span className="text-sm text-muted">
-            {entry.completedLessons}/{entry.totalLessons} topics · {entry.passedLevels}/{entry.totalLevels} missions
-            {entry.quiz && ` · Quiz ${entry.quiz.isPassed ? 'passed' : entry.quiz.state === LESSON_STATE.LOCKED ? 'locked' : 'open'}`}
-          </span>
+          <ProgressBar value={entry.progressPercent} size="sm" tone="green" />
+          <div className="module-card__meta">
+            <span title="Topics cleared"><Icon name="book" size={14} /> {entry.completedLessons}/{entry.totalLessons}</span>
+            <span title="Missions cleared"><Icon name="target" size={14} /> {entry.passedLevels}/{entry.totalLevels}</span>
+            {entry.quiz && (
+              <span title={`Module quiz ${entry.quiz.isPassed ? 'passed' : entry.quiz.state === LESSON_STATE.LOCKED ? 'locked' : 'open'}`}>
+                <Icon name={entry.quiz.isPassed ? 'check-circle' : entry.quiz.state === LESSON_STATE.LOCKED ? 'lock' : 'clipboard'} size={14} />
+                Quiz
+              </span>
+            )}
+            {!isLocked && <Icon name="chevron-right" size={18} className="module-card__chevron" />}
+          </div>
         </div>
+
         {isLocked && <p className="module-card__lock-note"><Icon name="lock" size={14} /> Clear Module {module.moduleNumber - 1} to unlock</p>}
       </div>
-      {!isLocked && <Icon name="chevron-right" size={22} className="module-card__chevron" />}
-      <UnlockBurst play={playUnlock} />
     </>
   );
 

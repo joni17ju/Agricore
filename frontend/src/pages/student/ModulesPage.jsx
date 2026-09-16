@@ -35,7 +35,7 @@ export default function ModulesPage() {
         title="Course Modules"
         subtitle={`${cleared} of ${curriculum.length} modules cleared · modules unlock in order as you clear each one`}
       />
-      <div className="module-path">
+      <div className="module-grid">
         {curriculum.map((entry, index) => (
           <ModuleMapCard
             key={entry.module._id}
