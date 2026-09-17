@@ -18,6 +18,7 @@ import MissionsPage from '../pages/student/MissionsPage.jsx';
 import MissionPlayPage from '../pages/student/MissionPlayPage.jsx';
 import LeaderboardPage from '../pages/student/LeaderboardPage.jsx';
 import ProfilePage from '../pages/student/ProfilePage.jsx';
+import AchievementsPage from '../pages/student/AchievementsPage.jsx';
 
 import InstructorDashboard from '../pages/instructor/InstructorDashboard.jsx';
 import ManageModulesPage from '../pages/instructor/ManageModulesPage.jsx';
@@ -50,6 +51,7 @@ export default function AppRouter() {
           <Route path="missions" element={<MissionsPage />} />
           <Route path="leaderboard" element={<LeaderboardPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="achievements" element={<AchievementsPage />} />
         </Route>
       </Route>
 

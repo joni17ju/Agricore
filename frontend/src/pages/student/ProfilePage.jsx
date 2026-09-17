@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useAsync } from '../../hooks/useAsync.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
@@ -58,10 +59,19 @@ export default function ProfilePage() {
         <StatTile label="Badges" value={`${earned}/${badges.length}`} icon="award" index={4} />
       </div>
 
-      <Card title="Badges" icon="award" actions={<span className="chip">{earned} earned</span>}>
-        <div className="badge-grid">
-          {badges.map((badge, index) => (
-            <BadgeTile key={badge.code} badge={badge} index={index} />
+      <Card
+        title="Badges"
+        icon="award"
+        actions={
+          <>
+            <span className="chip">{earned} of {badges.length} earned</span>
+            <Link to="/student/achievements" className="text-sm">View all</Link>
+          </>
+        }
+      >
+        <div className="badge-grid badge-grid--profile">
+          {badges.slice(0, 8).map((badge, index) => (
+            <BadgeTile key={badge.code} badge={badge} index={index} compact />
           ))}
         </div>
       </Card>

@@ -61,6 +61,44 @@ export function calculateStreak(attempts, now = new Date()) {
   return streak;
 }
 
+/**
+ * Longest run of consecutive days with at least one attempt, ever.
+ * @returns {{ days: number, endedOn: string|null }}
+ */
+export function calculateLongestStreak(attempts) {
+  const days = [...new Set(attempts.map((attempt) => toDayKey(attempt.attemptedAt)))].sort();
+  let best = { days: 0, endedOn: null };
+  let run = 0;
+  days.forEach((day, index) => {
+    const previous = index > 0 ? days[index - 1] : null;
+    run = previous && calendarDaysBetween(previous, day) === 1 ? run + 1 : 1;
+    if (run > best.days) best = { days: run, endedOn: day };
+  });
+  return best;
+}
+
+/** Missions the student has scored a perfect 100% on. */
+export function countPerfectMissions(attempts) {
+  return new Set(attempts.filter((attempt) => attempt.score === 100).map((attempt) => attempt.missionId)).size;
+}
+
+/**
+ * The single day with the most XP earned.
+ * @returns {{ xp: number, day: string|null }}
+ */
+export function findBestXpDay(attempts) {
+  const byDay = new Map();
+  for (const attempt of attempts) {
+    const day = toDayKey(attempt.attemptedAt);
+    byDay.set(day, (byDay.get(day) ?? 0) + (attempt.xpEarned || 0));
+  }
+  let best = { xp: 0, day: null };
+  for (const [day, xp] of byDay) {
+    if (xp > best.xp) best = { xp, day };
+  }
+  return best;
+}
+
 /** Highest score among attempts, or null if there are none. */
 export function getBestScore(attempts) {
   if (attempts.length === 0) return null;

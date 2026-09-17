@@ -92,7 +92,7 @@ export function AchievementsCard({ badges, index = 0 }) {
       icon="award"
       className="anim-fade-up"
       style={{ '--i': index }}
-      actions={<Link to="/student/profile" className="text-sm">View all</Link>}
+      actions={<Link to="/student/achievements" className="text-sm">View all</Link>}
     >
       <div className="badge-grid badge-grid--compact">
         {badges.slice(0, 6).map((badge, i) => (

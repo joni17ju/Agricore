@@ -1,7 +1,7 @@
 import { formatDate } from '../../utils/format.js';
-import Icon from '../common/Icon.jsx';
+import BadgeEmblem from '../illustrations/BadgeEmblem.jsx';
 
-/** A badge; locked badges appear muted. `reveal` plays the pop-in animation. */
+/** A badge; locked badges appear muted. `reveal` plays the unlock animation. */
 export default function BadgeTile({ badge, index = 0, compact = false, reveal = false }) {
   const earned = badge.isEarned ?? true;
   return (
@@ -10,9 +10,7 @@ export default function BadgeTile({ badge, index = 0, compact = false, reveal = 
       style={{ '--i': index }}
       title={`${badge.name} — ${badge.description}`}
     >
-      <span className="badge-tile__medal">
-        <Icon name={earned ? badge.icon : 'lock'} size={compact ? 20 : 26} />
-      </span>
+      <BadgeEmblem badge={badge} size={compact ? 58 : 84} isEarned={earned} reveal={reveal} />
       <strong className="badge-tile__name">{badge.name}</strong>
       {!compact && <span className="badge-tile__desc">{badge.description}</span>}
       {!compact && earned && badge.earnedAt && <span className="badge-tile__date">Earned {formatDate(badge.earnedAt)}</span>}
