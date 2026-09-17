@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useBreadcrumb } from '../../context/BreadcrumbContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -16,8 +16,13 @@ import { sanitizeHtml } from '../../components/common/SafeHtml.jsx';
 import Tabs from '../../components/common/Tabs.jsx';
 import MediaManager from '../../components/instructor/MediaManager.jsx';
 import { MissionManager } from '../../components/instructor/MissionManager.jsx';
-import RichTextEditor from '../../components/instructor/RichTextEditor.jsx';
 import { gameIcon } from '../../components/student/CourseMap.jsx';
+
+/**
+ * The editor bundles Tiptap, so it is loaded only when an instructor actually
+ * opens a lesson — students never download it.
+ */
+const RichTextEditor = lazy(() => import('../../components/instructor/RichTextEditor.jsx'));
 
 /** Step 3: the lesson content editor, opened as its own page. */
 export default function LessonEditorPage() {
@@ -137,15 +142,17 @@ function LessonWorkspace({ moduleEntry, lessonEntry, onChanged, onDeleted, toast
       <div className="workspace-body">
         {tab === 'content' && (
           <div className="stack">
-            <RichTextEditor
-              documentKey={`${lesson._id}-${revision}`}
-              initialHtml={html}
-              onChange={setHtml}
-              onInsertMedia={() => {
-                setTab('media');
-                setUploadOpen(true);
-              }}
-            />
+            <Suspense fallback={<div className="rte rte--loading">Loading editor…</div>}>
+              <RichTextEditor
+                documentKey={`${lesson._id}-${revision}`}
+                initialHtml={html}
+                onChange={setHtml}
+                onInsertMedia={() => {
+                  setTab('media');
+                  setUploadOpen(true);
+                }}
+              />
+            </Suspense>
             {lesson.mediaAssets.length > 0 && (
               <div className="embed-list">
                 {lesson.mediaAssets.map((asset) => (

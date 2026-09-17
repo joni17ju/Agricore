@@ -59,14 +59,6 @@
 .workspace-footer__dirty { color: var(--amber-600); font-weight: 600; animation: fade-in 200ms ease; }
 @media (max-width: 640px) { .workspace-header, .workspace-body { padding-inline: var(--space-4); } .workspace-tabs { padding: 0 var(--space-4); } }
 
-.rte { border: 1px solid var(--border-strong); border-radius: var(--radius-md); overflow: hidden; background: #fff; }
-.rte:focus-within { border-color: var(--green-600); box-shadow: var(--focus-ring); }
-.rte__toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 6px; border-bottom: 1px solid var(--border); background: var(--surface-muted); }
-.rte__tool { display: inline-flex; align-items: center; gap: 4px; height: 32px; min-width: 32px; justify-content: center; padding: 0 6px; border: 0; border-radius: 6px; background: transparent; color: var(--text-muted); font-size: var(--text-xs); font-weight: 600; transition: background-color var(--duration-fast) ease; }
-.rte__tool:hover { background: var(--green-100); color: var(--green-800); }
-.rte__tool:active { transform: scale(0.94); }
-.rte__divider { width: 1px; height: 20px; margin: 0 4px; background: var(--border-strong); }
-.rte__content { min-height: 360px; max-height: 60vh; overflow-y: auto; padding: var(--space-5); outline: none; }
 .embed-list { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .embed-list__item { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); background: var(--surface-muted); font-size: var(--text-xs); color: var(--text-muted); }
 
@@ -182,4 +174,102 @@ a.module-card:hover .module-card__edit { transform: scale(1.12); background: #ff
 @media (max-width: 560px) {
   .lesson-row { padding: var(--space-3); }
   .lesson-row__text strong { font-size: var(--text-sm); }
+}
+
+/* ───────── Lesson content editor ─────────
+   Tiptap supplies the document model only; all chrome below is ours. */
+.rte { border: 1px solid var(--border-strong); border-radius: var(--radius-md); overflow: hidden; background: var(--surface); }
+.rte:focus-within { border-color: var(--green-600); box-shadow: var(--focus-ring); }
+.rte--loading { display: grid; place-items: center; min-height: 320px; color: var(--text-muted); font-size: var(--text-sm); }
+.rte__chrome {
+  position: sticky;
+  top: var(--topbar-height);
+  z-index: 5;
+  background: var(--surface-muted);
+}
+.rte__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 6px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
+}
+.rte__tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  min-width: 32px;
+  justify-content: center;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease, transform var(--duration-fast) ease;
+}
+.rte__tool:hover:not(:disabled) { background: var(--green-100); color: var(--green-800); }
+.rte__tool:active:not(:disabled) { transform: scale(0.94); }
+.rte__tool:disabled { opacity: 0.35; cursor: not-allowed; }
+.rte__tool.is-active { background: var(--green-700); color: #fff; }
+.rte__tool--wide { padding: 0 10px; }
+.rte__tool small { font-size: 0.6rem; font-weight: 800; }
+.rte__divider { width: 1px; height: 20px; margin: 0 4px; background: var(--border-strong); }
+.rte__swatches { display: inline-flex; align-items: center; gap: 3px; }
+.rte__swatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12); transition: transform var(--duration-fast) var(--ease-spring); }
+.rte__swatch:hover { transform: scale(1.15); }
+.rte__swatch.is-active { border-color: var(--green-800); }
+.rte__swatch--green { background: #c8f0cf; }
+.rte__swatch--amber { background: #fde9b0; }
+.rte__swatch--blue { background: #c9dcfb; }
+.rte__swatch--pink { background: #fbc9dd; }
+
+.rte__contextbar { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-bottom: 1px solid var(--border); background: var(--green-50); flex-wrap: wrap; }
+.rte__contextbar-label { display: inline-flex; align-items: center; gap: 5px; margin-right: var(--space-2); font-size: var(--text-xs); font-weight: 700; color: var(--green-800); }
+
+.rte__surface { max-height: 60vh; overflow-y: auto; }
+.rte__content { min-height: 340px; padding: var(--space-5); outline: none; }
+.rte__content .ProseMirror-selectednode { outline: 2px solid var(--green-500); outline-offset: 3px; border-radius: var(--radius-sm); }
+.rte__content p.is-editor-empty:first-child::before { content: 'Write the lesson content…'; float: left; height: 0; pointer-events: none; color: var(--text-subtle); }
+.rte-node.is-selected > * { outline: 2px solid var(--green-500); outline-offset: 3px; border-radius: var(--radius-md); }
+
+.rte__bubble { display: flex; gap: 2px; padding: 4px; border-radius: var(--radius-md); background: var(--green-950); box-shadow: var(--shadow-lg); }
+.rte__bubble .rte__tool { color: #d7eadc; }
+.rte__bubble .rte__tool:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); color: #fff; }
+.rte__bubble .rte__tool.is-active { background: var(--green-500); color: #04240f; }
+
+.rte__menu {
+  position: fixed;
+  z-index: 120;
+  min-width: 190px;
+  padding: 5px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  animation: scale-in 120ms var(--ease-out) both;
+}
+.rte__menu button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+  font-size: var(--text-sm);
+  color: var(--text);
+}
+.rte__menu button:hover { background: var(--green-50); color: var(--green-800); }
+.rte__menu button .icon { color: var(--green-700); }
+.rte__menu-divider { display: block; height: 1px; margin: 4px 0; background: var(--border); }
+@media (max-width: 640px) {
+  .rte__chrome { position: static; }
+  .rte__content { padding: var(--space-4); }
 }
