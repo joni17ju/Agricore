@@ -6,6 +6,7 @@ import { ROLE_LABELS } from '../../constants/roles.js';
 import { Avatar, Logo } from '../common/Display.jsx';
 import { IconButton } from '../common/Button.jsx';
 import Icon from '../common/Icon.jsx';
+import ScrollToTopButton from '../common/ScrollToTopButton.jsx';
 
 /**
  * Shared shell for the three role layouts: sidebar navigation, top bar with
@@ -118,6 +119,8 @@ function AppShellInner({ navGroups, topbarRight, homePath, outletContext }) {
           </div>
         </main>
       </div>
+
+      <ScrollToTopButton />
     </div>
   );
 }
