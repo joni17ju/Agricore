@@ -21,7 +21,9 @@ import ProfilePage from '../pages/student/ProfilePage.jsx';
 import AchievementsPage from '../pages/student/AchievementsPage.jsx';
 
 import InstructorDashboard from '../pages/instructor/InstructorDashboard.jsx';
-import ManageModulesPage from '../pages/instructor/ManageModulesPage.jsx';
+import ModulesOverviewPage from '../pages/instructor/ModulesOverviewPage.jsx';
+import ModuleLessonsPage from '../pages/instructor/ModuleLessonsPage.jsx';
+import LessonEditorPage from '../pages/instructor/LessonEditorPage.jsx';
 import RosterPage from '../pages/instructor/RosterPage.jsx';
 import StudentPerformancePage from '../pages/instructor/StudentPerformancePage.jsx';
 import InstructorLeaderboardPage from '../pages/instructor/InstructorLeaderboardPage.jsx';
@@ -58,7 +60,9 @@ export default function AppRouter() {
       <Route element={<RequireRole role={ROLES.INSTRUCTOR} />}>
         <Route path="/instructor" element={<InstructorLayout />}>
           <Route index element={<InstructorDashboard />} />
-          <Route path="modules" element={<ManageModulesPage />} />
+          <Route path="modules" element={<ModulesOverviewPage />} />
+          <Route path="modules/:moduleId" element={<ModuleLessonsPage />} />
+          <Route path="modules/:moduleId/lessons/:lessonId" element={<LessonEditorPage />} />
           <Route path="roster" element={<RosterPage />} />
           <Route path="performance" element={<StudentPerformancePage />} />
           <Route path="leaderboard" element={<InstructorLeaderboardPage />} />

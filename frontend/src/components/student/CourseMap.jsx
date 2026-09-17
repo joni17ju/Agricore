@@ -51,7 +51,7 @@ export function UnlockBurst({ play }) {
  * While a file is missing, a soft green gradient with the module's game icon
  * is shown so the grid keeps its shape.
  */
-function ModuleCover({ module, isLocked }) {
+export function ModuleCover({ module, isLocked = false }) {
   const [hasImage, setHasImage] = useState(true);
   const source = `/images/modules/module-${module.moduleNumber}-cover.jpg`;
 

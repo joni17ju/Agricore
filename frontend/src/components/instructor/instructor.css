@@ -48,9 +48,6 @@
 .student-progress__more { display: inline-flex; align-items: center; gap: 6px; margin-top: var(--space-3); font-weight: 600; font-size: var(--text-sm); }
 
 /* ───────── Manage modules (Fig 25) ───────── */
-.manage-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: var(--space-4); align-items: start; }
-.manage-layout__tree { position: sticky; top: calc(var(--topbar-height) + var(--space-4)); max-height: calc(100vh - var(--topbar-height) - 40px); overflow: auto; }
-@media (max-width: 1000px) { .manage-layout { grid-template-columns: 1fr; } .manage-layout__tree { position: static; order: -1; max-height: 340px; } }
 .workspace-header { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-5) var(--space-5) var(--space-3); }
 .workspace-header__crumbs { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 .workspace-header__title { font-size: var(--text-xl); }
@@ -73,19 +70,6 @@
 .embed-list { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .embed-list__item { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); background: var(--surface-muted); font-size: var(--text-xs); color: var(--text-muted); }
 
-.tree { font-size: var(--text-sm); }
-.tree__list { list-style: none; margin: 0; padding-left: 14px; border-left: 1px dashed var(--border-strong); margin-left: 10px; }
-.tree__list--meta { border: 0; padding-left: 30px; color: var(--text-muted); font-size: var(--text-xs); display: flex; flex-direction: column; gap: 2px; margin: 2px 0 6px; }
-.tree__list--meta li { display: flex; align-items: center; gap: 6px; }
-.tree__row { display: flex; align-items: center; gap: 6px; width: 100%; padding: 6px 8px; border: 0; border-radius: var(--radius-sm); background: transparent; text-align: left; color: var(--text); transition: background-color var(--duration-fast) ease; }
-.tree__row:hover { background: var(--green-50); }
-.tree__row .icon { color: var(--green-700); flex-shrink: 0; }
-.tree__row--root { font-weight: 700; }
-.tree__row.is-selected { background: var(--green-100); color: var(--green-900); font-weight: 600; }
-.tree__toggle, .tree__label { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; padding: 0; color: inherit; font-weight: inherit; }
-.tree__label { flex: 1; text-align: left; }
-.tree__text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tree__edit { color: var(--green-700); }
 
 .manage-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .manage-list li { display: flex; align-items: center; gap: var(--space-3); padding: 10px 12px; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); }
@@ -134,3 +118,68 @@
 .history-header > div { flex: 1; min-width: 180px; }
 .history-subtitle { font-size: var(--text-sm); margin-bottom: var(--space-3); }
 .history-list--scroll { max-height: 320px; overflow-y: auto; padding-right: 6px; }
+
+/* ───────── Instructor module cards & lesson list ───────── */
+.module-card__edit {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--green-700);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--duration-fast) var(--ease-spring), background-color var(--duration-fast) ease;
+}
+a.module-card:hover .module-card__edit { transform: scale(1.12); background: #fff; }
+
+.lesson-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.lesson-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color var(--duration-fast) ease, transform var(--duration-fast) ease, box-shadow var(--duration-base) ease;
+}
+.lesson-row:hover { text-decoration: none; border-color: var(--green-400); transform: translateX(3px); box-shadow: var(--shadow-sm); }
+.lesson-row__number {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  min-width: 46px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  background: var(--green-50);
+  color: var(--green-800);
+  font-weight: 800;
+  font-size: var(--text-sm);
+}
+.lesson-row__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.lesson-row__text strong { font-size: var(--text-md); }
+.lesson-row__text small { color: var(--text-muted); font-size: var(--text-sm); line-height: 1.45; }
+.lesson-row__meta { display: flex; gap: var(--space-3); margin-top: 4px; font-size: var(--text-xs); color: var(--text-subtle); font-weight: 600; }
+.lesson-row__meta span { display: inline-flex; align-items: center; gap: 4px; }
+.lesson-row__edit {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
+}
+.lesson-row:hover .lesson-row__edit { background: var(--green-100); color: var(--green-700); }
+@media (max-width: 560px) {
+  .lesson-row { padding: var(--space-3); }
+  .lesson-row__text strong { font-size: var(--text-sm); }
+}
