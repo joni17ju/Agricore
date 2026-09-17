@@ -10,6 +10,7 @@ import { formatClock, missionCode } from '../../utils/format.js';
 import Button from '../../components/common/Button.jsx';
 import { Avatar, ErrorState, LoadingState, Logo, StatusPill, XPPill } from '../../components/common/Display.jsx';
 import Icon from '../../components/common/Icon.jsx';
+import ScrollToTopButton from '../../components/common/ScrollToTopButton.jsx';
 import MissionResult from '../../components/missions/MissionResult.jsx';
 import { HOW_TO_PLAY } from '../../components/missions/missionFeedback.js';
 import { gameIcon } from '../../components/student/CourseMap.jsx';
@@ -153,6 +154,9 @@ export default function MissionPlayPage() {
           <MissionResult result={result} answers={answers} mission={mission} module={module} onRetry={start} />
         )}
       </main>
+
+      {/* Missions run outside AppShell, so this page mounts the button itself. */}
+      <ScrollToTopButton />
     </div>
   );
 }

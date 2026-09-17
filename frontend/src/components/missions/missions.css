@@ -19,11 +19,11 @@
 .mission-topbar__crumbs { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--text-muted); min-width: 0; }
 .mission-topbar__crumbs strong { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mission-topbar__right { margin-left: auto; display: flex; align-items: center; gap: var(--space-3); }
-.mission-main { max-width: 1180px; margin: 0 auto; padding: var(--space-5) var(--space-5) var(--space-10); }
+.mission-main { max-width: 1180px; margin: 0 auto; padding: var(--space-5) var(--space-5) calc(var(--space-10) + var(--fab-safe-area)); }
 @media (max-width: 640px) {
   .mission-topbar { padding: 0 var(--space-3); }
   .mission-topbar__logo { display: none; }
-  .mission-main { padding: var(--space-3) var(--space-3) var(--space-8); }
+  .mission-main { padding: var(--space-3) var(--space-3) calc(var(--space-8) + var(--fab-safe-area)); }
   .hide-sm { display: none !important; }
 }
 

@@ -72,6 +72,10 @@
   --space-8: 2rem;
   --space-10: 2.5rem;
 
+  /* Room reserved at the bottom of scrolling content so the floating
+     scroll-to-top button never sits on top of it (button + its inset). */
+  --fab-safe-area: 62px;
+
   /* Shape */
   --radius-sm: 8px;
   --radius-md: 12px;
