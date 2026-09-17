@@ -40,6 +40,18 @@
   --silver-400: #a9b4bf;
   --bronze-400: #d08b52;
 
+  /* Podium tiers — one colour language for podium blocks and list rank badges. */
+  --tier-1-bg: linear-gradient(160deg, #fff0b8 0%, #f7cc3d 38%, #e0a100 72%, #b87d00 100%);
+  --tier-1-ring: #f2b300;
+  --tier-1-glow: 242, 179, 0;
+  --tier-2-bg: linear-gradient(160deg, #f4f7fa 0%, #c9d3dc 38%, #9aa6b2 74%, #78838f 100%);
+  --tier-2-ring: #a9b4bf;
+  --tier-2-glow: 169, 180, 191;
+  --tier-3-bg: linear-gradient(160deg, #ffd9b5 0%, #e3a36d 40%, #c27a40 74%, #9c5c2a 100%);
+  --tier-3-ring: #d08b52;
+  --tier-3-glow: 208, 139, 82;
+  --tier-rest-bg: linear-gradient(160deg, #ffffff 0%, #eef2ec 60%, #dfe6dd 100%);
+
   /* Type */
   --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', Arial, sans-serif;
   --text-xs: 0.75rem;

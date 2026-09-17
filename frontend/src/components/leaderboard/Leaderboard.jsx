@@ -3,33 +3,57 @@
  */
 import { Avatar } from '../common/Display.jsx';
 import Icon from '../common/Icon.jsx';
+import TrophyEmblem from '../illustrations/TrophyEmblem.jsx';
 
 const PODIUM_ORDER = [1, 0, 2]; // 2nd, 1st, 3rd
+const CONFETTI = Array.from({ length: 14 }, (_, i) => i);
+const LEAVES = Array.from({ length: 6 }, (_, i) => i);
 
 export function Podium({ rows, highlightId }) {
   const top = rows.slice(0, 3);
   if (top.length === 0) return null;
   return (
-    <div className="podium" aria-label="Top three students">
-      {PODIUM_ORDER.map((position) => {
-        const row = top[position];
-        if (!row) return <div key={position} className="podium__slot" />;
-        return (
-          <div
-            key={row.student._id}
-            className={`podium__slot podium__slot--${position + 1} ${row.student._id === highlightId ? 'is-me' : ''}`}
-            style={{ '--i': position }}
-          >
-            {position === 0 && <Icon name="trophy" size={26} className="podium__crown" />}
-            <Avatar firstName={row.student.firstName} lastName={row.student.lastName} size={position === 0 ? 64 : 52} className="podium__avatar" />
-            <strong className="podium__name">{row.student.firstName} {row.student.lastName[0]}.</strong>
-            <span className="podium__xp">{row.xp.toLocaleString()} XP</span>
-            <div className="podium__block">
-              <span>{row.rank}</span>
+    <div className="podium-stage">
+      {/* Decorative backdrop: spotlight, light rays and drifting leaves (CSS only). */}
+      <span className="podium-stage__glow" aria-hidden="true" />
+      <span className="podium-stage__rays" aria-hidden="true" />
+      <span className="podium-stage__leaves" aria-hidden="true">
+        {LEAVES.map((i) => (
+          <span key={i} style={{ '--i': i }} />
+        ))}
+      </span>
+
+      <div className="podium" aria-label="Top three students">
+        {PODIUM_ORDER.map((position) => {
+          const row = top[position];
+          if (!row) return <div key={position} className="podium__slot" />;
+          return (
+            <div
+              key={row.student._id}
+              className={`podium__slot podium__slot--${position + 1} ${row.student._id === highlightId ? 'is-me' : ''}`}
+              style={{ '--i': position }}
+            >
+              {position === 0 && (
+                <span className="podium__trophy">
+                  <span className="podium__trophy-burst" aria-hidden="true" />
+                  <TrophyEmblem size={74} />
+                  <span className="podium__confetti" aria-hidden="true">
+                    {CONFETTI.map((i) => (
+                      <span key={i} style={{ '--i': i }} />
+                    ))}
+                  </span>
+                </span>
+              )}
+              <Avatar firstName={row.student.firstName} lastName={row.student.lastName} size={position === 0 ? 64 : 52} className="podium__avatar" />
+              <strong className="podium__name">{row.student.firstName} {row.student.lastName[0]}.</strong>
+              <span className="podium__xp">{row.xp.toLocaleString()} XP</span>
+              <div className="podium__block">
+                <span>{row.rank}</span>
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
