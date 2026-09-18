@@ -10,6 +10,7 @@ import Card from '../../components/common/Card.jsx';
 import DataTable from '../../components/common/DataTable.jsx';
 import { Avatar, ErrorState, LoadingState, PageHeader, StatTile } from '../../components/common/Display.jsx';
 import { SearchInput, SelectInput } from '../../components/common/Form.jsx';
+import InfoTooltip from '../../components/common/InfoTooltip.jsx';
 import { MasteryHeatmap, PerformancePill, SectionFilter } from '../../components/instructor/InstructorWidgets.jsx';
 import StudentHistoryModal from '../../components/instructor/StudentHistoryModal.jsx';
 
@@ -86,7 +87,21 @@ export default function StudentPerformancePage() {
         <StatTile label="At risk" value={data.summary.atRiskCount} icon="alert" tone="red" index={4} />
       </div>
 
-      <Card title="Class Performance Overview · Topic Mastery Heatmap" icon="layers" className="anim-fade-up">
+      <Card
+        title={
+          /* One inline run, so the icon follows the last word instead of being
+             pushed to the far edge when the flex header wraps on a phone. */
+          <span className="card__title-text">
+            Class Performance Overview · Topic Mastery Heatmap{' '}
+            <InfoTooltip
+              label="How to read the Topic Mastery Heatmap"
+              text="Each cell is one topic, grouped by module, colored by your class's average best score on that topic — from Mastered down to Struggling, with a neutral color where no one has attempted it yet. Look for topics marked Struggling or No attempts to see what may need reteaching before moving on."
+            />
+          </span>
+        }
+        icon="layers"
+        className="anim-fade-up"
+      >
         <MasteryHeatmap lessonMastery={data.lessonMastery} />
       </Card>
 

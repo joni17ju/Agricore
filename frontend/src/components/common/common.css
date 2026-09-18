@@ -585,3 +585,52 @@ body:has(.scroll-top.is-visible) .toast-region { bottom: calc(var(--space-4) + 4
 }
 .panel-note--sub { margin-top: 0; font-size: var(--text-xs); }
 .panel-note__insight { display: block; margin-top: 4px; font-weight: 600; color: var(--text); }
+
+/* ───────── Info tooltip ─────────
+   Small "i" beside a panel heading. Hover and focus are CSS-only and gated
+   behind (hover: hover) so they never fire on touch; a tap toggles .is-open
+   instead. --shift is set in JS to nudge the bubble off a screen edge. */
+.info-tip { position: relative; display: inline-flex; vertical-align: middle; }
+.info-tip__btn {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-subtle);
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease, transform var(--duration-fast) ease;
+}
+.info-tip__btn:hover,
+.info-tip__btn.is-open { background: var(--green-50); color: var(--green-700); transform: scale(1.08); }
+.info-tip__bubble {
+  position: absolute;
+  top: calc(100% + 8px);
+  z-index: 80;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 2 * var(--space-4)));
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--green-950);
+  color: #e4f1e8;
+  box-shadow: var(--shadow-lg);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  line-height: 1.55;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) ease, visibility 0s linear var(--duration-fast);
+}
+.info-tip__bubble--center { left: 50%; transform: translateX(calc(-50% + var(--shift, 0px))); }
+.info-tip__bubble--start { left: 0; transform: translateX(var(--shift, 0px)); }
+.info-tip__bubble.is-open { opacity: 1; visibility: visible; transition-delay: 0s; }
+@media (hover: hover) {
+  .info-tip:hover .info-tip__bubble,
+  .info-tip__btn:focus-visible + .info-tip__bubble { opacity: 1; visibility: visible; transition-delay: 0s; }
+}
