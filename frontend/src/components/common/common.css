@@ -572,3 +572,16 @@ body:has(.scroll-top.is-visible) .toast-region { bottom: calc(var(--space-4) + 4
   .scroll-top { width: 42px; height: 42px; right: var(--space-3); bottom: var(--space-3); }
   body:has(.scroll-top.is-visible) .toast-region { bottom: calc(var(--space-3) + 42px + var(--space-3)); }
 }
+
+/* ───────── Panel captions ─────────
+   One short gray line under a panel heading explaining what it shows, with an
+   optional computed insight on its own line. Always secondary to the data. */
+.panel-note {
+  margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+  max-width: 70ch;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+.panel-note--sub { margin-top: 0; font-size: var(--text-xs); }
+.panel-note__insight { display: block; margin-top: 4px; font-weight: 600; color: var(--text); }

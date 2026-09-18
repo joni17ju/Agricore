@@ -273,3 +273,14 @@ a.module-card:hover .module-card__edit { transform: scale(1.12); background: #ff
   .rte__chrome { position: static; }
   .rte__content { padding: var(--space-4); }
 }
+
+/* Tile captions: secondary to the figure, and the tiles widen to fit them. */
+.banner-tile { min-width: 168px; max-width: 230px; text-align: center; }
+.banner-tile small { margin-top: 5px; color: var(--text-muted); font-size: var(--text-xs); font-weight: 500; line-height: 1.4; text-transform: none; letter-spacing: 0; }
+.banner-tile small em { display: block; margin-top: 4px; font-style: normal; font-weight: 700; color: var(--text); }
+.banner-tile--risk small { color: #8a5a57; }
+.banner-tile--risk small em { color: var(--red-600); }
+@media (max-width: 860px) {
+  .instructor-banner__tiles { width: 100%; }
+  .banner-tile { flex: 1 1 180px; min-width: 150px; max-width: none; }
+}

@@ -46,6 +46,20 @@ export function SectionFilter({ sections, value, onChange, allLabel = 'All Secti
 }
 
 export function SyllabusAnalytics({ summary, moduleCompletionRates }) {
+  /*
+   * Where the class actually stalls.
+   *
+   * Not simply the lowest completion rate: modules unlock in order, so the last
+   * modules sit at 0% because nobody has reached them yet, not because students
+   * are stuck there. The largest fall between two consecutive modules is the
+   * real wall, so that is what gets reported.
+   */
+  const dropOff = moduleCompletionRates.reduce((worst, entry, index) => {
+    if (index === 0) return worst;
+    const previous = moduleCompletionRates[index - 1];
+    const fall = previous.completionRate - entry.completionRate;
+    return fall > (worst?.fall ?? 0) ? { previous, entry, fall } : worst;
+  }, null);
   const bars = [
     { label: 'Avg. Assessment Score', value: summary.averageAssessmentScore, display: `${(summary.averageAssessmentScore / 10).toFixed(1)}` },
     { label: 'Module Completion %', value: summary.averageModuleCompletion, display: `${summary.averageModuleCompletion}%` },
@@ -66,6 +80,12 @@ export function SyllabusAnalytics({ summary, moduleCompletionRates }) {
       </div>
       <div className="module-completion">
         <h3>Module completion</h3>
+        {dropOff && (
+          <p className="panel-note panel-note--sub">
+            Biggest drop-off: {dropOff.previous.completionRate}% cleared Module {dropOff.previous.moduleNumber},
+            but only {dropOff.entry.completionRate}% cleared Module {dropOff.entry.moduleNumber}.
+          </p>
+        )}
         {moduleCompletionRates.map((module) => (
           <ProgressBar key={module.moduleId} value={module.completionRate} size="sm" tone="dark" label={`M${module.moduleNumber} · ${module.title}`} showValue />
         ))}
@@ -76,25 +96,42 @@ export function SyllabusAnalytics({ summary, moduleCompletionRates }) {
 
 export function BlindspotList({ blindspots }) {
   if (blindspots.length === 0) return <EmptyState icon="check-circle" title="No blindspots yet" message="Scores appear once students attempt missions." />;
+  // No computed insight here on purpose: every row already prints its own
+  // average and first-try pass rate, so a summary line would only repeat row 1.
   return (
-    <ol className="blindspots">
-      {blindspots.map((spot, index) => (
-        <li key={spot.lessonId} className="anim-fade-up" style={{ '--i': index }}>
-          <span className="blindspots__rank">{index + 1}</span>
-          <div className="blindspots__text">
-            <strong>Lesson {spot.module.moduleNumber}.{spot.lessonNumber} · {spot.title}</strong>
-            <small>{spot.studentsAttempted} students · first-try pass rate {spot.firstAttemptPassRate ?? 0}%</small>
-          </div>
-          <StatusPill tone={spot.averageScore < 70 ? 'red' : spot.averageScore < 80 ? 'amber' : 'green'}>{spot.averageScore}%</StatusPill>
-        </li>
-      ))}
-    </ol>
+    <>
+      <p className="panel-note panel-note--sub">
+        The lowest-scoring topics across your students &mdash; the ones most worth reteaching before moving on.
+      </p>
+      <ol className="blindspots">
+        {blindspots.map((spot, index) => (
+          <li key={spot.lessonId} className="anim-fade-up" style={{ '--i': index }}>
+            <span className="blindspots__rank">{index + 1}</span>
+            <div className="blindspots__text">
+              <strong>Lesson {spot.module.moduleNumber}.{spot.lessonNumber} · {spot.title}</strong>
+              <small>{spot.studentsAttempted} students · first-try pass rate {spot.firstAttemptPassRate ?? 0}%</small>
+            </div>
+            <StatusPill tone={spot.averageScore < 70 ? 'red' : spot.averageScore < 80 ? 'amber' : 'green'}>{spot.averageScore}%</StatusPill>
+          </li>
+        ))}
+      </ol>
+    </>
   );
 }
 
 export function StudentProgressList({ rows, limit = 6 }) {
+  // Students with no mission attempt in the last week — worth chasing first.
+  const inactiveCount = rows.filter((row) => (row.metrics.daysInactive ?? 0) >= 7).length;
   return (
     <>
+      <p className="panel-note">
+        Students who need attention first, ordered by how far behind they&rsquo;ve fallen.
+        {inactiveCount > 0 && (
+          <span className="panel-note__insight">
+            {inactiveCount} {inactiveCount === 1 ? 'has' : 'have'}n&rsquo;t attempted a mission in over a week.
+          </span>
+        )}
+      </p>
       <ul className="student-progress">
         {rows.slice(0, limit).map((row, index) => (
           <li key={row.student._id} className="anim-fade-up" style={{ '--i': index }}>
