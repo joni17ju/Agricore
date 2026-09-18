@@ -22,7 +22,7 @@
 @media (max-width: 640px) { .instructor-banner { padding: var(--space-5); } .instructor-banner__tiles { width: 100%; } .banner-tile { flex: 1; min-width: 0; } }
 
 .analytics-split { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: var(--space-5); }
-@media (max-width: 860px) { .analytics-split { grid-template-columns: 1fr; } }
+@media (max-width: 860px) { .analytics-split { grid-template-columns: minmax(0, 1fr); } }
 .analytics-split__title { font-size: var(--text-sm); margin-bottom: var(--space-3); }
 .syllabus-analytics { display: flex; flex-direction: column; gap: var(--space-4); }
 .big-bars { display: flex; justify-content: center; gap: var(--space-6); height: 220px; }
