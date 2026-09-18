@@ -6,6 +6,7 @@ import { ROLE_LABELS } from '../../constants/roles.js';
 import { Avatar, Logo } from '../common/Display.jsx';
 import { IconButton } from '../common/Button.jsx';
 import Icon from '../common/Icon.jsx';
+import NotificationBell from '../common/NotificationBell.jsx';
 import ScrollToTopButton from '../common/ScrollToTopButton.jsx';
 
 /**
@@ -110,7 +111,10 @@ function AppShellInner({ navGroups, topbarRight, homePath, outletContext }) {
               </Fragment>
             ))}
           </nav>
-          <div className="topbar__right">{topbarRight}</div>
+          <div className="topbar__right">
+            <NotificationBell />
+            {topbarRight}
+          </div>
         </header>
 
         <main className="app-content">
