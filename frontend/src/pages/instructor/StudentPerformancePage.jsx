@@ -39,7 +39,7 @@ export default function StudentPerformancePage() {
       primary: true,
       render: (row) => (
         <span className="cell-user">
-          <Avatar firstName={row.student.firstName} lastName={row.student.lastName} size={34} />
+          <Avatar firstName={row.student.firstName} lastName={row.student.lastName} size={34} src={row.student.avatarUrl} />
           <strong>{row.student.firstName} {row.student.lastName}</strong>
         </span>
       ),

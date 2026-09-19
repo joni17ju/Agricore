@@ -3,6 +3,7 @@
  * Used by Administrators (all users) and Instructors (their section rosters).
  */
 import { ROLES, USER_STATUS } from '../constants/roles.js';
+import { MAX_MOCK_UPLOAD_BYTES } from '../constants/rules.js';
 import { isBlank, isValidEmail, normalizeEmail } from '../utils/validation.js';
 import { db, request, ServiceError } from './mockDb.js';
 import { requireInstructorSection, requireSection, requireUser } from './serviceContext.js';
@@ -89,6 +90,44 @@ export function updateUser(userId, changes) {
     if ('email' in updates) updates.email = assertEmailAvailable(updates.email, user._id);
     if ('schoolId' in updates) updates.schoolId = isBlank(updates.schoolId) ? null : updates.schoolId.trim();
     return db.update('users', userId, updates);
+  });
+}
+
+/**
+ * Mock profile picture upload: the image is stored on the user as a data URL.
+ * The real backend will store the file and persist its URL instead.
+ *
+ * Mirrors uploadMediaAsset() in lessonService.js — same size cap, same
+ * data-URL approach, so both swap out the same way later.
+ */
+export function uploadAvatar(userId, file) {
+  return request(async () => {
+    requireUser(userId);
+    if (!file) throw new ServiceError('Choose an image to upload.');
+    if (!file.type.startsWith('image/')) throw new ServiceError('Choose an image file (PNG, JPG or WebP).');
+    if (file.size > MAX_MOCK_UPLOAD_BYTES) {
+      const limitMb = (MAX_MOCK_UPLOAD_BYTES / 1024 / 1024).toFixed(1);
+      throw new ServiceError(`Images must be ${limitMb} MB or smaller in the prototype.`, 413);
+    }
+    const avatarUrl = await readFileAsDataUrl(file);
+    return db.update('users', userId, { avatarUrl });
+  });
+}
+
+/** Drop the uploaded picture and fall back to the initials avatar. */
+export function removeAvatar(userId) {
+  return request(() => {
+    requireUser(userId);
+    return db.update('users', userId, { avatarUrl: null });
+  });
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new ServiceError('The file could not be read.'));
+    reader.readAsDataURL(file);
   });
 }
 

@@ -5,8 +5,9 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
 import { getStudentBadges } from '../../services/badgeService.js';
 import { getStudentCurriculumMap, getStudentDashboard } from '../../services/progressService.js';
 import { formatDateTime, missionCode } from '../../utils/format.js';
+import AvatarUploader from '../../components/common/AvatarUploader.jsx';
 import Card from '../../components/common/Card.jsx';
-import { Avatar, ErrorState, LoadingState, StatTile } from '../../components/common/Display.jsx';
+import { ErrorState, LoadingState, StatTile } from '../../components/common/Display.jsx';
 import Icon from '../../components/common/Icon.jsx';
 import { ProgressBar } from '../../components/common/Progress.jsx';
 import BadgeTile from '../../components/student/BadgeTile.jsx';
@@ -31,7 +32,7 @@ export default function ProfilePage() {
     <div className="page">
       <Card className="anim-fade-up">
         <div className="profile-hero">
-          <Avatar firstName={user.firstName} lastName={user.lastName} size={80} />
+          <AvatarUploader size={80} />
           <div className="profile-hero__info">
             <h1>{user.firstName} {user.lastName}</h1>
             <div className="profile-meta">

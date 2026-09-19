@@ -21,7 +21,7 @@ export default function StudentHistoryModal({ instructorId, studentId, onClose }
       {data && !isLoading && (
         <div className="stack">
           <div className="history-header">
-            <Avatar firstName={data.student.firstName} lastName={data.student.lastName} size={56} />
+            <Avatar firstName={data.student.firstName} lastName={data.student.lastName} size={56} src={data.student.avatarUrl} />
             <div>
               <h3>{data.student.firstName} {data.student.lastName}</h3>
               <p className="text-muted text-sm">

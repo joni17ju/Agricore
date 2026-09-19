@@ -61,6 +61,7 @@ function buildLeaderboard(sectionId, { period = LEADERBOARD_PERIODS.OVERALL, mod
         _id: row.student._id,
         firstName: row.student.firstName,
         lastName: row.student.lastName,
+        avatarUrl: row.student.avatarUrl ?? null,
         badgeCount: row.student.earnedBadges.length,
       },
       level: calculateLevel(totalXPByStudent.get(row.student._id)).level,

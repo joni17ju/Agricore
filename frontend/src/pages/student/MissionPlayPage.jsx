@@ -102,7 +102,7 @@ export default function MissionPlayPage() {
         </nav>
         <div className="mission-topbar__right">
           <XPPill xp={result?.totalXP ?? totalXP} prefix="" />
-          <Avatar firstName={user.firstName} lastName={user.lastName} size={34} />
+          <Avatar firstName={user.firstName} lastName={user.lastName} size={34} src={user.avatarUrl} />
         </div>
       </header>
 

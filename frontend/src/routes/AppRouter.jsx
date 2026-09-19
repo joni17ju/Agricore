@@ -18,6 +18,8 @@ import MissionsPage from '../pages/student/MissionsPage.jsx';
 import MissionPlayPage from '../pages/student/MissionPlayPage.jsx';
 import LeaderboardPage from '../pages/student/LeaderboardPage.jsx';
 import ProfilePage from '../pages/student/ProfilePage.jsx';
+import InstructorProfilePage from '../pages/instructor/InstructorProfilePage.jsx';
+import AdminProfilePage from '../pages/admin/AdminProfilePage.jsx';
 import AchievementsPage from '../pages/student/AchievementsPage.jsx';
 
 import InstructorDashboard from '../pages/instructor/InstructorDashboard.jsx';
@@ -66,6 +68,7 @@ export default function AppRouter() {
           <Route path="roster" element={<RosterPage />} />
           <Route path="performance" element={<StudentPerformancePage />} />
           <Route path="leaderboard" element={<InstructorLeaderboardPage />} />
+          <Route path="profile" element={<InstructorProfilePage />} />
         </Route>
       </Route>
 
@@ -74,6 +77,7 @@ export default function AppRouter() {
           <Route index element={<AdminDashboard />} />
           <Route path="users" element={<UserManagementPage />} />
           <Route path="sections" element={<SectionManagementPage />} />
+          <Route path="profile" element={<AdminProfilePage />} />
         </Route>
       </Route>
 

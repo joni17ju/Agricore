@@ -64,7 +64,7 @@ export default function AdminDashboard() {
             <ul className="admin-list">
               {data.pendingInstructors.map((instructor) => (
                 <li key={instructor._id}>
-                  <Avatar firstName={instructor.firstName} lastName={instructor.lastName} size={38} />
+                  <Avatar firstName={instructor.firstName} lastName={instructor.lastName} size={38} src={instructor.avatarUrl} />
                   <div className="admin-list__text">
                     <strong>{instructor.firstName} {instructor.lastName}</strong>
                     <small>{instructor.email}</small>

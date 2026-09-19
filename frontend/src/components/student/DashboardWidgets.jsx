@@ -122,7 +122,7 @@ export function LeaderboardPreview({ board, studentId, index = 0 }) {
         {rows.map((row) => (
           <li key={row.student._id} className={row.student._id === studentId ? 'is-me' : ''}>
             <span className={`rank-badge rank-badge--${row.rank}`}>{row.rank}</span>
-            <Avatar firstName={row.student.firstName} lastName={row.student.lastName} size={28} />
+            <Avatar firstName={row.student.firstName} lastName={row.student.lastName} size={28} src={row.student.avatarUrl} />
             <span className="leaderboard-preview__name">
               {row.student.firstName} {row.student.lastName[0]}.{row.student._id === studentId && ' (You)'}
             </span>

@@ -57,7 +57,7 @@ export default function SectionManagementPage() {
               <div className={`section-card__instructor ${instructor ? '' : 'is-empty'}`}>
                 {instructor ? (
                   <>
-                    <Avatar firstName={instructor.firstName} lastName={instructor.lastName} size={38} />
+                    <Avatar firstName={instructor.firstName} lastName={instructor.lastName} size={38} src={instructor.avatarUrl} />
                     <div>
                       <strong>Prof. {instructor.firstName} {instructor.lastName}</strong>
                       <small>{instructor.email}</small>

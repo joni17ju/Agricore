@@ -80,7 +80,7 @@ function AppShellInner({ navGroups, topbarRight, homePath, outletContext }) {
 
         <div className="sidebar__footer">
           <div className="sidebar__user">
-            <Avatar firstName={user.firstName} lastName={user.lastName} size={36} />
+            <Avatar firstName={user.firstName} lastName={user.lastName} size={36} src={user.avatarUrl} />
             <div className="sidebar__user-text">
               <strong>{user.role === 'instructor' ? `Prof. ${user.lastName}` : `${user.firstName} ${user.lastName}`}</strong>
               <span>{ROLE_LABELS[user.role]}</span>

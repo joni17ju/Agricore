@@ -87,7 +87,7 @@ export default function RosterPage() {
       primary: true,
       render: (student) => (
         <span className="cell-user">
-          <Avatar firstName={student.firstName} lastName={student.lastName} size={34} />
+          <Avatar firstName={student.firstName} lastName={student.lastName} size={34} src={student.avatarUrl} />
           <span>
             <strong>{student.firstName} {student.lastName}</strong>
           </span>

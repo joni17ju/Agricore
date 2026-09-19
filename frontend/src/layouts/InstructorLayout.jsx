@@ -18,6 +18,12 @@ const NAV_GROUPS = [
       { to: '/instructor/leaderboard', label: 'Leaderboard', icon: 'trophy' },
     ],
   },
+  {
+    label: 'Account',
+    items: [
+      { to: '/instructor/profile', label: 'Profile', icon: 'user' },
+    ],
+  },
 ];
 
 export default function InstructorLayout() {

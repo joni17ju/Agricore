@@ -33,9 +33,27 @@ export function XPPill({ xp, prefix = '', animate = true, className = '' }) {
 
 const AVATAR_TONES = ['green', 'teal', 'amber', 'blue', 'rose', 'olive'];
 
-export function Avatar({ firstName = '', lastName = '', size = 36, className = '' }) {
+/**
+ * Initials avatar, or the user's uploaded picture when `src` is given.
+ * `src` is the user record's optional avatarUrl (a data URL in the prototype);
+ * without it this falls back to the coloured initials exactly as before.
+ */
+export function Avatar({ firstName = '', lastName = '', size = 36, className = '', src = null }) {
   const initials = `${firstName[0] ?? ''}${lastName[0] ?? ''}`.toUpperCase();
   const tone = AVATAR_TONES[(initials.charCodeAt(0) + (initials.charCodeAt(1) || 0)) % AVATAR_TONES.length];
+  if (src) {
+    return (
+      <img
+        // Keyed on the src so a newly picked picture fades in instead of swapping.
+        key={src}
+        src={src}
+        alt=""
+        className={`avatar avatar--photo ${className}`}
+        style={{ width: size, height: size }}
+        aria-hidden="true"
+      />
+    );
+  }
   return (
     <span
       className={`avatar avatar--${tone} ${className}`}

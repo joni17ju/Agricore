@@ -634,3 +634,32 @@ body:has(.scroll-top.is-visible) .toast-region { bottom: calc(var(--space-4) + 4
   .info-tip:hover .info-tip__bubble,
   .info-tip__btn:focus-visible + .info-tip__bubble { opacity: 1; visibility: visible; transition-delay: 0s; }
 }
+
+/* ───────── Avatar upload ─────────
+   Initials avatar or uploaded photo with a camera button on the corner. */
+.avatar--photo { object-fit: cover; animation: avatar-in var(--duration-base) var(--ease-out); }
+@keyframes avatar-in { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: none; } }
+
+.avatar-upload { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.avatar-upload__frame { position: relative; flex-shrink: 0; }
+.avatar-upload__btn {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 2px solid var(--surface);
+  border-radius: var(--radius-full);
+  background: var(--green-700);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: background-color var(--duration-fast) ease, transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+.avatar-upload__btn:hover:not(:disabled) { background: var(--green-600); transform: scale(1.12); box-shadow: var(--shadow-md); }
+.avatar-upload__btn:active:not(:disabled) { transform: scale(0.96); }
+.avatar-upload__btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.avatar-upload__remove { font-size: var(--text-xs); }
+.avatar-upload__error { max-width: 260px; text-align: left; }

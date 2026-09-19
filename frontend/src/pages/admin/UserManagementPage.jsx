@@ -73,7 +73,7 @@ export default function UserManagementPage() {
       primary: true,
       render: (u) => (
         <span className="cell-user">
-          <Avatar firstName={u.firstName} lastName={u.lastName} size={34} />
+          <Avatar firstName={u.firstName} lastName={u.lastName} size={34} src={u.avatarUrl} />
           <span>
             <strong>{u.firstName} {u.lastName}</strong>
             <small>{u.email}</small>

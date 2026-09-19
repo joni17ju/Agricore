@@ -44,7 +44,7 @@ export function Podium({ rows, highlightId }) {
                   </span>
                 </span>
               )}
-              <Avatar firstName={row.student.firstName} lastName={row.student.lastName} size={position === 0 ? 64 : 52} className="podium__avatar" />
+              <Avatar firstName={row.student.firstName} lastName={row.student.lastName} size={position === 0 ? 64 : 52} className="podium__avatar" src={row.student.avatarUrl} />
               <strong className="podium__name">{row.student.firstName} {row.student.lastName[0]}.</strong>
               <span className="podium__xp">{row.xp.toLocaleString()} XP</span>
               <div className="podium__block">
@@ -90,7 +90,7 @@ export function LeaderboardTable({ rows, highlightId, showMovement = true }) {
             {showMovement && <RankChange value={row.rankChange} />}
           </span>
           <span className="cell-user">
-            <Avatar firstName={row.student.firstName} lastName={row.student.lastName} size={32} />
+            <Avatar firstName={row.student.firstName} lastName={row.student.lastName} size={32} src={row.student.avatarUrl} />
             <strong>
               {row.student.firstName} {row.student.lastName}
               {row.student._id === highlightId && <span className="leaderboard-table__you"> (You)</span>}

@@ -10,6 +10,12 @@ const NAV_GROUPS = [
       { to: '/admin/sections', label: 'Sections', icon: 'layers' },
     ],
   },
+  {
+    label: 'Account',
+    items: [
+      { to: '/admin/profile', label: 'Profile', icon: 'user' },
+    ],
+  },
 ];
 
 export default function AdminLayout() {

@@ -135,7 +135,7 @@ export function StudentProgressList({ rows, limit = 6 }) {
       <ul className="student-progress">
         {rows.slice(0, limit).map((row, index) => (
           <li key={row.student._id} className="anim-fade-up" style={{ '--i': index }}>
-            <Avatar firstName={row.student.firstName} lastName={row.student.lastName} size={42} />
+            <Avatar firstName={row.student.firstName} lastName={row.student.lastName} size={42} src={row.student.avatarUrl} />
             <div className="student-progress__main">
               <div className="student-progress__top">
                 <strong>{row.student.firstName} {row.student.lastName}</strong>
