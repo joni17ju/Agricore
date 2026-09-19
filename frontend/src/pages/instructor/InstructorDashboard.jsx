@@ -50,11 +50,6 @@ export default function InstructorDashboard() {
           <div className="banner-tile banner-tile--risk">
             <strong><CountUp value={data.summary.atRiskCount} /></strong>
             <span>At Risk</span>
-            {/* Live figure, not an explanation: suddenDropCount is already
-                computed for the roster and surfaced nowhere else. */}
-            {data.summary.suddenDropCount > 0 && (
-              <small><em>{data.summary.suddenDropCount} also show a sudden drop in recent scores.</em></small>
-            )}
           </div>
         </div>
       </section>
