@@ -8,7 +8,7 @@ import { getStudentXpSummary } from '../services/progressService.js';
 
 const NAV_GROUPS = [
   {
-    label: 'Learn',
+    label: 'Main',
     items: [
       { to: '/student', label: 'Dashboard', icon: 'dashboard', end: true },
       { to: '/student/modules', label: 'Modules', icon: 'book' },
@@ -16,9 +16,14 @@ const NAV_GROUPS = [
     ],
   },
   {
-    label: 'Compete',
+    label: 'Community',
     items: [
       { to: '/student/leaderboard', label: 'Leaderboard', icon: 'trophy' },
+    ],
+  },
+  {
+    label: 'Account',
+    items: [
       { to: '/student/profile', label: 'Profile', icon: 'user' },
     ],
   },
