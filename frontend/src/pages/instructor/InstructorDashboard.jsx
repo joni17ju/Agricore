@@ -42,23 +42,19 @@ export default function InstructorDashboard() {
           <div className="banner-tile">
             <strong><CountUp value={data.summary.totalStudents} /></strong>
             <span>Students</span>
-            <small>Learners enrolled across the sections you teach.</small>
           </div>
           <div className="banner-tile">
             <strong><CountUp value={data.summary.averageProgress} />%</strong>
             <span>Avg. Progress</span>
-            <small>Share of course topics your students have completed so far.</small>
           </div>
           <div className="banner-tile banner-tile--risk">
             <strong><CountUp value={data.summary.atRiskCount} /></strong>
             <span>At Risk</span>
-            <small>
-              Tracking behind their own section &mdash; worth an early check-in.
-              {/* suddenDropCount is already computed for the roster; surfacing it here. */}
-              {data.summary.suddenDropCount > 0 && (
-                <em>{data.summary.suddenDropCount} also show a sudden drop in recent scores.</em>
-              )}
-            </small>
+            {/* Live figure, not an explanation: suddenDropCount is already
+                computed for the roster and surfaced nowhere else. */}
+            {data.summary.suddenDropCount > 0 && (
+              <small><em>{data.summary.suddenDropCount} also show a sudden drop in recent scores.</em></small>
+            )}
           </div>
         </div>
       </section>
