@@ -15,12 +15,10 @@
  *         node scripts/seed.js --dry    (report only, writes nothing)
  */
 import 'dotenv/config';
-import { createRequire } from 'node:module';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import mongoose from 'mongoose';
 
-const require = createRequire(import.meta.url);
 const DATA_DIR = path.resolve(process.cwd(), '..', 'frontend', 'src', 'data');
 const isDryRun = process.argv.includes('--dry');
 
@@ -70,6 +68,7 @@ function resolve(map, collection, value, field, sourceCollection) {
 }
 
 function transform(data, idMap) {
+  const seededAt = new Date();
   const out = {};
   for (const name of COLLECTIONS) {
     out[name] = data[name].map((source) => {
@@ -97,6 +96,9 @@ function transform(data, idMap) {
 
       // Marks documents this script owns, matching the flag already in Atlas.
       doc.isSeedData = true;
+      // Written explicitly because insertMany bypasses Mongoose's timestamps.
+      doc.createdAt = seededAt;
+      doc.updatedAt = seededAt;
       return doc;
     });
   }
