@@ -17,6 +17,7 @@ import missionAttempts from '../data/missionAttempts.js';
 import progress from '../data/progress.js';
 import { MOCK_LATENCY_MS, MOCK_SEED_ANCHOR_DAY } from '../constants/rules.js';
 import { addDays, calendarDaysBetween } from '../utils/dates.js';
+import { ServiceError } from './serviceError.js';
 
 /** Bump this when the seed data shape changes so saved demo data is rebuilt. */
 const STORAGE_KEY = 'agricore.mockdb.v2';
@@ -32,14 +33,7 @@ const ID_PREFIXES = {
   asset: 'asset', // lesson media sub-documents
 };
 
-/** Error shaped like an HTTP error response so pages can handle both the same way. */
-export class ServiceError extends Error {
-  constructor(message, status = 400) {
-    super(message);
-    this.name = 'ServiceError';
-    this.status = status;
-  }
-}
+export { ServiceError } from './serviceError.js';
 
 const clone = (value) => (value === undefined ? undefined : structuredClone(value));
 
