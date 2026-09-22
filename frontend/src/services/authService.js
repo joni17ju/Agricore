@@ -1,41 +1,38 @@
 /**
- * Mock authentication. Passwords are accepted but not checked — real
- * authentication arrives with the backend. The session (user id only) is kept in
- * localStorage so a refresh keeps the user signed in.
+ * Authentication against the real API.
+ *
+ * Same exported functions and return shapes as the mock version, so pages and
+ * components are untouched: login/loginAsDemo resolve with the user record,
+ * register resolves with { user, requiresApproval }, getCurrentUser resolves
+ * with the user or null.
+ *
+ * The session is now a JWT held by apiClient rather than a user id in
+ * localStorage; the old `agricore.session` key is cleared on sign-out so a
+ * stale prototype session cannot linger.
  */
 import { ROLES, USER_STATUS } from '../constants/roles.js';
 import { isBlank, isValidEmail, MIN_PASSWORD_LENGTH, normalizeEmail } from '../utils/validation.js';
-import { db, request, ServiceError } from './mockDb.js';
+import { api, setToken, getToken } from './apiClient.js';
+import { ServiceError } from './serviceError.js';
 
-const SESSION_KEY = 'agricore.session';
+const LEGACY_SESSION_KEY = 'agricore.session';
 
-/** Accounts offered on the login page for quick demo sign-in. */
-const DEMO_ACCOUNT_IDS = ['usr_stu_001', 'usr_ins_reyes', 'usr_adm_mercado'];
+/**
+ * Shared password for the seeded demo accounts, set by
+ * backend/scripts/set-passwords.js. The login page's one-click demo sign-in
+ * performs a real /auth/login with it rather than bypassing authentication.
+ */
+const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD ?? 'agricore123';
 
-function readSession() {
+function clearLegacySession() {
   try {
-    return JSON.parse(window.localStorage.getItem(SESSION_KEY));
+    window.localStorage.removeItem(LEGACY_SESSION_KEY);
   } catch {
-    return null;
+    // Storage unavailable — nothing to clear.
   }
 }
 
-function writeSession(user) {
-  try {
-    window.localStorage.setItem(SESSION_KEY, JSON.stringify({ userId: user._id }));
-  } catch {
-    // Session only lasts for this page load when storage is unavailable.
-  }
-}
-
-function clearSession() {
-  try {
-    window.localStorage.removeItem(SESSION_KEY);
-  } catch {
-    // Nothing to clear.
-  }
-}
-
+/** Keeps the prototype's per-status messages, which are friendlier than the API's. */
 function assertCanSignIn(user) {
   if (user.status === USER_STATUS.PENDING) {
     throw new ServiceError('Your account is waiting for administrator approval.', 403);
@@ -45,109 +42,105 @@ function assertCanSignIn(user) {
   }
 }
 
+async function signIn(email, password, role) {
+  let result;
+  try {
+    result = await api.post('/auth/login', { email: normalizeEmail(email), password });
+  } catch (error) {
+    // The API answers 401 identically for unknown email and wrong password;
+    // keep the prototype's wording, including the role hint when one was given.
+    if (error.status === 401) {
+      const roleText = role ? ` ${role}` : '';
+      throw new ServiceError(`No${roleText} account found with that email, or the password is incorrect.`, 401);
+    }
+    throw error;
+  }
+
+  if (role && result.user.role !== role) {
+    setToken(null);
+    throw new ServiceError(`No ${role} account found with that email.`, 401);
+  }
+  assertCanSignIn(result.user);
+  setToken(result.token);
+  clearLegacySession();
+  return result.user;
+}
+
 /**
  * @param {{ email: string, password: string, role?: 'student' | 'instructor' | 'admin' }} credentials
  */
-export function login({ email, password, role }) {
-  return request(() => {
-    if (!isValidEmail(email)) throw new ServiceError('Enter a valid email address.');
-    if (isBlank(password)) throw new ServiceError('Enter your password.');
-
-    const user = db.findOne('users', (u) => u.email === normalizeEmail(email));
-    if (!user || (role && user.role !== role)) {
-      const roleText = role ? ` ${role}` : '';
-      throw new ServiceError(`No${roleText} account found with that email.`, 401);
-    }
-    assertCanSignIn(user);
-    writeSession(user);
-    return user;
-  });
+export async function login({ email, password, role }) {
+  if (!isValidEmail(email)) throw new ServiceError('Enter a valid email address.');
+  if (isBlank(password)) throw new ServiceError('Enter your password.');
+  return signIn(email, password, role);
 }
 
-export function loginAsDemo(userId) {
-  return request(() => {
-    const user = db.findById('users', userId);
-    if (!user) throw new ServiceError('Demo account not found. Try resetting the demo data.', 404);
-    assertCanSignIn(user);
-    writeSession(user);
-    return user;
-  });
+/** One-click demo sign-in: a real login using the shared demo password. */
+export async function loginAsDemo(userId) {
+  const accounts = await api.get('/auth/demo-accounts');
+  const account = accounts.find((item) => item._id === userId);
+  if (!account) throw new ServiceError('Demo account not found.', 404);
+  return signIn(account.email, DEMO_PASSWORD);
 }
 
 export function getDemoAccounts() {
-  return request(() => DEMO_ACCOUNT_IDS.map((id) => db.findById('users', id)).filter(Boolean), { latency: 0 });
+  return api.get('/auth/demo-accounts');
 }
 
 /**
  * Register a student or instructor (Proposal Figs 12–13).
- * Students are active immediately and signed in. Instructors wait for admin approval.
+ * Students are active immediately and signed in; instructors wait for approval.
  */
-export function register({ role, firstName, lastName, email, password, confirmPassword, sectionId, schoolId }) {
-  return request(() => {
-    if (![ROLES.STUDENT, ROLES.INSTRUCTOR].includes(role)) throw new ServiceError('Choose Student or Instructor.');
-    if (isBlank(firstName) || isBlank(lastName)) throw new ServiceError('Enter your first and last name.');
-    if (!isValidEmail(email)) throw new ServiceError('Enter a valid email address.');
-    if (String(password ?? '').length < MIN_PASSWORD_LENGTH) {
-      throw new ServiceError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
-    }
-    if (password !== confirmPassword) throw new ServiceError('Passwords do not match.');
+export async function register({ role, firstName, lastName, email, password, confirmPassword, sectionId, schoolId }) {
+  if (![ROLES.STUDENT, ROLES.INSTRUCTOR].includes(role)) throw new ServiceError('Choose Student or Instructor.');
+  if (isBlank(firstName) || isBlank(lastName)) throw new ServiceError('Enter your first and last name.');
+  if (!isValidEmail(email)) throw new ServiceError('Enter a valid email address.');
+  if (String(password ?? '').length < MIN_PASSWORD_LENGTH) {
+    throw new ServiceError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+  }
+  if (password !== confirmPassword) throw new ServiceError('Passwords do not match.');
+  if (role === ROLES.STUDENT && isBlank(sectionId)) throw new ServiceError('Select your section.');
 
-    const normalizedEmail = normalizeEmail(email);
-    if (db.findOne('users', (u) => u.email === normalizedEmail)) {
-      throw new ServiceError('An account with this email already exists.', 409);
-    }
-    if (role === ROLES.STUDENT && !db.findById('sections', sectionId)) {
-      throw new ServiceError('Select your section.');
-    }
-
-    const user = db.insert('users', {
-      role,
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      email: normalizedEmail,
-      schoolId: isBlank(schoolId) ? null : schoolId.trim(),
-      sectionId: role === ROLES.STUDENT ? sectionId : null,
-      assignedSectionIds: [],
-      status: role === ROLES.STUDENT ? USER_STATUS.ACTIVE : USER_STATUS.PENDING,
-      earnedBadges: [],
-    });
-
-    const requiresApproval = user.status === USER_STATUS.PENDING;
-    if (!requiresApproval) writeSession(user);
-    return { user, requiresApproval };
+  const result = await api.post('/auth/register', {
+    role,
+    firstName: String(firstName).trim(),
+    lastName: String(lastName).trim(),
+    email: normalizeEmail(email),
+    password,
+    schoolId: isBlank(schoolId) ? null : String(schoolId).trim(),
+    sectionId: role === ROLES.STUDENT ? sectionId : null,
   });
+
+  if (result.token) {
+    setToken(result.token);
+    clearLegacySession();
+  }
+  return { user: result.user, requiresApproval: result.requiresApproval };
 }
 
-/** Resolves with the signed-in user, or null. Clears sessions for removed/deactivated accounts. */
-export function getCurrentUser() {
-  return request(
-    () => {
-      const session = readSession();
-      if (!session?.userId) return null;
-      const user = db.findById('users', session.userId);
-      if (!user || user.status !== USER_STATUS.ACTIVE) {
-        clearSession();
-        return null;
-      }
-      return user;
-    },
-    { latency: 0 },
-  );
+/** Resolves with the signed-in user, or null when there is no valid session. */
+export async function getCurrentUser() {
+  if (!getToken()) return null;
+  try {
+    const { user } = await api.get('/auth/me');
+    return user;
+  } catch (error) {
+    // apiClient already discards the token on 401.
+    if (error.status === 401 || error.status === 403) return null;
+    throw error;
+  }
 }
 
-export function logout() {
-  return request(() => {
-    clearSession();
-    return true;
-  }, { latency: 0 });
+export async function logout() {
+  setToken(null);
+  clearLegacySession();
+  return true;
 }
 
-/** Mock only — no email is sent. */
-export function requestPasswordReset(email) {
-  return request(() => {
-    if (!isValidEmail(email)) throw new ServiceError('Enter a valid email address.');
-    return {
-      message: 'Password reset is not available in the prototype. Please contact your administrator.',
-    };
-  });
+/** No reset email in the prototype; the message is unchanged. */
+export async function requestPasswordReset(email) {
+  if (!isValidEmail(email)) throw new ServiceError('Enter a valid email address.');
+  return {
+    message: 'Password reset is not available in the prototype. Please contact your administrator.',
+  };
 }

@@ -1,103 +1,115 @@
 /**
- * Shared lookups used by several mock services. These run inside `request()`
- * callbacks and read the mock database synchronously.
+ * Shared lookups used by several services, backed by the real API.
  *
- * When the backend exists, this logic moves server-side and this file is deleted.
+ * These run inside `request()` callbacks, which await their handler, so every
+ * lookup here is async and callers await it.
+ *
+ * Role scoping matters here. The mock version read whole collections out of a
+ * local database; the API scopes by role, so:
+ *   - getStudentActivity() only works for your own id unless you are staff
+ *   - getSectionStudents() is STAFF ONLY — it calls GET /users, which returns
+ *     403 to a student. Student-facing code that needs section ranking must use
+ *     leaderboardService (the server-side aggregation), not this helper.
  */
 import { ROLES, USER_STATUS } from '../constants/roles.js';
 import { buildStudentCurriculum } from '../utils/curriculum.js';
-import { db, ServiceError } from './mockDb.js';
+import { api } from './apiClient.js';
+import { ServiceError } from './serviceError.js';
 
-export function getCourse() {
-  const modules = db.all('modules');
-  const lessons = db.all('lessons');
-  const missions = db.all('missions');
-  return {
-    modules,
-    lessons,
-    missions,
-    modulesById: new Map(modules.map((m) => [m._id, m])),
-    lessonsById: new Map(lessons.map((l) => [l._id, l])),
-    missionsById: new Map(missions.map((m) => [m._id, m])),
-  };
+/*
+ * Course content — modules, lessons and missions — is the same for everyone and
+ * changes only when an instructor edits it, so it is fetched once and reused.
+ * Services that write to it call invalidateCourse().
+ */
+let coursePromise = null;
+
+export function invalidateCourse() {
+  coursePromise = null;
 }
 
-export function requireUser(userId, role) {
-  const user = db.findById('users', userId);
-  if (!user) throw new ServiceError('User not found.', 404);
+export function getCourse() {
+  if (!coursePromise) {
+    coursePromise = Promise.all([api.get('/modules'), api.get('/lessons'), api.get('/missions')])
+      .then(([modules, lessons, missions]) => ({
+        modules,
+        lessons,
+        missions,
+        modulesById: new Map(modules.map((m) => [m._id, m])),
+        lessonsById: new Map(lessons.map((l) => [l._id, l])),
+        missionsById: new Map(missions.map((m) => [m._id, m])),
+      }))
+      .catch((error) => {
+        // Never cache a failure, or the app stays broken until a reload.
+        coursePromise = null;
+        throw error;
+      });
+  }
+  return coursePromise;
+}
+
+export async function requireUser(userId, role) {
+  let user;
+  try {
+    user = await api.get(`/users/${userId}`);
+  } catch (error) {
+    if (error.status === 404) throw new ServiceError('User not found.', 404);
+    throw error;
+  }
   if (role && user.role !== role) throw new ServiceError('This action is not allowed for this account.', 403);
   return user;
 }
 
-export function requireSection(sectionId) {
-  const section = db.findById('sections', sectionId);
-  if (!section) throw new ServiceError('Section not found.', 404);
-  return section;
+export async function requireSection(sectionId) {
+  try {
+    return await api.get(`/sections/${sectionId}`);
+  } catch (error) {
+    if (error.status === 404) throw new ServiceError('Section not found.', 404);
+    throw error;
+  }
 }
 
 /** Instructors may only access sections assigned to them. */
-export function requireInstructorSection(instructorId, sectionId) {
-  const instructor = requireUser(instructorId, ROLES.INSTRUCTOR);
-  const section = requireSection(sectionId);
-  if (!instructor.assignedSectionIds.includes(sectionId)) {
+export async function requireInstructorSection(instructorId, sectionId) {
+  const [instructor, section] = await Promise.all([
+    requireUser(instructorId, ROLES.INSTRUCTOR),
+    requireSection(sectionId),
+  ]);
+  if (!(instructor.assignedSectionIds ?? []).some((id) => String(id) === String(sectionId))) {
     throw new ServiceError('You are not assigned to this section.', 403);
   }
   return section;
 }
 
-export function getStudentActivity(studentId) {
-  return {
-    attempts: db.find('missionAttempts', (a) => a.studentId === studentId),
-    progress: db.find('progress', (p) => p.studentId === studentId),
-  };
+export async function getStudentActivity(studentId) {
+  const [attempts, progress] = await Promise.all([
+    api.get('/missionAttempts', { studentId }),
+    api.get('/progress', { studentId }),
+  ]);
+  return { attempts, progress };
 }
 
-export function getStudentCurriculum(studentId, course = getCourse()) {
-  const { attempts, progress } = getStudentActivity(studentId);
-  return buildStudentCurriculum({ ...course, attempts, progress });
+export async function getStudentCurriculum(studentId, course) {
+  const [resolvedCourse, { attempts, progress }] = await Promise.all([
+    course ? Promise.resolve(course) : getCourse(),
+    getStudentActivity(studentId),
+  ]);
+  return buildStudentCurriculum({ ...resolvedCourse, attempts, progress });
 }
 
-export function getSectionStudents(sectionId, { includeInactive = false } = {}) {
-  return db.find(
-    'users',
-    (u) =>
-      u.role === ROLES.STUDENT &&
-      u.sectionId === sectionId &&
-      (includeInactive || u.status === USER_STATUS.ACTIVE),
-  );
+/**
+ * STAFF ONLY — GET /users returns 403 to students.
+ * Student-facing ranking goes through leaderboardService instead.
+ */
+export async function getSectionStudents(sectionId, { includeInactive = false } = {}) {
+  const students = await api.get('/users', { role: ROLES.STUDENT, sectionId });
+  return includeInactive ? students : students.filter((u) => u.status === USER_STATUS.ACTIVE);
 }
 
 /** Module and lesson a mission belongs to. */
-export function getMissionContext(mission, course = getCourse()) {
-  const lesson = course.lessonsById.get(mission.lessonId);
-  const module = lesson ? course.modulesById.get(lesson.moduleId) : null;
+export function getMissionContext(mission, course) {
+  const lesson = course.lessonsById.get(String(mission.lessonId));
+  const module = lesson ? course.modulesById.get(String(lesson.moduleId)) : null;
   return { lesson, module };
 }
 
 export const fullName = (user) => `${user.firstName} ${user.lastName}`;
-
-/** Re-number lessons 1..n inside a module, keeping their current order. */
-export function renumberLessons(moduleId) {
-  db.find('lessons', (l) => l.moduleId === moduleId)
-    .sort((a, b) => a.lessonNumber - b.lessonNumber)
-    .forEach((lesson, index) => {
-      if (lesson.lessonNumber !== index + 1) db.update('lessons', lesson._id, { lessonNumber: index + 1 });
-    });
-}
-
-/**
- * Mission levels are numbered across the whole module (Level 1 of 8, …).
- * Re-number them in lesson order after levels are added or removed.
- */
-export function renumberModuleLevels(moduleId) {
-  const lessons = db.find('lessons', (l) => l.moduleId === moduleId).sort((a, b) => a.lessonNumber - b.lessonNumber);
-  let level = 0;
-  for (const lesson of lessons) {
-    db.find('missions', (m) => m.lessonId === lesson._id && m.levelNumber !== null)
-      .sort((a, b) => a.levelNumber - b.levelNumber)
-      .forEach((mission) => {
-        level += 1;
-        if (mission.levelNumber !== level) db.update('missions', mission._id, { levelNumber: level });
-      });
-  }
-}

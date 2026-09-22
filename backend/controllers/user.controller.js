@@ -26,7 +26,7 @@ export async function getUser(req, res) {
 }
 
 /** Fields a client may change; role and status have their own guarded paths. */
-const EDITABLE = ['firstName', 'lastName', 'email', 'schoolId', 'sectionId', 'assignedSectionIds', 'avatarUrl', 'status', 'role'];
+const EDITABLE = ['firstName', 'lastName', 'email', 'schoolId', 'sectionId', 'assignedSectionIds', 'avatarUrl', 'status', 'role', 'earnedBadges'];
 
 /** PATCH /api/users/:id — admin and instructor management screens, and avatar upload. */
 export async function updateUser(req, res) {

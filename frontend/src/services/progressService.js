@@ -12,56 +12,48 @@ import {
   calculateWeeklyActivity,
 } from '../utils/gamification.js';
 import { isWithinLastDays, toDayKey } from '../utils/dates.js';
-import { db, request, ServiceError } from './mockDb.js';
+import { api } from './apiClient.js';
+import { ServiceError } from './serviceError.js';
 import { getCourse, getStudentActivity, getStudentCurriculum, requireUser } from './serviceContext.js';
 
 const WEEKLY_PASS_GOAL = 3;
 
 /** Lightweight XP/level/streak summary for the top bar. */
-export function getStudentXpSummary(studentId) {
-  return request(
-    () => {
-      requireUser(studentId, ROLES.STUDENT);
-      const { attempts } = getStudentActivity(studentId);
-      const totalXP = calculateTotalXP(attempts);
-      return { totalXP, level: calculateLevel(totalXP), streak: calculateStreak(attempts, new Date()) };
-    },
-    { latency: 0 },
-  );
+export async function getStudentXpSummary(studentId) {
+  const { attempts } = await getStudentActivity(studentId);
+  const totalXP = calculateTotalXP(attempts);
+  return { totalXP, level: calculateLevel(totalXP), streak: calculateStreak(attempts, new Date()) };
 }
 
-export function getStudentCurriculumMap(studentId) {
-  return request(() => {
-    requireUser(studentId, ROLES.STUDENT);
-    return getStudentCurriculum(studentId);
-  });
+export async function getStudentCurriculumMap(studentId) {
+  await requireUser(studentId, ROLES.STUDENT);
+  return getStudentCurriculum(studentId);
 }
 
 /** One module with its topics and states (Course Modules page). */
-export function getStudentModule(studentId, moduleId) {
-  return request(() => {
-    requireUser(studentId, ROLES.STUDENT);
-    const entry = getStudentCurriculum(studentId).find((item) => item.module._id === moduleId);
-    if (!entry) throw new ServiceError('Module not found.', 404);
-    return entry;
-  });
+export async function getStudentModule(studentId, moduleId) {
+  await requireUser(studentId, ROLES.STUDENT);
+  const curriculum = await getStudentCurriculum(studentId);
+  const entry = curriculum.find((item) => String(item.module._id) === String(moduleId));
+  if (!entry) throw new ServiceError('Module not found.', 404);
+  return entry;
 }
 
 /**
  * Lesson content for a student, with its state, mission levels and neighbours.
  * Rejects locked lessons.
  */
-export function getLessonForStudent(studentId, lessonId) {
-  return request(() => {
-    requireUser(studentId, ROLES.STUDENT);
-    const curriculum = getStudentCurriculum(studentId);
+export async function getLessonForStudent(studentId, lessonId) {
+  await requireUser(studentId, ROLES.STUDENT);
+  {
+    const curriculum = await getStudentCurriculum(studentId);
     if (!canAccessLesson(curriculum, lessonId)) {
       throw new ServiceError('This topic is locked. Complete the previous topic first.', 403);
     }
     const allLessons = curriculum.flatMap((moduleEntry) =>
       moduleEntry.lessons.map((lessonEntry) => ({ ...lessonEntry, module: moduleEntry.module })),
     );
-    const index = allLessons.findIndex((entry) => entry.lesson._id === lessonId);
+    const index = allLessons.findIndex((entry) => String(entry.lesson._id) === String(lessonId));
     const entry = allLessons[index];
     const next = allLessons[index + 1];
 
@@ -73,19 +65,18 @@ export function getLessonForStudent(studentId, lessonId) {
       previousLesson: allLessons[index - 1]?.lesson ?? null,
       nextLesson: next && next.state !== LESSON_STATE.LOCKED ? next.lesson : null,
     };
-  });
+  }
 }
 
 /** Record that the student opened a lesson (Learn step). */
-export function markLessonViewed(studentId, lessonId) {
-  return request(() => {
-    requireUser(studentId, ROLES.STUDENT);
-    if (!canAccessLesson(getStudentCurriculum(studentId), lessonId)) {
-      throw new ServiceError('This topic is locked.', 403);
-    }
-    const existing = db.findOne('progress', (p) => p.studentId === studentId && p.lessonId === lessonId);
-    return existing ?? db.insert('progress', { studentId, lessonId, status: PROGRESS_STATUS.IN_PROGRESS });
-  }, { latency: 0 });
+export async function markLessonViewed(studentId, lessonId) {
+  const curriculum = await getStudentCurriculum(studentId);
+  if (!canAccessLesson(curriculum, lessonId)) throw new ServiceError('This topic is locked.', 403);
+
+  // Only the first view records anything; a completed lesson is never demoted.
+  const rows = await api.get('/progress', { studentId, lessonId });
+  if (rows.length > 0) return rows[0];
+  return api.patch('/progress', { studentId, lessonId, status: PROGRESS_STATUS.IN_PROGRESS });
 }
 
 function buildObjectives({ curriculum, attempts, streak, now }) {
@@ -133,13 +124,13 @@ function buildObjectives({ curriculum, attempts, streak, now }) {
 }
 
 /** Dashboard overview for a student (Proposal Fig 16). */
-export function getStudentDashboard(studentId) {
-  return request(() => {
-    const student = requireUser(studentId, ROLES.STUDENT);
+export async function getStudentDashboard(studentId) {
+  {
+    const student = await requireUser(studentId, ROLES.STUDENT);
     const now = new Date();
-    const course = getCourse();
-    const { attempts } = getStudentActivity(studentId);
-    const curriculum = getStudentCurriculum(studentId, course);
+    const course = await getCourse();
+    const { attempts } = await getStudentActivity(studentId);
+    const curriculum = await getStudentCurriculum(studentId, course);
     const totalXP = calculateTotalXP(attempts);
     const streak = calculateStreak(attempts, now);
     const totalLessons = curriculum.reduce((sum, entry) => sum + entry.totalLessons, 0);
@@ -148,7 +139,7 @@ export function getStudentDashboard(studentId) {
 
     return {
       student,
-      section: student.sectionId ? db.findById('sections', student.sectionId) : null,
+      section: student.sectionId ? await api.get(`/sections/${student.sectionId}`).catch(() => null) : null,
       totalXP,
       level: calculateLevel(totalXP),
       streak,
@@ -160,9 +151,9 @@ export function getStudentDashboard(studentId) {
       weeklyActivity: calculateWeeklyActivity(attempts, now),
       objectives: buildObjectives({ curriculum, attempts, streak, now }),
       recentAttempts: [...attempts]
-        .sort((a, b) => b.attemptedAt.localeCompare(a.attemptedAt))
+        .sort((a, b) => String(b.attemptedAt).localeCompare(String(a.attemptedAt)))
         .slice(0, 5)
-        .map((attempt) => ({ attempt, mission: course.missionsById.get(attempt.missionId) ?? null })),
+        .map((attempt) => ({ attempt, mission: course.missionsById.get(String(attempt.missionId)) ?? null })),
     };
-  });
+  }
 }

@@ -1,13 +1,18 @@
 /**
  * Section leaderboards (Proposal Fig 23). Rankings are always limited to one
  * section — students only see classmates in their own section (NFR: Data Privacy).
+ *
+ * The ranking itself is computed by the server. The mock version read every
+ * user and every attempt in the section, which the API refuses to a student;
+ * GET /leaderboard returns the same ordering with only display fields, so a
+ * student can see where they stand without being able to read classmates'
+ * records. The row shape returned here is unchanged.
  */
 import { ROLES } from '../constants/roles.js';
-import { getModuleLessons } from '../utils/curriculum.js';
-import { calculateLevel, rankStudentsByXP } from '../utils/gamification.js';
-import { isWithinLastDays } from '../utils/dates.js';
-import { db, request, ServiceError } from './mockDb.js';
-import { getCourse, getSectionStudents, requireInstructorSection, requireSection, requireUser } from './serviceContext.js';
+import { calculateLevel } from '../utils/gamification.js';
+import { api } from './apiClient.js';
+import { ServiceError } from './serviceError.js';
+import { requireInstructorSection, requireSection, requireUser } from './serviceContext.js';
 
 export const LEADERBOARD_PERIODS = Object.freeze({
   OVERALL: 'overall',
@@ -15,74 +20,49 @@ export const LEADERBOARD_PERIODS = Object.freeze({
   MODULE: 'module',
 });
 
-function filterAttempts(attempts, { period, moduleId }, now) {
-  if (period === LEADERBOARD_PERIODS.WEEK) {
-    return attempts.filter((a) => isWithinLastDays(a.attemptedAt, 7, now));
-  }
-  if (period === LEADERBOARD_PERIODS.MODULE) {
-    if (!moduleId) throw new ServiceError('Choose a module.');
-    const { lessons, missions } = getCourse();
-    const lessonIds = new Set(getModuleLessons(lessons, moduleId).map((l) => l._id));
-    const missionIds = new Set(missions.filter((m) => lessonIds.has(m.lessonId)).map((m) => m._id));
-    return attempts.filter((a) => missionIds.has(a.missionId));
-  }
-  return attempts;
-}
-
-function buildLeaderboard(sectionId, { period = LEADERBOARD_PERIODS.OVERALL, moduleId } = {}) {
-  const section = requireSection(sectionId);
-  const now = new Date();
-  const students = getSectionStudents(sectionId);
-  const studentIds = new Set(students.map((s) => s._id));
-  const sectionAttempts = db.find('missionAttempts', (a) => studentIds.has(a.studentId));
-  const ranking = rankStudentsByXP(students, filterAttempts(sectionAttempts, { period, moduleId }, now));
-
-  // Rank a week ago (overall XP only) to show movement arrows.
-  const lastWeekRanks = new Map(
-    rankStudentsByXP(students, sectionAttempts.filter((a) => !isWithinLastDays(a.attemptedAt, 7, now))).map(
-      (row) => [row.student._id, row.rank],
-    ),
-  );
-  const totalXPByStudent = new Map(
-    rankStudentsByXP(students, sectionAttempts).map((row) => [row.student._id, row.xp]),
-  );
+async function buildLeaderboard(sectionId, { period = LEADERBOARD_PERIODS.OVERALL, moduleId } = {}) {
+  if (period === LEADERBOARD_PERIODS.MODULE && !moduleId) throw new ServiceError('Choose a module.');
+  const [section, rows] = await Promise.all([
+    requireSection(sectionId),
+    api.get('/leaderboard', { sectionId, period, moduleId }),
+  ]);
 
   return {
     section,
     period,
     moduleId: moduleId ?? null,
-    totalStudents: students.length,
-    rows: ranking.map((row) => ({
+    totalStudents: rows.length,
+    rows: rows.map((row) => ({
       rank: row.rank,
-      xp: row.xp,
-      rankChange:
-        period === LEADERBOARD_PERIODS.OVERALL ? lastWeekRanks.get(row.student._id) - row.rank : 0,
+      xp: row.totalXP,
+      // Arrows only make sense against an all-time ranking.
+      rankChange: period === LEADERBOARD_PERIODS.OVERALL && row.previousRank ? row.previousRank - row.rank : 0,
       student: {
-        _id: row.student._id,
-        firstName: row.student.firstName,
-        lastName: row.student.lastName,
-        avatarUrl: row.student.avatarUrl ?? null,
-        badgeCount: row.student.earnedBadges.length,
+        _id: row._id,
+        firstName: row.firstName,
+        lastName: row.lastName,
+        avatarUrl: row.avatarUrl ?? null,
+        badgeCount: row.badgeCount ?? 0,
       },
-      level: calculateLevel(totalXPByStudent.get(row.student._id)).level,
+      // Level always reflects lifetime XP, even on a weekly or per-module board.
+      level: calculateLevel(row.overallXP ?? row.totalXP).level,
     })),
   };
 }
 
 /** Leaderboard of the student's own section. */
-export function getStudentLeaderboard(studentId, options) {
-  return request(() => {
-    const student = requireUser(studentId, ROLES.STUDENT);
-    if (!student.sectionId) throw new ServiceError('You are not enrolled in a section yet.', 409);
-    const board = buildLeaderboard(student.sectionId, options);
-    return { ...board, currentStudentRow: board.rows.find((row) => row.student._id === studentId) ?? null };
-  });
+export async function getStudentLeaderboard(studentId, options) {
+  const student = await requireUser(studentId, ROLES.STUDENT);
+  if (!student.sectionId) throw new ServiceError('You are not enrolled in a section yet.', 409);
+  const board = await buildLeaderboard(student.sectionId, options);
+  return {
+    ...board,
+    currentStudentRow: board.rows.find((row) => String(row.student._id) === String(studentId)) ?? null,
+  };
 }
 
 /** Leaderboard of one of the instructor's sections. */
-export function getSectionLeaderboard(instructorId, sectionId, options) {
-  return request(() => {
-    requireInstructorSection(instructorId, sectionId);
-    return buildLeaderboard(sectionId, options);
-  });
+export async function getSectionLeaderboard(instructorId, sectionId, options) {
+  await requireInstructorSection(instructorId, sectionId);
+  return buildLeaderboard(sectionId, options);
 }
