@@ -21,17 +21,34 @@ export async function connectDatabase() {
   mongoose.connection.on('disconnected', () => console.warn('[db] disconnected'));
   mongoose.connection.on('error', (error) => console.error('[db] error:', error.message));
 
-  try {
-    await mongoose.connect(uri, {
-      // Fail fast with a clear message instead of hanging when the URI, network
-      // or Atlas IP allow-list is wrong.
-      serverSelectionTimeoutMS: 10000,
-    });
-    return true;
-  } catch (error) {
-    console.error('[db] initial connection failed:', error.message);
-    return false;
+  /*
+   * Retry the first connection a few times.
+   *
+   * Mongoose reconnects on its own once a connection has been established, but
+   * not if the very first attempt fails — the process would then serve 500s
+   * until restarted. Atlas can refuse connections briefly (cluster waking,
+   * transient TLS or DNS failures), and a cold start on a hosting platform
+   * lands exactly in that window, so boot backs off instead of giving up.
+   */
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    try {
+      await mongoose.connect(uri, {
+        // Fail fast with a clear message instead of hanging when the URI,
+        // network or Atlas IP allow-list is wrong.
+        serverSelectionTimeoutMS: 10000,
+      });
+      return true;
+    } catch (error) {
+      const last = attempt === 5;
+      console.error(`[db] connection attempt ${attempt}/5 failed: ${error.message.split('.')[0]}`);
+      if (last) {
+        console.error('[db] giving up for now — Mongoose will keep retrying in the background.');
+        return false;
+      }
+      await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
+    }
   }
+  return false;
 }
 
 /** Human-readable connection state for the health check. */

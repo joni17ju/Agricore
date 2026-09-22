@@ -100,3 +100,20 @@ export async function changePassword(req, res) {
   await user.save();
   res.json({ updated: true });
 }
+
+/**
+ * GET /api/auth/demo-accounts — public.
+ *
+ * The login page offers one account per role for quick prototype sign-in. Only
+ * the display fields are returned, never the hash. Signing in as one of these
+ * still goes through the normal /auth/login flow with a real password, so this
+ * endpoint grants no access by itself.
+ */
+const DEMO_EMAILS = ['juan.delacruz@dorsu.edu.ph', 'c.reyes@dorsu.edu.ph', 'l.mercado@dorsu.edu.ph'];
+
+export async function demoAccounts(req, res) {
+  const users = await User.find({ email: { $in: DEMO_EMAILS } }).select('firstName lastName role email status');
+  const order = new Map(DEMO_EMAILS.map((email, index) => [email, index]));
+  users.sort((a, b) => order.get(a.email) - order.get(b.email));
+  res.json(users);
+}
