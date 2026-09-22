@@ -151,9 +151,14 @@ export async function submitAttempt({ studentId, missionId, answers, timeSpentSe
   const rankAfter = await sectionRankOf(student);
 
   /*
-   * Badges are still evaluated client-side, as in the prototype, and persisted
-   * through PATCH /users/:id. Unlike scoring they are not yet authoritative on
-   * the server — worth moving alongside the scoring rules later.
+   * TODO(security): badges are not authoritative yet.
+   *
+   * Scoring was moved server-side so a tampered client cannot award itself XP,
+   * but badge evaluation still runs here and is persisted through
+   * PATCH /users/:id, which accepts earnedBadges. A crafted request could grant
+   * itself any badge. Fix the same way as scoring: evaluate inside the
+   * mission-attempt controller and drop earnedBadges from the editable fields.
+   * Tracked in backend/README.md under "Known follow-ups".
    */
   const newCodes = evaluateNewBadges({
     attempts: after.attempts,

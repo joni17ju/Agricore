@@ -44,13 +44,20 @@ shape without real values.
 
 | Command | What it does |
 |---|---|
-| `node scripts/seed.js` | Replaces all seven collections with the content in `frontend/src/data/*.js`, converting the readable string ids to real ObjectIds and rewiring every reference. **Destructive** — it deletes existing documents first. |
+| `node scripts/seed.js` | Replaces all seven collections with the content in `frontend/src/data/*.js`, converting the readable string ids to real ObjectIds and rewiring every reference. Activity dates are shifted so the newest attempt is always yesterday, and every account is given the demo password. **Destructive** — it deletes existing documents first. |
 | `node scripts/seed.js --dry` | Reports what would be written. Touches nothing. |
 | `node scripts/verify-seed.js` | Read-only. Checks that seeded documents carry the fields the frontend reads, that every `scenarioData` matches its game type, and that no reference is orphaned. |
-| `node scripts/set-passwords.js` | Replaces the seeded placeholder password hashes with real bcrypt hashes so the demo accounts can sign in. Defaults to password `agricore123`; pass `--password "…"`, `--email "…"` or `--all`. |
+| `node scripts/set-passwords.js` | Resets account passwords. `seed.js` already sets them, so this is only needed to change a password or repair an account. Defaults to `agricore123`; pass `--password "…"`, `--email "…"` or `--all`. |
+| `node scripts/smoke-test.js` | End-to-end check against a running API: auth, role guards, data routes, the leaderboard aggregation, and that a tampered score is ignored. |
 
 The seed data is generated from the frontend mock files, so the mission
 `scenarioData` shapes match exactly what the five game components render.
+
+Re-run the seed before a demo if the data has aged oddly. Because it shifts the
+whole activity history relative to the day it runs, streaks, weekly activity
+and at-risk counts stay realistic rather than drifting as the fixed seed dates
+recede into the past. Note that re-seeding mints new ObjectIds, so anyone signed
+in is signed out.
 
 ## API
 
@@ -115,6 +122,26 @@ from the database on every request, so a profile edit takes effect immediately
 and a stale token cannot assert outdated identity. `requireAuth` rejects tokens
 whose user has been deleted or deactivated; `requireRole(...)` returns 403 (not
 401) when a valid session lacks the necessary role.
+
+## Known follow-ups
+
+**Badges are not yet authoritative on the server.** Mission scoring was
+deliberately moved server-side so a tampered client cannot award itself XP —
+`POST /api/missionAttempts` ignores any score in the request and re-scores the
+answers itself. Badge evaluation did *not* move: the frontend still runs
+`utils/badgeRules.js` after a submit and writes the result through
+`PATCH /api/users/:id`, which accepts `earnedBadges`. A crafted request could
+therefore grant itself any badge.
+
+This is the same class of trust problem as the XP one, and it should be closed
+the same way before any final defence: port `badgeRules.js` alongside the
+already-ported `scoring.js` and `gamification.js`, evaluate badges inside the
+mission-attempt controller, and drop `earnedBadges` from the editable field
+list in `controllers/user.controller.js`.
+
+Lower priority: the instructor analytics screens issue one activity request per
+student (roughly 50 requests for 21 students), which makes them take a few
+seconds to settle. Correct, but a bulk endpoint would fix it.
 
 ## Deployment notes
 

@@ -17,13 +17,21 @@
 import 'dotenv/config';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
+import { MOCK_SEED_ANCHOR_DAY } from '../constants/rules.js';
+import { addDays, calendarDaysBetween } from '../utils/dates.js';
 
 const DATA_DIR = path.resolve(process.cwd(), '..', 'frontend', 'src', 'data');
 const isDryRun = process.argv.includes('--dry');
 
-/** Placeholder until Phase 4 hashes real passwords for the demo accounts. */
-const PLACEHOLDER_HASH = 'DEV_SEED_PLACEHOLDER_HASH_NOT_REAL';
+/**
+ * Every seeded account gets this password, hashed properly with bcrypt, so the
+ * demo accounts can sign in immediately after a seed. Without it a re-seed
+ * would silently lock everyone out until scripts/set-passwords.js was run —
+ * a bad surprise right before a demo.
+ */
+const SEED_PASSWORD = process.env.SEED_PASSWORD ?? 'agricore123';
 
 const COLLECTIONS = ['users', 'sections', 'modules', 'lessons', 'missions', 'missionAttempts', 'progress'];
 
@@ -40,6 +48,18 @@ const REFERENCES = {
 
 /** ISO strings that should land in Mongo as real Dates. */
 const DATE_FIELDS = { missionAttempts: ['attemptedAt'] };
+
+/**
+ * The generated activity ends on MOCK_SEED_ANCHOR_DAY. Seeding those dates
+ * verbatim means the data ages: a week later every student looks inactive and
+ * the at-risk count balloons. Shifting the whole history so the anchor day
+ * becomes "yesterday" keeps streaks, weekly activity and at-risk status
+ * realistic whenever the seed is run — the same trick the mock layer used.
+ */
+const SEED_DATE_OFFSET_DAYS = calendarDaysBetween(new Date(`${MOCK_SEED_ANCHOR_DAY}T12:00:00`), new Date()) - 1;
+
+const shiftDate = (value) =>
+  SEED_DATE_OFFSET_DAYS === 0 ? new Date(value) : addDays(value, SEED_DATE_OFFSET_DAYS);
 
 async function loadMockData() {
   const data = {};
@@ -67,7 +87,7 @@ function resolve(map, collection, value, field, sourceCollection) {
   return found;
 }
 
-function transform(data, idMap) {
+function transform(data, idMap, passwordHash) {
   const seededAt = new Date();
   const out = {};
   for (const name of COLLECTIONS) {
@@ -82,15 +102,14 @@ function transform(data, idMap) {
       }
 
       for (const field of DATE_FIELDS[name] ?? []) {
-        if (doc[field]) doc[field] = new Date(doc[field]);
+        if (doc[field]) doc[field] = shiftDate(doc[field]);
       }
 
       if (name === 'users') {
-        // Atlas already carried passwordHash; keep the field so Phase 4 can rehash in place.
-        doc.passwordHash = source.passwordHash ?? PLACEHOLDER_HASH;
+        doc.passwordHash = passwordHash;
         doc.earnedBadges = (source.earnedBadges ?? []).map((badge) => ({
           ...badge,
-          earnedAt: new Date(badge.earnedAt),
+          earnedAt: shiftDate(badge.earnedAt),
         }));
       }
 
@@ -107,9 +126,18 @@ function transform(data, idMap) {
 
 const data = await loadMockData();
 const idMap = buildIdMap(data);
-const documents = transform(data, idMap);
+// One hash reused across the demo accounts: bcrypt is slow by design.
+const seedPasswordHash = await bcrypt.hash(SEED_PASSWORD, 10);
+const documents = transform(data, idMap, seedPasswordHash);
 
-console.log('Loaded from frontend/src/data:');
+const newestAttempt = documents.missionAttempts.reduce(
+  (latest, doc) => (doc.attemptedAt > latest ? doc.attemptedAt : latest),
+  new Date(0),
+);
+console.log(
+  `Loaded from frontend/src/data — activity shifted ${SEED_DATE_OFFSET_DAYS} day(s); ` +
+    `newest attempt ${newestAttempt.toISOString().slice(0, 10)} (today is ${new Date().toISOString().slice(0, 10)}):`,
+);
 for (const name of COLLECTIONS) console.log(`  ${name.padEnd(16)} ${String(documents[name].length).padStart(4)} documents`);
 
 if (isDryRun) {
