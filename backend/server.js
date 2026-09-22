@@ -3,7 +3,7 @@ import cors from 'cors';
 import express from 'express';
 import { connectDatabase } from './config/db.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
-import healthRoutes from './routes/health.routes.js';
+import apiRoutes from './routes/index.js';
 
 const app = express();
 const PORT = process.env.PORT ?? 5000;
@@ -29,7 +29,7 @@ app.use(
 );
 app.use(express.json({ limit: '2mb' })); // Headroom for data-URL images.
 
-app.use('/api', healthRoutes);
+app.use('/api', apiRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

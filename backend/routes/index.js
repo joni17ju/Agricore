@@ -1,0 +1,24 @@
+import { Router } from 'express';
+import authRoutes from './auth.routes.js';
+import healthRoutes from './health.routes.js';
+import leaderboardRoutes from './leaderboard.routes.js';
+import lessonRoutes from './lesson.routes.js';
+import missionRoutes from './mission.routes.js';
+import missionAttemptRoutes from './missionAttempt.routes.js';
+import moduleRoutes from './module.routes.js';
+import progressRoutes from './progress.routes.js';
+import sectionRoutes from './section.routes.js';
+import userRoutes from './user.routes.js';
+
+const router = Router();
+router.use(healthRoutes);
+router.use(authRoutes);
+router.use(userRoutes);
+router.use(sectionRoutes);
+router.use(moduleRoutes);
+router.use(lessonRoutes);
+router.use(missionRoutes);
+router.use(missionAttemptRoutes);
+router.use(progressRoutes);
+router.use(leaderboardRoutes);
+export default router;
