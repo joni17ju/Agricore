@@ -1,192 +1,128 @@
 /**
  * User accounts, roles and enrollment.
  * Used by Administrators (all users) and Instructors (their section rosters).
+ *
+ * GET /users is open to instructors and admins only, which is exactly who uses
+ * these screens. Avatar upload is the one function a student calls, and it
+ * touches only their own record through PATCH /users/:id.
  */
 import { ROLES, USER_STATUS } from '../constants/roles.js';
 import { MAX_MOCK_UPLOAD_BYTES } from '../constants/rules.js';
 import { isBlank, isValidEmail, normalizeEmail } from '../utils/validation.js';
-import { db, request, ServiceError } from './mockDb.js';
-import { requireInstructorSection, requireSection, requireUser } from './serviceContext.js';
+import { api } from './apiClient.js';
+import { ServiceError } from './serviceError.js';
+import { requireInstructorSection, requireUser } from './serviceContext.js';
 
 const EDITABLE_FIELDS = ['firstName', 'lastName', 'email', 'schoolId'];
+
+const byName = (a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName);
 
 function matchesSearch(user, search) {
   if (isBlank(search)) return true;
   const term = search.trim().toLowerCase();
   return [user.firstName, user.lastName, `${user.firstName} ${user.lastName}`, user.email, user.schoolId]
     .filter(Boolean)
-    .some((value) => value.toLowerCase().includes(term));
+    .some((value) => String(value).toLowerCase().includes(term));
 }
 
-const byName = (a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName);
-
-function assertEmailAvailable(email, ignoreId) {
+function validateEmail(email) {
   if (!isValidEmail(email)) throw new ServiceError('Enter a valid email address.');
-  const normalized = normalizeEmail(email);
-  if (db.findOne('users', (u) => u._id !== ignoreId && u.email === normalized)) {
-    throw new ServiceError('An account with this email already exists.', 409);
-  }
-  return normalized;
+  return normalizeEmail(email);
 }
 
-function unassignInstructorSections(user) {
-  for (const sectionId of user.assignedSectionIds) {
-    const section = db.findById('sections', sectionId);
-    if (section?.instructorId === user._id) db.update('sections', sectionId, { instructorId: null });
-  }
-}
-
-/**
- * @param {{ role?: string, status?: string, sectionId?: string, search?: string }} filters
- */
-export function listUsers(filters = {}) {
-  return request(() =>
-    db
-      .find(
-        'users',
-        (u) =>
-          (!filters.role || u.role === filters.role) &&
-          (!filters.status || u.status === filters.status) &&
-          (!filters.sectionId || u.sectionId === filters.sectionId || u.assignedSectionIds.includes(filters.sectionId)) &&
-          matchesSearch(u, filters.search),
-      )
-      .sort(byName),
-  );
+export async function listUsers(filters = {}) {
+  const users = await api.get('/users', {
+    role: filters.role,
+    status: filters.status,
+    sectionId: filters.sectionId,
+    search: filters.search,
+  });
+  return [...users].sort(byName);
 }
 
 export function getUser(userId) {
-  return request(() => requireUser(userId));
+  return requireUser(userId);
 }
 
-/** Administrator: create a student, instructor or administrator account. */
-export function createUser({ role, firstName, lastName, email, schoolId, sectionId, status = USER_STATUS.ACTIVE }) {
-  return request(() => {
-    if (!Object.values(ROLES).includes(role)) throw new ServiceError('Choose a valid role.');
-    if (isBlank(firstName) || isBlank(lastName)) throw new ServiceError('First and last name are required.');
-    if (!Object.values(USER_STATUS).includes(status)) throw new ServiceError('Choose a valid status.');
-    if (role === ROLES.STUDENT) requireSection(sectionId);
-
-    return db.insert('users', {
-      role,
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      email: assertEmailAvailable(email),
-      schoolId: isBlank(schoolId) ? null : schoolId.trim(),
-      sectionId: role === ROLES.STUDENT ? sectionId : null,
-      assignedSectionIds: [],
-      status,
-      earnedBadges: [],
-    });
+export async function createUser({ role, firstName, lastName, email, schoolId, sectionId, status = USER_STATUS.ACTIVE }) {
+  if (!Object.values(ROLES).includes(role)) throw new ServiceError('Choose a valid role.');
+  if (isBlank(firstName) || isBlank(lastName)) throw new ServiceError('First and last name are required.');
+  return api.post('/users', {
+    role,
+    firstName: String(firstName).trim(),
+    lastName: String(lastName).trim(),
+    email: validateEmail(email),
+    schoolId: isBlank(schoolId) ? null : String(schoolId).trim(),
+    sectionId: role === ROLES.STUDENT ? sectionId ?? null : null,
+    status,
   });
 }
 
-/** Update profile fields (name, email, school ID). */
-export function updateUser(userId, changes) {
-  return request(() => {
-    const user = requireUser(userId);
-    const updates = Object.fromEntries(Object.entries(changes).filter(([key]) => EDITABLE_FIELDS.includes(key)));
-    if ('firstName' in updates && isBlank(updates.firstName)) throw new ServiceError('First name is required.');
-    if ('lastName' in updates && isBlank(updates.lastName)) throw new ServiceError('Last name is required.');
-    if ('email' in updates) updates.email = assertEmailAvailable(updates.email, user._id);
-    if ('schoolId' in updates) updates.schoolId = isBlank(updates.schoolId) ? null : updates.schoolId.trim();
-    return db.update('users', userId, updates);
-  });
+export async function updateUser(userId, changes) {
+  const updates = Object.fromEntries(Object.entries(changes).filter(([key]) => EDITABLE_FIELDS.includes(key)));
+  if ('firstName' in updates && isBlank(updates.firstName)) throw new ServiceError('First name is required.');
+  if ('lastName' in updates && isBlank(updates.lastName)) throw new ServiceError('Last name is required.');
+  if ('email' in updates) updates.email = validateEmail(updates.email);
+  if ('schoolId' in updates) updates.schoolId = isBlank(updates.schoolId) ? null : String(updates.schoolId).trim();
+  return api.patch(`/users/${userId}`, updates);
 }
 
 /**
  * Mock profile picture upload: the image is stored on the user as a data URL.
- * The real backend will store the file and persist its URL instead.
- *
- * Mirrors uploadMediaAsset() in lessonService.js — same size cap, same
- * data-URL approach, so both swap out the same way later.
+ * A real backend would store the file and persist its URL instead.
  */
-export function uploadAvatar(userId, file) {
-  return request(async () => {
-    requireUser(userId);
-    if (!file) throw new ServiceError('Choose an image to upload.');
-    if (!file.type.startsWith('image/')) throw new ServiceError('Choose an image file (PNG, JPG or WebP).');
-    if (file.size > MAX_MOCK_UPLOAD_BYTES) {
-      const limitMb = (MAX_MOCK_UPLOAD_BYTES / 1024 / 1024).toFixed(1);
-      throw new ServiceError(`Images must be ${limitMb} MB or smaller in the prototype.`, 413);
-    }
-    const avatarUrl = await readFileAsDataUrl(file);
-    return db.update('users', userId, { avatarUrl });
-  });
-}
-
-/** Drop the uploaded picture and fall back to the initials avatar. */
-export function removeAvatar(userId) {
-  return request(() => {
-    requireUser(userId);
-    return db.update('users', userId, { avatarUrl: null });
-  });
-}
-
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
+export async function uploadAvatar(userId, file) {
+  if (!file) throw new ServiceError('Choose an image to upload.');
+  if (!file.type.startsWith('image/')) throw new ServiceError('Choose an image file (PNG, JPG or WebP).');
+  if (file.size > MAX_MOCK_UPLOAD_BYTES) {
+    const limitMb = (MAX_MOCK_UPLOAD_BYTES / 1024 / 1024).toFixed(1);
+    throw new ServiceError(`Images must be ${limitMb} MB or smaller in the prototype.`, 413);
+  }
+  const avatarUrl = await new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
     reader.onerror = () => reject(new ServiceError('The file could not be read.'));
     reader.readAsDataURL(file);
   });
+  return api.patch(`/users/${userId}`, { avatarUrl });
 }
 
-export function setUserStatus(userId, status) {
-  return request(() => {
-    if (!Object.values(USER_STATUS).includes(status)) throw new ServiceError('Choose a valid status.');
-    const user = requireUser(userId);
-    if (status !== USER_STATUS.ACTIVE && user.role === ROLES.INSTRUCTOR) unassignInstructorSections(user);
-    return db.update('users', userId, {
-      status,
-      assignedSectionIds: status === USER_STATUS.ACTIVE ? user.assignedSectionIds : [],
-    });
+export function removeAvatar(userId) {
+  return api.patch(`/users/${userId}`, { avatarUrl: null });
+}
+
+export async function setUserStatus(userId, status) {
+  if (!Object.values(USER_STATUS).includes(status)) throw new ServiceError('Choose a valid status.');
+  return api.patch(`/users/${userId}`, { status });
+}
+
+export async function changeUserRole(userId, role, { sectionId } = {}) {
+  if (!Object.values(ROLES).includes(role)) throw new ServiceError('Choose a valid role.');
+  const user = await requireUser(userId);
+  if (user.role === ROLES.ADMIN && role !== ROLES.ADMIN) {
+    const admins = await api.get('/users', { role: ROLES.ADMIN });
+    if (admins.length === 1) throw new ServiceError('There must be at least one administrator.', 409);
+  }
+  return api.patch(`/users/${userId}`, {
+    role,
+    sectionId: role === ROLES.STUDENT ? sectionId ?? user.sectionId ?? null : null,
+    assignedSectionIds: role === ROLES.INSTRUCTOR ? user.assignedSectionIds ?? [] : [],
   });
 }
 
-/** Administrator: change a user's role. Section links that no longer apply are cleared. */
-export function changeUserRole(userId, role, { sectionId } = {}) {
-  return request(() => {
-    if (!Object.values(ROLES).includes(role)) throw new ServiceError('Choose a valid role.');
-    const user = requireUser(userId);
-    if (user.role === role) return user;
-    if (user.role === ROLES.ADMIN && db.find('users', (u) => u.role === ROLES.ADMIN).length === 1) {
-      throw new ServiceError('The system needs at least one administrator.', 409);
-    }
-    if (role === ROLES.STUDENT) requireSection(sectionId);
-    if (user.role === ROLES.INSTRUCTOR) unassignInstructorSections(user);
-
-    return db.update('users', userId, {
-      role,
-      sectionId: role === ROLES.STUDENT ? sectionId : null,
-      assignedSectionIds: [],
-    });
-  });
+export async function enrollStudent(studentId, sectionId) {
+  await requireUser(studentId, ROLES.STUDENT);
+  return api.patch(`/users/${studentId}`, { sectionId });
 }
 
-/** Move a student to another section (enrollment). */
-export function enrollStudent(studentId, sectionId) {
-  return request(() => {
-    requireUser(studentId, ROLES.STUDENT);
-    requireSection(sectionId);
-    return db.update('users', studentId, { sectionId });
-  });
-}
-
-/** Delete an account. A student's attempts and progress are deleted with it. */
-export function deleteUser(userId) {
-  return request(() => {
-    const user = requireUser(userId);
-    if (user.role === ROLES.ADMIN && db.find('users', (u) => u.role === ROLES.ADMIN).length === 1) {
-      throw new ServiceError('The system needs at least one administrator.', 409);
-    }
-    if (user.role === ROLES.INSTRUCTOR) unassignInstructorSections(user);
-    if (user.role === ROLES.STUDENT) {
-      db.removeWhere('missionAttempts', (a) => a.studentId === userId);
-      db.removeWhere('progress', (p) => p.studentId === userId);
-    }
-    db.remove('users', userId);
-    return { deleted: true };
-  });
+export async function deleteUser(userId) {
+  const user = await requireUser(userId);
+  if (user.role === ROLES.ADMIN) {
+    const admins = await api.get('/users', { role: ROLES.ADMIN });
+    if (admins.length === 1) throw new ServiceError('There must be at least one administrator.', 409);
+  }
+  // The server removes the account; its attempts and progress go with it.
+  return api.del(`/users/${userId}`);
 }
 
 // ───────── Instructor roster (Proposal Fig 26) ─────────
@@ -196,54 +132,49 @@ export function deleteUser(userId) {
  * @param {string} instructorId
  * @param {{ sectionId?: string, search?: string, status?: string }} filters
  */
-export function listRoster(instructorId, filters = {}) {
-  return request(() => {
-    const instructor = requireUser(instructorId, ROLES.INSTRUCTOR);
-    if (filters.sectionId) requireInstructorSection(instructorId, filters.sectionId);
-    const sectionIds = filters.sectionId ? [filters.sectionId] : instructor.assignedSectionIds;
-    return db
-      .find(
-        'users',
-        (u) =>
-          u.role === ROLES.STUDENT &&
-          sectionIds.includes(u.sectionId) &&
-          (!filters.status || u.status === filters.status) &&
-          matchesSearch(u, filters.search),
-      )
-      .sort(byName);
-  });
+export async function listRoster(instructorId, filters = {}) {
+  const instructor = await requireUser(instructorId, ROLES.INSTRUCTOR);
+  if (filters.sectionId) await requireInstructorSection(instructorId, filters.sectionId);
+  const sectionIds = (filters.sectionId ? [filters.sectionId] : instructor.assignedSectionIds ?? []).map(String);
+  if (sectionIds.length === 0) return [];
+
+  // One request per section keeps the filtering server-side.
+  const perSection = await Promise.all(
+    sectionIds.map((sectionId) => api.get('/users', { role: ROLES.STUDENT, sectionId, status: filters.status })),
+  );
+  return perSection
+    .flat()
+    .filter((student) => matchesSearch(student, filters.search))
+    .sort(byName);
 }
 
 /** Instructor edits a student in one of their sections. */
-export function updateRosterStudent(instructorId, studentId, changes) {
-  return request(() => {
-    const student = requireUser(studentId, ROLES.STUDENT);
-    requireInstructorSection(instructorId, student.sectionId);
-    const updates = {};
-    for (const field of EDITABLE_FIELDS) {
-      if (field in changes) updates[field] = changes[field];
-    }
-    if ('firstName' in updates && isBlank(updates.firstName)) throw new ServiceError('First name is required.');
-    if ('lastName' in updates && isBlank(updates.lastName)) throw new ServiceError('Last name is required.');
-    if ('email' in updates) updates.email = assertEmailAvailable(updates.email, studentId);
-    if ('schoolId' in updates) updates.schoolId = isBlank(updates.schoolId) ? null : updates.schoolId.trim();
-    if (changes.sectionId && changes.sectionId !== student.sectionId) {
-      requireInstructorSection(instructorId, changes.sectionId);
-      updates.sectionId = changes.sectionId;
-    }
-    if (changes.status) {
-      if (!Object.values(USER_STATUS).includes(changes.status)) throw new ServiceError('Choose a valid status.');
-      updates.status = changes.status;
-    }
-    return db.update('users', studentId, updates);
-  });
+export async function updateRosterStudent(instructorId, studentId, changes) {
+  const student = await requireUser(studentId, ROLES.STUDENT);
+  await requireInstructorSection(instructorId, student.sectionId);
+
+  const updates = {};
+  for (const field of EDITABLE_FIELDS) {
+    if (field in changes) updates[field] = changes[field];
+  }
+  if ('firstName' in updates && isBlank(updates.firstName)) throw new ServiceError('First name is required.');
+  if ('lastName' in updates && isBlank(updates.lastName)) throw new ServiceError('Last name is required.');
+  if ('email' in updates) updates.email = validateEmail(updates.email);
+  if ('schoolId' in updates) updates.schoolId = isBlank(updates.schoolId) ? null : String(updates.schoolId).trim();
+  if (changes.sectionId && String(changes.sectionId) !== String(student.sectionId)) {
+    await requireInstructorSection(instructorId, changes.sectionId);
+    updates.sectionId = changes.sectionId;
+  }
+  if (changes.status) {
+    if (!Object.values(USER_STATUS).includes(changes.status)) throw new ServiceError('Choose a valid status.');
+    updates.status = changes.status;
+  }
+  return api.patch(`/users/${studentId}`, updates);
 }
 
 /** Instructor removes a student from the course (the account is deactivated, not deleted). */
-export function removeRosterStudent(instructorId, studentId) {
-  return request(() => {
-    const student = requireUser(studentId, ROLES.STUDENT);
-    requireInstructorSection(instructorId, student.sectionId);
-    return db.update('users', studentId, { status: USER_STATUS.INACTIVE });
-  });
+export async function removeRosterStudent(instructorId, studentId) {
+  const student = await requireUser(studentId, ROLES.STUDENT);
+  await requireInstructorSection(instructorId, student.sectionId);
+  return api.patch(`/users/${studentId}`, { status: USER_STATUS.INACTIVE });
 }

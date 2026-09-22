@@ -15,7 +15,7 @@ import {
 } from '../utils/analytics.js';
 import { buildStudentCurriculum } from '../utils/curriculum.js';
 import { isBlank } from '../utils/validation.js';
-import { db, request } from './mockDb.js';
+import { api } from './apiClient.js';
 import {
   fullName,
   getCourse,
@@ -34,13 +34,21 @@ const STATUS_SEVERITY = {
 };
 
 /** Metrics, statuses and course-level analytics for a group of students. */
-function analyzeStudents(students, course, now = new Date()) {
-  const studentData = students.map((student) => {
-    const { attempts, progress } = getStudentActivity(student._id);
-    const curriculum = buildStudentCurriculum({ ...course, attempts, progress });
-    const metrics = computeStudentMetrics({ attempts, curriculum, missionsById: course.missionsById, now });
-    return { student, attempts, curriculum, metrics };
-  });
+async function analyzeStudents(students, course, now = new Date()) {
+  // One activity fetch per student, in parallel. Instructors and admins are
+  // allowed to read any student's records, so this needs no special scoping.
+  const studentData = await Promise.all(
+    students.map(async (student) => {
+      const { attempts, progress } = await getStudentActivity(student._id);
+      const curriculum = buildStudentCurriculum({ ...course, attempts, progress });
+      const metrics = computeStudentMetrics({ attempts, curriculum, missionsById: course.missionsById, now });
+      return { student, attempts, curriculum, metrics };
+    }),
+  );
+
+  // Sections are fetched once and looked up locally rather than per student.
+  const sectionList = await api.get('/sections');
+  const sectionsById = new Map(sectionList.map((section) => [String(section._id), section]));
 
   // Status is relative to the student's own section average.
   const sectionAverages = new Map();
@@ -51,7 +59,7 @@ function analyzeStudents(students, course, now = new Date()) {
 
   const rows = studentData.map(({ student, metrics }) => ({
     student,
-    section: db.findById('sections', student.sectionId),
+    section: sectionsById.get(String(student.sectionId)) ?? null,
     metrics,
     status: determinePerformanceStatus(metrics, sectionAverages.get(student.sectionId)),
   }));
@@ -77,15 +85,15 @@ function analyzeStudents(students, course, now = new Date()) {
   };
 }
 
-function instructorStudents(instructorId, sectionId) {
-  const instructor = requireUser(instructorId, ROLES.INSTRUCTOR);
+async function instructorStudents(instructorId, sectionId) {
+  const instructor = await requireUser(instructorId, ROLES.INSTRUCTOR);
   if (sectionId) {
-    requireInstructorSection(instructorId, sectionId);
-    return { instructor, students: getSectionStudents(sectionId) };
+    await requireInstructorSection(instructorId, sectionId);
+    return { instructor, students: await getSectionStudents(sectionId) };
   }
   return {
     instructor,
-    students: instructor.assignedSectionIds.flatMap((id) => getSectionStudents(id)),
+    students: (await Promise.all((instructor.assignedSectionIds ?? []).map((id) => getSectionStudents(id)))).flat(),
   };
 }
 
@@ -101,28 +109,29 @@ const sortBySeverity = (rows) =>
  * @param {string} instructorId
  * @param {{ sectionId?: string }} options  omit sectionId for all assigned sections
  */
-export function getInstructorDashboard(instructorId, { sectionId } = {}) {
-  return request(() => {
-    const { instructor, students } = instructorStudents(instructorId, sectionId);
-    const analysis = analyzeStudents(students, getCourse());
-    return {
-      instructor,
-      sections: instructor.assignedSectionIds.map((id) => db.findById('sections', id)).filter(Boolean),
-      selectedSectionId: sectionId ?? null,
-      ...analysis,
-      rows: sortBySeverity(analysis.rows),
-    };
-  });
+export async function getInstructorDashboard(instructorId, { sectionId } = {}) {
+  const { instructor, students } = await instructorStudents(instructorId, sectionId);
+  const analysis = await analyzeStudents(students, await getCourse());
+  const sections = await Promise.all(
+    (instructor.assignedSectionIds ?? []).map((id) => api.get(`/sections/${id}`).catch(() => null)),
+  );
+  return {
+    instructor,
+    sections: sections.filter(Boolean),
+    selectedSectionId: sectionId ?? null,
+    ...analysis,
+    rows: sortBySeverity(analysis.rows),
+  };
 }
 
 /**
  * Student Performance page: mastery heatmap and individual records.
  * @param {{ sectionId?: string, search?: string, status?: string }} filters
  */
-export function getStudentPerformance(instructorId, { sectionId, search, status } = {}) {
-  return request(() => {
-    const { instructor, students } = instructorStudents(instructorId, sectionId);
-    const analysis = analyzeStudents(students, getCourse());
+export async function getStudentPerformance(instructorId, { sectionId, search, status } = {}) {
+  {
+    const { instructor, students } = await instructorStudents(instructorId, sectionId);
+    const analysis = await analyzeStudents(students, await getCourse());
     const term = search?.trim().toLowerCase();
     const rows = analysis.rows.filter(
       (row) =>
@@ -132,23 +141,24 @@ export function getStudentPerformance(instructorId, { sectionId, search, status 
           (row.student.schoolId ?? '').toLowerCase().includes(term)),
     );
     return {
-      sections: instructor.assignedSectionIds.map((id) => db.findById('sections', id)).filter(Boolean),
+      sections: (await Promise.all((instructor.assignedSectionIds ?? []).map((id) => api.get('/sections/' + id).catch(() => null)))).filter(Boolean),
       summary: analysis.summary,
       lessonMastery: analysis.lessonMastery,
       rows: sortBySeverity(rows),
     };
-  });
+  }
 }
 
 /** Full performance history of one student (instructor "view" action). */
-export function getStudentPerformanceDetail(instructorId, studentId) {
-  return request(() => {
-    const student = requireUser(studentId, ROLES.STUDENT);
-    requireInstructorSection(instructorId, student.sectionId);
-    const course = getCourse();
-    const sectionAnalysis = analyzeStudents(getSectionStudents(student.sectionId, { includeInactive: true }), course);
-    const row = sectionAnalysis.rows.find((item) => item.student._id === studentId);
-    const { attempts, progress } = getStudentActivity(studentId);
+export async function getStudentPerformanceDetail(instructorId, studentId) {
+  {
+    const student = await requireUser(studentId, ROLES.STUDENT);
+    await requireInstructorSection(instructorId, student.sectionId);
+    const course = await getCourse();
+    const peers = await getSectionStudents(student.sectionId, { includeInactive: true });
+    const sectionAnalysis = await analyzeStudents(peers, course);
+    const row = sectionAnalysis.rows.find((item) => String(item.student._id) === String(studentId));
+    const { attempts, progress } = await getStudentActivity(studentId);
     const curriculum = buildStudentCurriculum({ ...course, attempts, progress });
 
     return {
@@ -162,22 +172,22 @@ export function getStudentPerformanceDetail(instructorId, studentId) {
         totalLevels: entry.totalLevels,
       })),
       attempts: [...attempts]
-        .sort((a, b) => b.attemptedAt.localeCompare(a.attemptedAt))
+        .sort((a, b) => String(b.attemptedAt).localeCompare(String(a.attemptedAt)))
         .map((attempt) => {
-          const mission = course.missionsById.get(attempt.missionId);
+          const mission = course.missionsById.get(String(attempt.missionId));
           return { attempt, mission, ...(mission ? getMissionContext(mission, course) : {}) };
         }),
-      badges: student.earnedBadges.map((badge) => ({ ...BADGES_BY_CODE[badge.code], earnedAt: badge.earnedAt })),
+      badges: (student.earnedBadges ?? []).map((badge) => ({ ...BADGES_BY_CODE[badge.code], earnedAt: badge.earnedAt })),
     };
-  });
+  }
 }
 
 /** Administrator dashboard counts. */
-export function getAdminOverview() {
-  return request(() => {
-    const users = db.all('users');
+export async function getAdminOverview() {
+  {
+    const [users, sections, course] = await Promise.all([api.get('/users'), api.get('/sections'), getCourse()]);
     const count = (predicate) => users.filter(predicate).length;
-    const sections = db.all('sections');
+    const sectionIds = new Set(sections.map((s) => String(s._id)));
     return {
       students: count((u) => u.role === ROLES.STUDENT),
       activeStudents: count((u) => u.role === ROLES.STUDENT && u.status === USER_STATUS.ACTIVE),
@@ -187,10 +197,10 @@ export function getAdminOverview() {
       inactiveUsers: count((u) => u.status === USER_STATUS.INACTIVE),
       sections: sections.length,
       sectionsWithoutInstructor: sections.filter((s) => !s.instructorId),
-      studentsWithoutSection: count((u) => u.role === ROLES.STUDENT && !db.findById('sections', u.sectionId)),
-      modules: db.all('modules').length,
-      lessons: db.all('lessons').length,
-      missions: db.all('missions').length,
+      studentsWithoutSection: count((u) => u.role === ROLES.STUDENT && !sectionIds.has(String(u.sectionId))),
+      modules: course.modules.length,
+      lessons: course.lessons.length,
+      missions: course.missions.length,
     };
-  });
+  }
 }

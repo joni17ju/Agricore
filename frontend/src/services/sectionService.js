@@ -2,99 +2,105 @@
  * Academic sections and instructor assignment (Administrator).
  * The section ↔ instructor link is stored on both sides
  * (`sections.instructorId` and `users.assignedSectionIds`) and kept in sync here.
+ *
+ * Admin-only screens, so reading the full user list is permitted — GET /users
+ * is open to instructors and admins.
  */
 import { ROLES, USER_STATUS } from '../constants/roles.js';
 import { isBlank } from '../utils/validation.js';
-import { db, request, ServiceError } from './mockDb.js';
+import { api } from './apiClient.js';
+import { ServiceError } from './serviceError.js';
 import { requireSection, requireUser } from './serviceContext.js';
 
-function setSectionInstructor(section, instructorId) {
+/**
+ * Point a section at an instructor, keeping users.assignedSectionIds in step.
+ * Both sides are written here because the API stores the link on both.
+ */
+async function setSectionInstructor(section, instructorId) {
   if (section.instructorId) {
-    const previous = db.findById('users', section.instructorId);
+    const previous = await api.get(`/users/${section.instructorId}`).catch(() => null);
     if (previous) {
-      db.update('users', previous._id, {
-        assignedSectionIds: previous.assignedSectionIds.filter((id) => id !== section._id),
+      await api.patch(`/users/${previous._id}`, {
+        assignedSectionIds: (previous.assignedSectionIds ?? []).filter((id) => String(id) !== String(section._id)),
       });
     }
   }
   if (instructorId) {
-    const instructor = requireUser(instructorId, ROLES.INSTRUCTOR);
+    const instructor = await requireUser(instructorId, ROLES.INSTRUCTOR);
     if (instructor.status !== USER_STATUS.ACTIVE) {
       throw new ServiceError('Only active instructors can be assigned to a section.');
     }
-    if (!instructor.assignedSectionIds.includes(section._id)) {
-      db.update('users', instructor._id, {
-        assignedSectionIds: [...instructor.assignedSectionIds, section._id],
-      });
+    const assigned = (instructor.assignedSectionIds ?? []).map(String);
+    if (!assigned.includes(String(section._id))) {
+      await api.patch(`/users/${instructor._id}`, { assignedSectionIds: [...assigned, section._id] });
     }
   }
-  return db.update('sections', section._id, { instructorId: instructorId || null });
+  return api.patch(`/sections/${section._id}`, { instructorId: instructorId || null });
 }
 
-function assertUniqueName(sectionName, ignoreId) {
+async function assertUniqueName(sectionName, ignoreId) {
   const name = sectionName.trim().toLowerCase();
-  if (db.findOne('sections', (s) => s._id !== ignoreId && s.sectionName.toLowerCase() === name)) {
+  const sections = await api.get('/sections');
+  if (sections.some((s) => String(s._id) !== String(ignoreId) && s.sectionName.toLowerCase() === name)) {
     throw new ServiceError('A section with this name already exists.', 409);
   }
 }
 
-export function listSections() {
-  return request(() => [...db.all('sections')].sort((a, b) => a.sectionName.localeCompare(b.sectionName)));
+export async function listSections() {
+  const sections = await api.get('/sections');
+  return [...sections].sort((a, b) => a.sectionName.localeCompare(b.sectionName));
 }
 
 /** Sections with their instructor and enrolled student counts. */
-export function listSectionsWithDetails() {
-  return request(() =>
-    [...db.all('sections')]
-      .sort((a, b) => a.sectionName.localeCompare(b.sectionName))
-      .map((section) => {
-        const students = db.find('users', (u) => u.role === ROLES.STUDENT && u.sectionId === section._id);
-        return {
-          section,
-          instructor: section.instructorId ? db.findById('users', section.instructorId) : null,
-          studentCount: students.length,
-          activeStudentCount: students.filter((u) => u.status === USER_STATUS.ACTIVE).length,
-        };
-      }),
-  );
+export async function listSectionsWithDetails() {
+  const [sections, students, instructors] = await Promise.all([
+    api.get('/sections'),
+    api.get('/users', { role: ROLES.STUDENT }),
+    api.get('/users', { role: ROLES.INSTRUCTOR }),
+  ]);
+  const instructorsById = new Map(instructors.map((u) => [String(u._id), u]));
+
+  return [...sections]
+    .sort((a, b) => a.sectionName.localeCompare(b.sectionName))
+    .map((section) => {
+      const enrolled = students.filter((u) => String(u.sectionId) === String(section._id));
+      return {
+        section,
+        instructor: section.instructorId ? instructorsById.get(String(section.instructorId)) ?? null : null,
+        studentCount: enrolled.length,
+        activeStudentCount: enrolled.filter((u) => u.status === USER_STATUS.ACTIVE).length,
+      };
+    });
 }
 
 export function getSection(sectionId) {
-  return request(() => requireSection(sectionId));
+  return requireSection(sectionId);
 }
 
-export function createSection({ sectionName, instructorId }) {
-  return request(() => {
-    if (isBlank(sectionName)) throw new ServiceError('Section name is required.');
-    assertUniqueName(sectionName);
-    const section = db.insert('sections', { sectionName: sectionName.trim(), instructorId: null });
-    return instructorId ? setSectionInstructor(section, instructorId) : section;
-  });
+export async function createSection({ sectionName, instructorId }) {
+  if (isBlank(sectionName)) throw new ServiceError('Section name is required.');
+  await assertUniqueName(sectionName);
+  const section = await api.post('/sections', { sectionName: sectionName.trim() });
+  return instructorId ? setSectionInstructor(section, instructorId) : section;
 }
 
-export function updateSection(sectionId, { sectionName }) {
-  return request(() => {
-    requireSection(sectionId);
-    if (isBlank(sectionName)) throw new ServiceError('Section name is required.');
-    assertUniqueName(sectionName, sectionId);
-    return db.update('sections', sectionId, { sectionName: sectionName.trim() });
-  });
+export async function updateSection(sectionId, { sectionName }) {
+  if (isBlank(sectionName)) throw new ServiceError('Section name is required.');
+  await requireSection(sectionId);
+  await assertUniqueName(sectionName, sectionId);
+  return api.patch(`/sections/${sectionId}`, { sectionName: sectionName.trim() });
 }
 
 /** Assign an instructor to a section, or pass null to unassign. */
-export function assignInstructor(sectionId, instructorId) {
-  return request(() => setSectionInstructor(requireSection(sectionId), instructorId));
+export async function assignInstructor(sectionId, instructorId) {
+  const section = await requireSection(sectionId);
+  return setSectionInstructor(section, instructorId);
 }
 
-export function deleteSection(sectionId) {
-  return request(() => {
-    const section = requireSection(sectionId);
-    const enrolled = db.find('users', (u) => u.role === ROLES.STUDENT && u.sectionId === sectionId).length;
-    if (enrolled > 0) {
-      throw new ServiceError(`Move the ${enrolled} enrolled student(s) to another section first.`, 409);
-    }
-    setSectionInstructor(section, null);
-    db.remove('sections', sectionId);
-    return { deleted: true };
-  });
+export async function deleteSection(sectionId) {
+  const section = await requireSection(sectionId);
+  // Unlink the instructor first; the server refuses to delete a section that
+  // still has students enrolled.
+  await setSectionInstructor(section, null);
+  return api.del(`/sections/${sectionId}`);
 }

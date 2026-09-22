@@ -1,4 +1,4 @@
-import { Section } from '../models/index.js';
+import { Section, User } from '../models/index.js';
 import { findOr404, httpError } from '../utils/http.js';
 
 /** GET /api/sections */
@@ -28,4 +28,17 @@ export async function updateSection(req, res) {
   if (instructorId !== undefined) section.instructorId = instructorId;
   await section.save();
   res.json(section);
+}
+
+/** DELETE /api/sections/:id — refuses while students are still enrolled. */
+export async function deleteSection(req, res) {
+  const section = await findOr404(Section, req.params.id, 'Section');
+  const enrolled = await User.countDocuments({ role: 'student', sectionId: section._id });
+  if (enrolled > 0) {
+    throw httpError(409, `Move the ${enrolled} enrolled student(s) to another section first.`);
+  }
+  // Clear the reciprocal link before removing the section.
+  await User.updateMany({ assignedSectionIds: section._id }, { $pull: { assignedSectionIds: section._id } });
+  await section.deleteOne();
+  res.json({ deleted: true });
 }
