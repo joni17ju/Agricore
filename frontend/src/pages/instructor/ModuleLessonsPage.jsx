@@ -5,7 +5,7 @@ import { useToast } from '../../context/ToastContext.jsx';
 import { GAME_TYPE_INFO } from '../../constants/gameTypes.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
-import { createLesson } from '../../services/lessonService.js';
+import { createLesson, reorderLessons } from '../../services/lessonService.js';
 import { getCourseStructure, updateModuleTitle } from '../../services/moduleService.js';
 import Button from '../../components/common/Button.jsx';
 import Card from '../../components/common/Card.jsx';
@@ -13,7 +13,7 @@ import { EmptyState, ErrorState, LoadingState, PageHeader, StatusPill } from '..
 import { TextArea, TextInput } from '../../components/common/Form.jsx';
 import Icon from '../../components/common/Icon.jsx';
 import Modal from '../../components/common/Modal.jsx';
-import { summarizeHtml } from '../../components/common/SafeHtml.jsx';
+import ReorderableLessonList from '../../components/instructor/ReorderableLessonList.jsx';
 import { gameIcon } from '../../components/student/CourseMap.jsx';
 
 /** Step 2: the lessons inside one module. */
@@ -23,7 +23,23 @@ export default function ModuleLessonsPage() {
   const navigate = useNavigate();
   const { data: structure, error, isLoading, reload } = useAsync(getCourseStructure, []);
   const [addOpen, setAddOpen] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
   const entry = structure?.find((item) => item.module._id === moduleId);
+
+  /** Persist a new lesson order, then refresh so numbering comes from the server. */
+  const saveOrder = async (lessonIds) => {
+    setIsReordering(true);
+    try {
+      await reorderLessons(moduleId, lessonIds);
+      await reload();
+      toast.success('Lesson order updated.');
+    } catch (err) {
+      toast.error(err.message);
+      await reload();
+    } finally {
+      setIsReordering(false);
+    }
+  };
 
   useDocumentTitle(entry ? `Module ${entry.module.moduleNumber}` : 'Module');
   useBreadcrumb(
@@ -57,24 +73,19 @@ export default function ModuleLessonsPage() {
             action={<Button icon="plus" onClick={() => setAddOpen(true)}>Add Lesson</Button>}
           />
         ) : (
-          <ul className="lesson-rows">
-            {lessons.map(({ lesson, missions }, index) => (
-              <li key={lesson._id} className="anim-fade-up" style={{ '--i': index }}>
-                <Link to={`/instructor/modules/${module._id}/lessons/${lesson._id}`} className="lesson-row">
-                  <span className="lesson-row__number">{module.moduleNumber}.{lesson.lessonNumber}</span>
-                  <span className="lesson-row__text">
-                    <strong>{lesson.title}</strong>
-                    <small>{summarizeHtml(lesson.contentBody, 120) || 'No content yet.'}</small>
-                    <span className="lesson-row__meta">
-                      <span><Icon name="target" size={13} /> {missions.length} mission{missions.length === 1 ? '' : 's'}</span>
-                      <span><Icon name="image" size={13} /> {lesson.mediaAssets.length} media</span>
-                    </span>
-                  </span>
-                  <span className="lesson-row__edit" aria-hidden="true"><Icon name="edit" size={17} /></span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <ReorderableLessonList
+            module={module}
+            lessons={lessons}
+            isSaving={isReordering}
+            onReorder={saveOrder}
+          />
+
+        )}
+        {lessons.length > 1 && (
+          <p className="text-muted text-xs lesson-rows__hint">
+            <Icon name="menu" size={12} /> Press and hold a lesson to drag it into a new position, or focus the
+            handle and use the arrow keys.
+          </p>
         )}
       </Card>
 

@@ -30,7 +30,13 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.json({ limit: '2mb' })); // Headroom for data-URL images.
+/*
+ * Data-URL uploads are capped at 1.5MB client-side, but base64 inflates a file
+ * by about a third, so a 1.5MB image arrives as roughly 2MB. A 2mb limit sat
+ * exactly on that boundary and rejected legitimate avatar uploads; 4mb leaves
+ * real headroom.
+ */
+app.use(express.json({ limit: '4mb' }));
 
 app.use('/api', apiRoutes);
 

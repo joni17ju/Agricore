@@ -57,6 +57,16 @@ export async function updateLesson(lessonId, { title, contentBody }) {
 }
 
 /**
+ * Reorder a module's lessons. `lessonIds` is the full list in its new order;
+ * the server assigns lessonNumber 1..n to match.
+ */
+export async function reorderLessons(moduleId, lessonIds) {
+  const lessons = await api.patch('/lessons/reorder', { moduleId, lessonIds });
+  invalidateCourse();
+  return lessons;
+}
+
+/**
  * Delete a lesson together with its missions and the progress records for it.
  * The server removes the dependants and renumbers what remains.
  */

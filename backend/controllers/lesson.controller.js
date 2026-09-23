@@ -44,6 +44,48 @@ export async function updateLesson(req, res) {
 }
 
 /**
+ * PATCH /api/lessons/reorder  { moduleId, lessonIds: [...] }
+ *
+ * Assigns lessonNumber 1..n in the order given. The list must contain exactly
+ * the module's lessons — a partial list would leave gaps or duplicates.
+ *
+ * Written in two passes because (moduleId, lessonNumber) is a unique index:
+ * assigning final numbers directly collides the moment two lessons swap
+ * places, so every row is parked on a temporary negative number first.
+ */
+export async function reorderLessons(req, res) {
+  const { moduleId, lessonIds } = req.body ?? {};
+  if (!Array.isArray(lessonIds) || lessonIds.length === 0) {
+    throw httpError(400, 'lessonIds must be a non-empty array.');
+  }
+
+  const module = toObjectId(moduleId, 'moduleId');
+  const existing = await Lesson.find({ moduleId: module }, { _id: 1 });
+  const existingIds = new Set(existing.map((lesson) => String(lesson._id)));
+  const requested = lessonIds.map(String);
+
+  if (new Set(requested).size !== requested.length) {
+    throw httpError(400, 'lessonIds contains duplicates.');
+  }
+  if (requested.length !== existingIds.size || requested.some((id) => !existingIds.has(id))) {
+    throw httpError(400, 'lessonIds must list exactly the lessons of this module.');
+  }
+
+  await Lesson.bulkWrite(
+    requested.map((id, index) => ({
+      updateOne: { filter: { _id: toObjectId(id, 'lesson id') }, update: { $set: { lessonNumber: -(index + 1) } } },
+    })),
+  );
+  await Lesson.bulkWrite(
+    requested.map((id, index) => ({
+      updateOne: { filter: { _id: toObjectId(id, 'lesson id') }, update: { $set: { lessonNumber: index + 1 } } },
+    })),
+  );
+
+  res.json(await Lesson.find({ moduleId: module }).sort({ lessonNumber: 1 }));
+}
+
+/**
  * DELETE /api/lessons/:id
  * Removes the lesson with its missions and progress rows, then renumbers the
  * module's remaining lessons so numbering stays contiguous.
