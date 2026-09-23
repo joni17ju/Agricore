@@ -22,7 +22,10 @@ app.use(
     origin(origin, callback) {
       // No Origin header: curl, Postman, same-origin or server-to-server.
       if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error(`Origin not allowed by CORS: ${origin}`));
+      // Carry a status so a blocked origin reads as 403, not a server fault.
+      const error = new Error(`Origin not allowed by CORS: ${origin}`);
+      error.status = 403;
+      return callback(error);
     },
     credentials: true,
   }),
