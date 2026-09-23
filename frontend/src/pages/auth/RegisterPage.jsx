@@ -23,7 +23,7 @@ const ROLE_OPTIONS = [
   { value: ROLES.INSTRUCTOR, label: 'Instructor', icon: 'user-check' },
 ];
 
-const EMPTY_FORM = { firstName: '', lastName: '', email: '', sectionId: '', password: '', confirmPassword: '' };
+const EMPTY_FORM = { firstName: '', lastName: '', email: '', schoolId: '', sectionId: '', password: '', confirmPassword: '' };
 
 export default function RegisterPage() {
   useDocumentTitle('Create account');
@@ -129,8 +129,20 @@ export default function RegisterPage() {
                     />
                   </div>
 
+                  {/* Students identify themselves by school ID; instructors are issued one
+                      by the institution, so it is not collected at sign-up. */}
                   {role === ROLES.STUDENT && (
-                    <div className="login-field anim-fade-up" style={{ '--i': 5 }}>
+                    <div className="login-row login-field anim-fade-up" style={{ '--i': 5 }}>
+                      <TextInput
+                        label="School ID number"
+                        value={form.schoolId}
+                        onChange={update('schoolId')}
+                        placeholder="2023-0795"
+                        hint="Format: YYYY-NNNN"
+                        inputMode="numeric"
+                        maxLength={9}
+                        required
+                      />
                       <SelectInput
                         label="Section | Batch"
                         value={form.sectionId}

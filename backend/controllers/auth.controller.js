@@ -2,11 +2,14 @@ import bcrypt from 'bcryptjs';
 import { Section, User } from '../models/index.js';
 import { issueToken } from '../middleware/auth.js';
 import { httpError } from '../utils/http.js';
+import { SCHOOL_ID_FORMAT, buildIdentifierQuery, isValidStudentId, normalizeSchoolId } from '../utils/identifiers.js';
 
 const SALT_ROUNDS = 10;
 
 /** Kept in step with the frontend's MIN_PASSWORD_LENGTH. */
 const MIN_PASSWORD_LENGTH = 8;
+
+const isBlankValue = (value) => value === undefined || value === null || String(value).trim() === '';
 
 /** Seeded accounts carry this instead of a usable hash until they are given a password. */
 const PLACEHOLDER_HASH = 'DEV_SEED_PLACEHOLDER_HASH_NOT_REAL';
@@ -23,11 +26,18 @@ const publicUser = (user) => {
  * wrong, so the endpoint cannot be used to enumerate which accounts exist.
  */
 export async function login(req, res) {
-  const { email, password } = req.body ?? {};
-  if (!email?.trim() || !password) throw httpError(400, 'Email and password are required.');
+  const { identifier, email, password } = req.body ?? {};
+  // `email` is still accepted so older callers keep working.
+  const signIn = identifier ?? email;
+  if (!String(signIn ?? '').trim() || !password) {
+    throw httpError(400, 'Email or school ID and password are required.');
+  }
 
-  const user = await User.findOne({ email: String(email).trim().toLowerCase() });
-  const invalid = httpError(401, 'Incorrect email or password.');
+  const query = buildIdentifierQuery(signIn);
+  const user = query ? await User.findOne(query) : null;
+  // One message for an unknown identifier and a wrong password alike, so this
+  // cannot be used to discover which emails or IDs exist.
+  const invalid = httpError(401, 'Incorrect email/school ID or password.');
   if (!user) throw invalid;
 
   if (user.passwordHash === PLACEHOLDER_HASH) {
@@ -59,6 +69,25 @@ export async function register(req, res) {
   const normalisedEmail = String(email).trim().toLowerCase();
   if (await User.findOne({ email: normalisedEmail })) throw httpError(409, 'That email address is already registered.');
 
+  /*
+   * Students must supply a school ID in the YYYY-NNNN format, and it must be
+   * unique. Instructors register without one — their IDs are issued by the
+   * institution, not chosen at sign-up.
+   */
+  let normalisedSchoolId = null;
+  if (role === 'student') {
+    normalisedSchoolId = normalizeSchoolId(schoolId);
+    if (!normalisedSchoolId) throw httpError(400, 'School ID number is required.');
+    if (!isValidStudentId(normalisedSchoolId)) {
+      throw httpError(400, `School ID number must be in the format ${SCHOOL_ID_FORMAT}.`);
+    }
+    if (await User.findOne({ schoolId: normalisedSchoolId })) {
+      throw httpError(409, 'That school ID number is already registered.');
+    }
+  } else if (!isBlankValue(schoolId)) {
+    normalisedSchoolId = normalizeSchoolId(schoolId);
+  }
+
   if (sectionId) {
     const section = await Section.findById(sectionId);
     if (!section) throw httpError(400, 'That section does not exist.');
@@ -70,7 +99,7 @@ export async function register(req, res) {
     lastName: lastName.trim(),
     email: normalisedEmail,
     passwordHash: await bcrypt.hash(String(password), SALT_ROUNDS),
-    schoolId,
+    schoolId: normalisedSchoolId,
     sectionId: role === 'student' ? sectionId : null,
     assignedSectionIds: [],
     status: role === 'instructor' ? 'pending' : 'active',

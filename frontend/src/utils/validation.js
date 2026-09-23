@@ -20,3 +20,17 @@ export function validateRequired(values, fields) {
 }
 
 export const MIN_PASSWORD_LENGTH = 8;
+
+/**
+ * Student school ID: YYYY-NNNN, e.g. 2023-0795.
+ * Mirrors backend/utils/identifiers.js — change both together.
+ */
+const STUDENT_ID_PATTERN = /^\d{4}-\d{4}$/;
+export const SCHOOL_ID_FORMAT = 'YYYY-NNNN (for example 2023-0795)';
+
+export function isValidStudentId(value) {
+  const id = String(value ?? '').trim();
+  if (!STUDENT_ID_PATTERN.test(id)) return false;
+  const year = Number(id.slice(0, 4));
+  return year >= 1900 && year <= new Date().getFullYear() + 1;
+}

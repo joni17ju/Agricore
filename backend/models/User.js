@@ -27,4 +27,15 @@ const userSchema = new Schema(
   { collection: 'users', timestamps: true },
 );
 
+/*
+ * School IDs are unique, but only where one exists. A plain unique index would
+ * treat every null as the same value and reject the second account without an
+ * ID — instructors and admins may legitimately have none. The partial filter
+ * constrains real strings only.
+ */
+userSchema.index(
+  { schoolId: 1 },
+  { unique: true, partialFilterExpression: { schoolId: { $type: 'string' } } },
+);
+
 export default mongoose.model('User', userSchema);

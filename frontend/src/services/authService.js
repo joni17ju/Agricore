@@ -11,7 +11,7 @@
  * stale prototype session cannot linger.
  */
 import { ROLES, USER_STATUS } from '../constants/roles.js';
-import { isBlank, isValidEmail, MIN_PASSWORD_LENGTH, normalizeEmail } from '../utils/validation.js';
+import { isBlank, isValidEmail, isValidStudentId, MIN_PASSWORD_LENGTH, normalizeEmail, SCHOOL_ID_FORMAT } from '../utils/validation.js';
 import { api, setToken, getToken } from './apiClient.js';
 import { ServiceError } from './serviceError.js';
 
@@ -42,23 +42,24 @@ function assertCanSignIn(user) {
   }
 }
 
-async function signIn(email, password, role) {
+async function signIn(identifier, password, role) {
   let result;
   try {
-    result = await api.post('/auth/login', { email: normalizeEmail(email), password });
+    // The server decides whether this is an email or a school ID.
+    result = await api.post('/auth/login', { identifier: String(identifier).trim(), password });
   } catch (error) {
     // The API answers 401 identically for unknown email and wrong password;
     // keep the prototype's wording, including the role hint when one was given.
     if (error.status === 401) {
       const roleText = role ? ` ${role}` : '';
-      throw new ServiceError(`No${roleText} account found with that email, or the password is incorrect.`, 401);
+      throw new ServiceError(`No${roleText} account found with that email or school ID, or the password is incorrect.`, 401);
     }
     throw error;
   }
 
   if (role && result.user.role !== role) {
     setToken(null);
-    throw new ServiceError(`No ${role} account found with that email.`, 401);
+    throw new ServiceError(`No ${role} account found with that email or school ID.`, 401);
   }
   assertCanSignIn(result.user);
   setToken(result.token);
@@ -67,12 +68,22 @@ async function signIn(email, password, role) {
 }
 
 /**
- * @param {{ email: string, password: string, role?: 'student' | 'instructor' | 'admin' }} credentials
+ * Sign in with either an email address or a school ID number.
+ *
+ * `identifier` is the field name; `email` is still accepted so any older caller
+ * keeps working. Anything containing "@" is validated as an email, everything
+ * else is passed through as an ID for the server to look up.
+ *
+ * @param {{ identifier?: string, email?: string, password: string, role?: 'student' | 'instructor' | 'admin' }} credentials
  */
-export async function login({ email, password, role }) {
-  if (!isValidEmail(email)) throw new ServiceError('Enter a valid email address.');
+export async function login({ identifier, email, password, role }) {
+  const signInAs = String(identifier ?? email ?? '').trim();
+  if (isBlank(signInAs)) throw new ServiceError('Enter your email address or school ID number.');
+  if (signInAs.includes('@') && !isValidEmail(signInAs)) {
+    throw new ServiceError('Enter a valid email address.');
+  }
   if (isBlank(password)) throw new ServiceError('Enter your password.');
-  return signIn(email, password, role);
+  return signIn(signInAs, password, role);
 }
 
 /** One-click demo sign-in: a real login using the shared demo password. */
@@ -100,6 +111,12 @@ export async function register({ role, firstName, lastName, email, password, con
   }
   if (password !== confirmPassword) throw new ServiceError('Passwords do not match.');
   if (role === ROLES.STUDENT && isBlank(sectionId)) throw new ServiceError('Select your section.');
+  if (role === ROLES.STUDENT) {
+    if (isBlank(schoolId)) throw new ServiceError('Enter your school ID number.');
+    if (!isValidStudentId(schoolId)) {
+      throw new ServiceError(`School ID number must be in the format ${SCHOOL_ID_FORMAT}.`);
+    }
+  }
 
   const result = await api.post('/auth/register', {
     role,

@@ -30,7 +30,7 @@ export default function LoginPage() {
   const { login, loginAsDemo } = useAuth();
   const navigate = useNavigate();
   const [role, setRole] = useState(ROLES.STUDENT);
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [form, setForm] = useState({ identifier: '', password: '' });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
@@ -107,12 +107,14 @@ export default function LoginPage() {
 
               <div className="login-field anim-fade-up" style={{ '--i': 3 }}>
                 <TextInput
-                  label="Email address"
-                  type="email"
-                  autoComplete="email"
-                  placeholder={role === ROLES.STUDENT ? 'juan.delacruz@dorsu.edu.ph' : 'c.reyes@dorsu.edu.ph'}
-                  value={form.email}
-                  onChange={(event) => setForm({ ...form, email: event.target.value })}
+                  label={role === ROLES.STUDENT ? 'Email or school ID' : 'Email address'}
+                  /* Not type="email": the browser would reject a school ID. */
+                  type="text"
+                  autoComplete="username"
+                  placeholder={role === ROLES.STUDENT ? 'juan.delacruz@dorsu.edu.ph or 2023-0101' : 'c.reyes@dorsu.edu.ph'}
+                  hint={role === ROLES.STUDENT ? 'Sign in with your email address or your school ID number.' : undefined}
+                  value={form.identifier}
+                  onChange={(event) => setForm({ ...form, identifier: event.target.value })}
                   required
                 />
               </div>
