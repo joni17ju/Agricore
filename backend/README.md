@@ -48,7 +48,8 @@ shape without real values.
 | `node scripts/seed.js --dry` | Reports what would be written. Touches nothing. |
 | `node scripts/verify-seed.js` | Read-only. Checks that seeded documents carry the fields the frontend reads, that every `scenarioData` matches its game type, and that no reference is orphaned. |
 | `node scripts/set-passwords.js` | Resets account passwords. `seed.js` already sets them, so this is only needed to change a password or repair an account. Defaults to `agricore123`; pass `--password "…"`, `--email "…"` or `--all`. |
-| `node scripts/smoke-test.js` | End-to-end check against a running API: auth, role guards, data routes, the leaderboard aggregation, and that a tampered score is ignored. |
+| `node scripts/smoke-test.js` | End-to-end check against a running API: auth, role guards, data routes, the leaderboard aggregation, and that a tampered score is ignored. It submits one real attempt and deletes it again, so it leaves no trace. |
+| `node scripts/remove-test-attempts.js` | Clears zero-score attempts left by older smoke-test runs. Reports by default; pass `--apply` to delete. |
 
 The seed data is generated from the frontend mock files, so the mission
 `scenarioData` shapes match exactly what the five game components render.

@@ -1,9 +1,16 @@
 /**
- * End-to-end smoke test against a running API. Read-only apart from the
- * mission attempt it submits (which is real student activity by design).
+ * End-to-end smoke test against a running API.
+ *
+ * It submits one real mission attempt — that is the only way to prove the
+ * server re-scores answers instead of trusting the client — and then deletes
+ * that attempt directly so repeated runs do not accumulate junk activity on a
+ * demo account and skew its stats. There is deliberately no DELETE route for
+ * attempts, so the cleanup goes through Mongoose.
  *
  * Usage: node scripts/smoke-test.js [baseUrl]
  */
+import 'dotenv/config';
+import mongoose from 'mongoose';
 const BASE = process.argv[2] ?? 'http://localhost:5000/api';
 const DEMO = { email: 'juan.delacruz@dorsu.edu.ph', password: 'agricore123' };
 
@@ -111,6 +118,20 @@ check('xpEarned not the cheated value', submitted.data.xpEarned !== 999999, `${s
 const after = (await call(`/missionAttempts?studentId=${studentId}`, { token })).data.length;
 check('attempt persisted', after === before + 1, `${before} → ${after}`);
 check('lesson progress upserted', ['in-progress', 'completed'].includes(submitted.data.lessonStatus), submitted.data.lessonStatus);
+
+// Remove the attempt this run created, so the test leaves no trace.
+if (submitted.data?.attempt?._id && process.env.MONGODB_URI) {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 10000 });
+    const result = await mongoose.connection.db
+      .collection('missionAttempts')
+      .deleteOne({ _id: new mongoose.Types.ObjectId(String(submitted.data.attempt._id)) });
+    check('test attempt cleaned up', result.deletedCount === 1, `${result.deletedCount} removed`);
+    await mongoose.disconnect();
+  } catch (error) {
+    check('test attempt cleaned up', false, error.message.slice(0, 80));
+  }
+}
 
 console.log(`\n${failures === 0 ? 'All checks passed.' : `${failures} check(s) FAILED.`}`);
 process.exit(failures === 0 ? 0 : 1);
