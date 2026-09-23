@@ -1,12 +1,15 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { ROLE_LABELS } from '../../constants/roles.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
 import { getStudentBadges } from '../../services/badgeService.js';
 import { getStudentCurriculumMap, getStudentDashboard } from '../../services/progressService.js';
 import { formatDateTime, missionCode } from '../../utils/format.js';
 import AvatarUploader from '../../components/common/AvatarUploader.jsx';
+import AccountDetails from '../../components/common/AccountDetails.jsx';
 import Card from '../../components/common/Card.jsx';
+import SecurityCard from '../../components/common/SecurityCard.jsx';
 import { ErrorState, LoadingState, StatTile } from '../../components/common/Display.jsx';
 import Icon from '../../components/common/Icon.jsx';
 import { ProgressBar } from '../../components/common/Progress.jsx';
@@ -35,11 +38,7 @@ export default function ProfilePage() {
           <AvatarUploader size={80} />
           <div className="profile-hero__info">
             <h1>{user.firstName} {user.lastName}</h1>
-            <div className="profile-meta">
-              <span><Icon name="mail" size={15} /> {user.email}</span>
-              {user.schoolId && <span><Icon name="id" size={15} /> {user.schoolId}</span>}
-              {dashboard.section && <span><Icon name="layers" size={15} /> {dashboard.section.sectionName}</span>}
-            </div>
+            <span className="profile-hero__role">{ROLE_LABELS[user.role]}</span>
             <div style={{ maxWidth: 420, marginTop: 8 }}>
               <ProgressBar
                 value={dashboard.level.progressPercent}
@@ -50,7 +49,20 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        <h2 className="section-heading">Account information</h2>
+        <AccountDetails
+          fields={[
+            { label: 'Full name', value: `${user.firstName} ${user.lastName}`, icon: 'user' },
+            { label: 'Email address', value: user.email, icon: 'mail' },
+            { label: 'ID number', value: user.schoolId, icon: 'id' },
+            { label: 'Section', value: dashboard.section?.sectionName, icon: 'layers' },
+            { label: 'Role', value: ROLE_LABELS[user.role], icon: 'shield' },
+          ]}
+        />
       </Card>
+
+      <SecurityCard />
 
       <div className="stat-grid">
         <StatTile label="Total XP" value={dashboard.totalXP} icon="star" tone="gold" index={0} />

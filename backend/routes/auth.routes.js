@@ -7,5 +7,5 @@ router.get('/auth/demo-accounts', demoAccounts);
 router.post('/auth/login', login);
 router.post('/auth/register', register);
 router.get('/auth/me', requireAuth, me);
-router.post('/auth/change-password', requireAuth, changePassword);
+router.patch('/auth/change-password', requireAuth, changePassword);
 export default router;

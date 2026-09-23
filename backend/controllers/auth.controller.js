@@ -5,6 +5,9 @@ import { httpError } from '../utils/http.js';
 
 const SALT_ROUNDS = 10;
 
+/** Kept in step with the frontend's MIN_PASSWORD_LENGTH. */
+const MIN_PASSWORD_LENGTH = 8;
+
 /** Seeded accounts carry this instead of a usable hash until they are given a password. */
 const PLACEHOLDER_HASH = 'DEV_SEED_PLACEHOLDER_HASH_NOT_REAL';
 
@@ -48,7 +51,9 @@ export async function register(req, res) {
 
   if (!firstName?.trim() || !lastName?.trim()) throw httpError(400, 'First and last name are required.');
   if (!email?.trim()) throw httpError(400, 'Email is required.');
-  if (!password || String(password).length < 8) throw httpError(400, 'Password must be at least 8 characters.');
+  if (!password || String(password).length < MIN_PASSWORD_LENGTH) {
+    throw httpError(400, `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+  }
   if (!['student', 'instructor'].includes(role)) throw httpError(403, 'You cannot register with that role.');
 
   const normalisedEmail = String(email).trim().toLowerCase();
@@ -86,16 +91,32 @@ export async function me(req, res) {
   res.json({ user: req.user });
 }
 
-/** POST /api/auth/change-password  { currentPassword, newPassword } */
+/**
+ * PATCH /api/auth/change-password  { currentPassword, newPassword }
+ *
+ * The current password is always verified against the stored hash. An earlier
+ * version skipped that check for accounts still carrying the seed placeholder
+ * hash, which meant anyone holding such an account's token could set a new
+ * password without knowing the old one. There is no bypass now: an account
+ * whose hash cannot be matched simply cannot change its password here, and is
+ * repaired with scripts/set-passwords.js instead.
+ */
 export async function changePassword(req, res) {
   const { currentPassword, newPassword } = req.body ?? {};
-  if (!newPassword || String(newPassword).length < 8) throw httpError(400, 'New password must be at least 8 characters.');
+  if (!currentPassword) throw httpError(400, 'Enter your current password.');
+  if (!newPassword || String(newPassword).length < MIN_PASSWORD_LENGTH) {
+    throw httpError(400, `New password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+  }
+  if (String(newPassword) === String(currentPassword)) {
+    throw httpError(400, 'Choose a password different from your current one.');
+  }
 
   const user = await User.findById(req.user._id);
-  const hasPassword = user.passwordHash && user.passwordHash !== PLACEHOLDER_HASH;
-  if (hasPassword && !(await bcrypt.compare(String(currentPassword ?? ''), user.passwordHash))) {
+  if (!user) throw httpError(404, 'Account not found.');
+  if (!(await bcrypt.compare(String(currentPassword), user.passwordHash))) {
     throw httpError(401, 'Current password is incorrect.');
   }
+
   user.passwordHash = await bcrypt.hash(String(newPassword), SALT_ROUNDS);
   await user.save();
   res.json({ updated: true });

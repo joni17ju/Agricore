@@ -75,8 +75,14 @@ async function call(path, { method = 'GET', body } = {}) {
   }
 
   if (!response.ok) {
-    // An expired or rejected token should not leave a stale one behind.
-    if (response.status === 401) setToken(null);
+    /*
+     * Discard the token only when the session itself is no longer valid, which
+     * the server marks with code "invalid_session". A 401 can also mean a route
+     * rejected supplied credentials — mistyping your current password on the
+     * change-password form, for instance — and signing the user out for that
+     * would be both confusing and wrong.
+     */
+    if (response.status === 401 && data?.code === 'invalid_session') setToken(null);
     const message = (data && typeof data === 'object' && data.message) || 'Something went wrong.';
     throw new ServiceError(message, response.status);
   }

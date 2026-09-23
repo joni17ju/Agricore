@@ -137,6 +137,24 @@ export async function logout() {
   return true;
 }
 
+/**
+ * Change the signed-in user's password.
+ *
+ * The server always verifies `currentPassword` against the stored bcrypt hash,
+ * so a wrong current password is rejected there, not merely here.
+ */
+export async function changePassword({ currentPassword, newPassword, confirmPassword }) {
+  if (isBlank(currentPassword)) throw new ServiceError('Enter your current password.');
+  if (String(newPassword ?? '').length < MIN_PASSWORD_LENGTH) {
+    throw new ServiceError(`New password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+  }
+  if (newPassword !== confirmPassword) throw new ServiceError('New passwords do not match.');
+  if (newPassword === currentPassword) throw new ServiceError('Choose a password different from your current one.');
+
+  await api.patch('/auth/change-password', { currentPassword, newPassword });
+  return { updated: true };
+}
+
 /** No reset email in the prototype; the message is unchanged. */
 export async function requestPasswordReset(email) {
   if (!isValidEmail(email)) throw new ServiceError('Enter a valid email address.');

@@ -15,6 +15,18 @@ import { httpError } from '../utils/http.js';
  */
 const TOKEN_TTL = process.env.JWT_EXPIRES_IN ?? '7d';
 
+/**
+ * A 401 meaning "your session is no longer valid", as opposed to a 401 from a
+ * route rejecting supplied credentials (a wrong current password, say). The
+ * client discards its token only for the former, so mistyping a password does
+ * not sign you out.
+ */
+function sessionError(message) {
+  const error = httpError(401, message);
+  error.code = 'invalid_session';
+  return error;
+}
+
 function secret() {
   const value = process.env.JWT_SECRET;
   if (!value) throw httpError(500, 'JWT_SECRET is not configured on the server.');
@@ -32,18 +44,18 @@ export function issueToken(user) {
 export async function requireAuth(req, res, next) {
   const header = req.headers.authorization ?? '';
   const token = header.startsWith('Bearer ') ? header.slice(7).trim() : null;
-  if (!token) return next(httpError(401, 'Authentication required.'));
+  if (!token) return next(sessionError('Authentication required.'));
 
   let payload;
   try {
     payload = jwt.verify(token, secret());
   } catch (error) {
     const expired = error.name === 'TokenExpiredError';
-    return next(httpError(401, expired ? 'Session expired — please sign in again.' : 'Invalid session token.'));
+    return next(sessionError(expired ? 'Session expired — please sign in again.' : 'Invalid session token.'));
   }
 
   const user = await User.findById(payload.sub).select('-passwordHash');
-  if (!user) return next(httpError(401, 'Account no longer exists.'));
+  if (!user) return next(sessionError('Account no longer exists.'));
   if (user.status !== 'active') return next(httpError(403, 'This account is not active.'));
 
   req.user = user;
