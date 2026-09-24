@@ -19,6 +19,7 @@ export default function InstructorProfilePage() {
   return (
     <div className="page">
       <ProfileDetailsCard
+        showIdNumber={false}
         extraFields={
           mine.length > 0
             ? [{ label: 'Assigned sections', value: mine.map((section) => section.sectionName).join(' · '), icon: 'layers' }]
