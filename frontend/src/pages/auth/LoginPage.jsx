@@ -145,7 +145,7 @@ export default function LoginPage() {
               <div className="login-demo__title">
                 <Icon name="sparkles" size={15} /> Prototype demo accounts
               </div>
-              <p>No backend yet — pick an account to sign in instantly. Any password works on the form above.</p>
+              <p>Pick an account to sign in instantly, or use the form above. The demo password is <strong>agricore123</strong>.</p>
               <div className="login-demo__list">
                 {(demoAccounts.data ?? []).map((account) => (
                   <button
@@ -166,26 +166,34 @@ export default function LoginPage() {
             </section>
 
             <p className="login-fineprint anim-fade-up" style={{ '--i': 8 }}>
-              Prototype build for Principles of Crop Protection I · mock data only, no real authentication.
+              Prototype build for Principles of Crop Protection I · demo accounts, real authentication.
             </p>
           </div>
         </div>
 
         {/* ── Visual panel: your image + decorative overlays ── */}
-        <div className={`login-visual ${hasHeroImage ? '' : 'has-fallback'}`} aria-hidden="true">
+        {/* Not aria-hidden as a whole any more: the welcome line is real content,
+            so only the decorative layers below are hidden from screen readers. */}
+        <div className={`login-visual ${hasHeroImage ? '' : 'has-fallback'}`}>
           {hasHeroImage && (
-            <img className="login-visual__photo" src={HERO_IMAGE} alt="" onError={() => setHasHeroImage(false)} />
+            <img className="login-visual__photo" src={HERO_IMAGE} alt="" aria-hidden="true" onError={() => setHasHeroImage(false)} />
           )}
-          <span className="login-visual__wash" />
-          <svg className="login-visual__shapes" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice">
+          <span className="login-visual__wash" aria-hidden="true" />
+          <svg className="login-visual__shapes" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
             <path className="shape shape--a" d="M40 90 Q150 20 250 80 Q170 170 40 90 Z" />
             <path className="shape shape--b" d="M300 420 Q400 360 392 470 Q330 540 300 420 Z" />
             <path className="shape shape--c" d="M-30 330 Q90 280 140 380 Q60 470 -30 330 Z" />
             <circle className="shape shape--d" cx="330" cy="150" r="58" />
             <path className="shape shape--e" d="M120 520 Q210 470 260 560 Q180 610 120 520 Z" />
           </svg>
-          <span className="login-visual__glass login-visual__glass--one" />
-          <span className="login-visual__glass login-visual__glass--two" />
+          <span className="login-visual__glass login-visual__glass--one" aria-hidden="true" />
+          <span className="login-visual__glass login-visual__glass--two" aria-hidden="true" />
+
+          {/* Sits in the clear band between the two glass panels, so it never
+              lands on top of them at any width. */}
+          <p className="login-visual__hero anim-fade-up" style={{ '--i': 2 }}>
+            Welcome to <span>AgriCore</span>
+          </p>
         </div>
 
         {/* Floating accent — AgriCore sprout motif on the seam between panels */}

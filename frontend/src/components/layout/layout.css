@@ -463,3 +463,43 @@
   .notif { position: static; }
   .notif__panel { top: calc(100% + 6px); left: var(--space-3); right: var(--space-3); width: auto; transform-origin: top center; }
 }
+
+/* ───────── Login hero statement ─────────
+   Sits in the clear band between the two glass panels (one top-left, one
+   bottom-right), so it never overlaps them. The text shadow keeps it legible
+   whether the panel falls back to the gradient or shows a supplied photo. */
+.login-visual__hero {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  margin: 0;
+  /* Extra left padding clears the sprout badge that sits on the panel seam. */
+  padding: 0 clamp(var(--space-5), 6%, var(--space-8)) 0 clamp(var(--space-8), 12%, 4.5rem);
+  color: #fff;
+  font-size: clamp(1.75rem, 3.4vw, 3rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  text-shadow: 0 2px 18px rgba(6, 30, 18, 0.45);
+}
+/* "AgriCore" carries the emphasis; "Welcome to" sits back a little. */
+.login-visual__hero span { display: block; color: var(--green-100); }
+
+@media (max-width: 900px) {
+  /* The panel is a short banner above the form here, not a full column. */
+  .login-visual__hero {
+    text-align: center;
+    font-size: clamp(1.25rem, 5.2vw, 1.9rem);
+    padding: 0 var(--space-5);
+    text-shadow: 0 2px 14px rgba(6, 30, 18, 0.55);
+  }
+  .login-visual__hero span { display: inline; }
+}
+@media (max-width: 560px) {
+  .login-visual__hero { font-size: clamp(1.1rem, 6vw, 1.5rem); }
+}
