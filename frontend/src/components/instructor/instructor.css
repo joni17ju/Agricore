@@ -301,3 +301,20 @@ a.module-card:hover .module-card__edit { transform: scale(1.12); background: #ff
   border-radius: var(--radius-md);
 }
 .lesson-rows__hint { display: flex; align-items: center; gap: 6px; margin-top: var(--space-3); }
+
+/* ───────── Module cover editing ───────── */
+.module-cover-edit { display: flex; gap: var(--space-4); flex-wrap: wrap; align-items: flex-start; }
+.module-cover-edit__preview {
+  position: relative;
+  flex: 0 0 auto;
+  width: 200px;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.module-cover-edit__preview .module-card__image { width: 100%; height: 100%; object-fit: cover; }
+.module-cover-edit__actions { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: var(--space-3); }
+@media (max-width: 560px) {
+  .module-cover-edit__preview { width: 100%; }
+}

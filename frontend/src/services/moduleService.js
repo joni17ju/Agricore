@@ -3,6 +3,7 @@
  * (Proposal Scope item 2), so modules can be read and renamed but never
  * created or deleted.
  */
+import { MAX_MOCK_UPLOAD_BYTES } from '../constants/rules.js';
 import { isBlank } from '../utils/validation.js';
 import { getLessonGameMissions, getModuleLessons, sortModules } from '../utils/curriculum.js';
 import { api } from './apiClient.js';
@@ -37,6 +38,36 @@ export async function updateModuleTitle(moduleId, title) {
   if (isBlank(title)) throw new ServiceError('Module title is required.');
   await requireModule(moduleId);
   const updated = await api.patch(`/modules/${moduleId}`, { title: title.trim() });
+  invalidateCourse();
+  return updated;
+}
+
+/**
+ * Replace a module's cover image, or pass null to clear it and fall back to
+ * the static file shipped with the app.
+ *
+ * Follows the same mock-upload approach as avatars and lesson media: the file
+ * becomes a data URL on the document, with the shared size cap.
+ */
+export async function updateModuleCover(moduleId, file) {
+  await requireModule(moduleId);
+
+  let coverImage = null;
+  if (file) {
+    if (!file.type.startsWith('image/')) throw new ServiceError('Choose an image file (PNG, JPG or WebP).');
+    if (file.size > MAX_MOCK_UPLOAD_BYTES) {
+      const limitMb = (MAX_MOCK_UPLOAD_BYTES / 1024 / 1024).toFixed(1);
+      throw new ServiceError(`Images must be ${limitMb} MB or smaller in the prototype.`, 413);
+    }
+    coverImage = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new ServiceError('The file could not be read.'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  const updated = await api.patch(`/modules/${moduleId}`, { coverImage });
   invalidateCourse();
   return updated;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useBreadcrumb } from '../../context/BreadcrumbContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -6,7 +6,7 @@ import { GAME_TYPE_INFO } from '../../constants/gameTypes.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
 import { createLesson, reorderLessons } from '../../services/lessonService.js';
-import { getCourseStructure, updateModuleTitle } from '../../services/moduleService.js';
+import { getCourseStructure, updateModuleCover, updateModuleTitle } from '../../services/moduleService.js';
 import Button from '../../components/common/Button.jsx';
 import Card from '../../components/common/Card.jsx';
 import { EmptyState, ErrorState, LoadingState, PageHeader, StatusPill } from '../../components/common/Display.jsx';
@@ -14,7 +14,7 @@ import { TextArea, TextInput } from '../../components/common/Form.jsx';
 import Icon from '../../components/common/Icon.jsx';
 import Modal from '../../components/common/Modal.jsx';
 import ReorderableLessonList from '../../components/instructor/ReorderableLessonList.jsx';
-import { gameIcon } from '../../components/student/CourseMap.jsx';
+import { ModuleCover, gameIcon } from '../../components/student/CourseMap.jsx';
 
 /** Step 2: the lessons inside one module. */
 export default function ModuleLessonsPage() {
@@ -115,6 +115,9 @@ export default function ModuleLessonsPage() {
 function ModuleSettingsCard({ module, onSaved, toast }) {
   const [title, setTitle] = useState(module.title);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [coverError, setCoverError] = useState('');
+  const coverInputRef = useRef(null);
 
   useEffect(() => setTitle(module.title), [module.title]);
 
@@ -131,6 +134,38 @@ function ModuleSettingsCard({ module, onSaved, toast }) {
     }
   };
 
+  const pickCover = async (event) => {
+    const file = event.target.files?.[0];
+    // Allow the same file to be chosen again after an error.
+    event.target.value = '';
+    if (!file) return;
+    setCoverError('');
+    setIsUploading(true);
+    try {
+      await updateModuleCover(module._id, file);
+      toast.success('Module cover updated.');
+      onSaved();
+    } catch (err) {
+      setCoverError(err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const clearCover = async () => {
+    setCoverError('');
+    setIsUploading(true);
+    try {
+      await updateModuleCover(module._id, null);
+      toast.success('Module cover removed.');
+      onSaved();
+    } catch (err) {
+      setCoverError(err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <Card title="Module settings" icon="settings">
       <div className="row" style={{ alignItems: 'flex-end' }}>
@@ -138,6 +173,30 @@ function ModuleSettingsCard({ module, onSaved, toast }) {
           <TextInput label="Module title" value={title} onChange={(event) => setTitle(event.target.value)} />
         </div>
         <Button icon="save" onClick={save} disabled={title === module.title} isLoading={isSaving}>Save title</Button>
+      </div>
+
+      <h3 className="section-heading">Cover image</h3>
+      <div className="module-cover-edit">
+        <div className="module-cover-edit__preview">
+          <ModuleCover module={module} />
+        </div>
+        <div className="module-cover-edit__actions">
+          <p className="text-sm text-muted">
+            Shown on the module card for you and for students. PNG, JPG or WebP up to 1.5 MB.
+          </p>
+          <div className="row">
+            <Button variant="secondary" icon="image" onClick={() => coverInputRef.current?.click()} isLoading={isUploading}>
+              {module.coverImage ? 'Change cover' : 'Upload cover'}
+            </Button>
+            {module.coverImage && (
+              <Button variant="ghost" icon="trash" onClick={clearCover} disabled={isUploading}>Remove</Button>
+            )}
+          </div>
+          {coverError && (
+            <p className="form-error" role="alert"><Icon name="alert" size={16} /> {coverError}</p>
+          )}
+          <input ref={coverInputRef} type="file" accept="image/*" className="visually-hidden" onChange={pickCover} />
+        </div>
       </div>
       <p className="text-sm text-muted" style={{ marginTop: 'var(--space-3)' }}>
         <Icon name="info" size={14} style={{ display: 'inline', verticalAlign: '-2px' }} /> Module numbers and game types follow

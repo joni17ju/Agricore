@@ -22,7 +22,7 @@ export async function createModule(req, res) {
 /** PATCH /api/modules/:id — title edits from the instructor CMS. */
 export async function updateModule(req, res) {
   const module = await findOr404(Module, req.params.id, 'Module');
-  const { title, gameType } = req.body ?? {};
+  const { title, gameType, coverImage } = req.body ?? {};
   if (title !== undefined) {
     if (!String(title).trim()) throw httpError(400, 'title cannot be empty.');
     module.title = String(title).trim();
@@ -31,6 +31,8 @@ export async function updateModule(req, res) {
     if (!GAME_TYPES.includes(gameType)) throw httpError(400, `gameType must be one of: ${GAME_TYPES.join(', ')}`);
     module.gameType = gameType;
   }
+  // null clears the cover and returns the module to its static/gradient image.
+  if (coverImage !== undefined) module.coverImage = coverImage;
   await module.save();
   res.json(module);
 }

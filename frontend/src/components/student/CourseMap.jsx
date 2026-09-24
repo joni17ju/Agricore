@@ -2,7 +2,7 @@
  * Course map pieces: module cards (linear, locked path), topic cards
  * (Proposal Fig 17) and the Learn → Practice → Apply step indicator.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { GAME_TYPE_INFO } from '../../constants/gameTypes.js';
 import { LESSON_STATE } from '../../constants/rules.js';
@@ -52,8 +52,12 @@ export function UnlockBurst({ play }) {
  * is shown so the grid keeps its shape.
  */
 export function ModuleCover({ module, isLocked = false }) {
+  // An instructor-uploaded cover wins; otherwise fall back to the file shipped
+  // with the app, and to the gradient if that is missing too.
+  const source = module.coverImage || `/images/modules/module-${module.moduleNumber}-cover.jpg`;
   const [hasImage, setHasImage] = useState(true);
-  const source = `/images/modules/module-${module.moduleNumber}-cover.jpg`;
+  // A new cover must clear a previous load failure, or the gradient sticks.
+  useEffect(() => setHasImage(true), [source]);
 
   return (
     <>
