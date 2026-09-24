@@ -38,6 +38,35 @@ export function issueToken(user) {
 }
 
 /**
+ * Short-lived proof that a password reset code was verified.
+ *
+ * Signed with the same secret as a session token, so it carries an explicit
+ * purpose claim and requireAuth refuses any token that has one. Without that
+ * guard this token would satisfy jwt.verify on every authenticated route and
+ * amount to a full session handed out to someone who only proved they can read
+ * an inbox — which is enough to reset a password, but not to act as the user.
+ */
+const RESET_PURPOSE = 'password_reset';
+
+export function issueResetToken(user, expiresInSeconds) {
+  return jwt.sign(
+    { sub: String(user._id), purpose: RESET_PURPOSE },
+    secret(),
+    { expiresIn: expiresInSeconds },
+  );
+}
+
+/** Returns the user id a reset token vouches for, or null if it is not one. */
+export function readResetToken(token) {
+  try {
+    const payload = jwt.verify(String(token ?? ''), secret());
+    return payload.purpose === RESET_PURPOSE ? String(payload.sub) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Verifies the bearer token and attaches the live user record as req.user.
  * Rejects tokens whose user has since been deleted or deactivated.
  */
@@ -53,6 +82,11 @@ export async function requireAuth(req, res, next) {
     const expired = error.name === 'TokenExpiredError';
     return next(sessionError(expired ? 'Session expired — please sign in again.' : 'Invalid session token.'));
   }
+
+  // Single-purpose tokens (a verified password reset, say) are not sessions.
+  // Session tokens carry no purpose claim, so anything that has one is refused
+  // here rather than being allowed to stand in for signing in.
+  if (payload.purpose) return next(sessionError('Invalid session token.'));
 
   const user = await User.findById(payload.sub).select('-passwordHash');
   if (!user) return next(sessionError('Account no longer exists.'));

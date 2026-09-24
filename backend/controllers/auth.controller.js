@@ -3,16 +3,9 @@ import { Section, User } from '../models/index.js';
 import { issueToken } from '../middleware/auth.js';
 import { httpError } from '../utils/http.js';
 import { SCHOOL_ID_FORMAT, buildIdentifierQuery, isValidStudentId, normalizeSchoolId } from '../utils/identifiers.js';
-
-const SALT_ROUNDS = 10;
-
-/** Kept in step with the frontend's MIN_PASSWORD_LENGTH. */
-const MIN_PASSWORD_LENGTH = 8;
+import { MIN_PASSWORD_LENGTH, PLACEHOLDER_HASH, SALT_ROUNDS } from '../constants/auth.js';
 
 const isBlankValue = (value) => value === undefined || value === null || String(value).trim() === '';
-
-/** Seeded accounts carry this instead of a usable hash until they are given a password. */
-const PLACEHOLDER_HASH = 'DEV_SEED_PLACEHOLDER_HASH_NOT_REAL';
 
 const publicUser = (user) => {
   const { passwordHash, ...rest } = user.toObject ? user.toObject() : user;

@@ -36,6 +36,9 @@ server. The reason is logged to the terminal.
 | `JWT_EXPIRES_IN` | no | Token lifetime, default `7d` |
 | `PORT` | no | Listen port, default `5000` |
 | `CORS_ORIGINS` | no | Comma-separated browser origins allowed to call the API. Default `http://localhost:5173` |
+| `BREVO_API_KEY` | for password reset | Brevo API key used to send reset codes. Without it the reset endpoints return 503 |
+| `MAIL_FROM_EMAIL` | for password reset | Sender address, which must be verified in Brevo |
+| `MAIL_FROM_NAME` | no | Sender display name, default `AgriCore` |
 
 `.env` is gitignored and must never be committed. `.env.example` documents the
 shape without real values.
@@ -50,6 +53,7 @@ shape without real values.
 | `node scripts/set-passwords.js` | Resets account passwords. `seed.js` already sets them, so this is only needed to change a password or repair an account. Defaults to `agricore123`; pass `--password "…"`, `--email "…"` or `--all`. |
 | `node scripts/smoke-test.js` | End-to-end check against a running API: auth, role guards, data routes, the leaderboard aggregation, and that a tampered score is ignored. It submits one real attempt and deletes it again, so it leaves no trace. |
 | `node scripts/remove-test-attempts.js` | Clears zero-score attempts left by older smoke-test runs. Reports by default; pass `--apply` to delete. |
+| `TEST_EMAIL=you@example.com node --env-file=.env scripts/test-password-reset.js` | Checks the reset rate limit, attempt budget, expiry and enumeration behaviour against a running API. `TEST_EMAIL` must name an existing account on an inbox you can read; two of the checks send real mail. |
 
 The seed data is generated from the frontend mock files, so the mission
 `scenarioData` shapes match exactly what the five game components render.
@@ -62,9 +66,10 @@ in is signed out.
 
 ## API
 
-All routes are prefixed `/api`. Every route except `/api/health`,
-`/api/auth/login` and `/api/auth/register` requires
-`Authorization: Bearer <token>`.
+All routes are prefixed `/api`. Every route requires
+`Authorization: Bearer <token>` except `/api/health`, `/api/auth/login`,
+`/api/auth/register` and the three password-reset routes — someone who has
+forgotten their password cannot hold a session, so those have to be public.
 
 ### Auth
 | Method | Path | Access |
@@ -73,6 +78,9 @@ All routes are prefixed `/api`. Every route except `/api/health`,
 | POST | `/auth/register` | public — students become active, instructors `pending` |
 | GET | `/auth/me` | any signed-in user |
 | POST | `/auth/change-password` | any signed-in user |
+| POST | `/auth/forgot-password` | public — emails a 6-digit code |
+| POST | `/auth/verify-reset-code` | public — exchanges the code for a reset token |
+| POST | `/auth/reset-password` | public — sets the new password using that token |
 
 ### Data
 | Method | Path | Access |
@@ -124,6 +132,50 @@ and a stale token cannot assert outdated identity. `requireAuth` rejects tokens
 whose user has been deleted or deactivated; `requireRole(...)` returns 403 (not
 401) when a valid session lacks the necessary role.
 
+## Password reset
+
+Three endpoints rather than one form, so the emailed code is never posted
+alongside the new password:
+
+1. `POST /auth/forgot-password { identifier }` — an email address or a school
+   ID, the same rule the login form uses. Generates a six-digit code, stores
+   only its SHA-256, and emails the code through Brevo.
+2. `POST /auth/verify-reset-code { identifier, code }` — on success the code
+   is cleared immediately (single use) and a short-lived reset token is
+   returned in its place.
+3. `POST /auth/reset-password { resetToken, newPassword }` — sets the hash and
+   clears the reset state, which consumes the token. It deliberately does not
+   sign the user in.
+
+The in-flight reset lives in a `passwordReset` subdocument on the user, not in
+a new collection, so the seven-collection schema is unchanged.
+
+Rules, all in `utils/passwordReset.js`:
+
+| Rule | Value |
+|---|---|
+| Code length | 6 digits, from `crypto.randomInt` |
+| Expiry | 15 minutes |
+| Wrong guesses before the code is burned | 5 |
+| Codes per account per 15 minutes | 3 |
+
+Two things worth knowing:
+
+- **The request step never reveals whether an account exists.** Unknown
+  identifiers, known ones and rate-limited ones all return the same message.
+  The cost is that a user who has hit the limit sees success and gets no
+  email, so the UI states the limit up front.
+- **The reset token is not a session.** It is signed with `JWT_SECRET` like a
+  normal token, so it carries `purpose: "password_reset"` and `requireAuth`
+  refuses any token that has a purpose claim. Without that guard it would
+  satisfy `jwt.verify` on every authenticated route.
+
+Email sending is `mail/send.js` (Brevo's HTTP API via `fetch` — no email
+library, and no SMTP port for a host to block) and the branded template is
+`mail/resetCodeEmail.js` (table-based, fully inline styles, with a plain-text
+part). The template's palette is copied from the frontend's design tokens by
+hand and has to be updated by hand if the brand colours change.
+
 ## Known follow-ups
 
 **Badges are not yet authoritative on the server.** Mission scoring was
@@ -146,14 +198,17 @@ seconds to settle. Correct, but a bulk endpoint would fix it.
 
 ## Deployment notes
 
-Two values must change once the app is deployed, and both are environment
-variables — no code edit is needed:
+Everything that changes once the app is deployed is an environment variable —
+no code edit is needed:
 
-1. **Backend (Render)** — set `MONGODB_URI`, `JWT_SECRET`, and `CORS_ORIGINS`
-   to the deployed frontend origin, e.g.
+1. **Backend (Render)** — set `MONGODB_URI`, `JWT_SECRET`, `BREVO_API_KEY` and
+   `MAIL_FROM_EMAIL` to the same values used locally, and point `CORS_ORIGINS`
+   at the deployed frontend origin, e.g.
    `CORS_ORIGINS=https://<your-app>.vercel.app`. Multiple origins are
    comma-separated, so keep `http://localhost:5173` in the list if you still
-   develop locally. Render sets `PORT` itself.
+   develop locally. Render sets `PORT` itself. Reset email needs no extra
+   network setup: Brevo is called over HTTPS, so the outbound SMTP ports that
+   free hosts commonly block are not involved.
 2. **Frontend (Vercel)** — set `VITE_API_URL` in the project's environment
    settings to the deployed API base, e.g.
    `https://<your-service>.onrender.com/api`. Vite only exposes variables

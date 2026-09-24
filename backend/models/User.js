@@ -22,6 +22,34 @@ const userSchema = new Schema(
     earnedBadges: [{ _id: false, code: { type: String, required: true }, earnedAt: { type: Date, required: true } }],
     // Set only once the user uploads a picture (a data URL in the prototype).
     avatarUrl: { type: String, default: null },
+    /*
+     * In-flight password reset. Embedded rather than given its own collection
+     * so the seven-collection schema stays as it is: at most one reset can be
+     * open per account, so there is nothing here a subdocument cannot hold.
+     *
+     * codeHash is a SHA-256 of the six digits, never the digits themselves, so
+     * a dump of this collection hands an attacker nothing usable. The counters
+     * drive rate limiting and live in the database rather than in process
+     * memory, so the limits survive a restart.
+     */
+    passwordReset: {
+      type: new Schema(
+        {
+          codeHash: { type: String, default: null },
+          expiresAt: { type: Date, default: null },
+          // Wrong guesses against the code currently outstanding.
+          attemptCount: { type: Number, default: 0 },
+          // Codes sent inside the current rate-limit window.
+          requestCount: { type: Number, default: 0 },
+          windowStartedAt: { type: Date, default: null },
+          // Set when the code is accepted. The new password is taken only
+          // while this is present and the reset has not expired.
+          verifiedAt: { type: Date, default: null },
+        },
+        { _id: false },
+      ),
+      default: null,
+    },
     isSeedData: { type: Boolean, default: false },
   },
   { collection: 'users', timestamps: true },
