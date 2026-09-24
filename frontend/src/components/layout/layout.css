@@ -503,3 +503,24 @@
 @media (max-width: 560px) {
   .login-visual__hero { font-size: clamp(1.1rem, 6vw, 1.5rem); }
 }
+
+/* ── Forgotten-password modal ── */
+
+/* Sits above the first field in each step of the reset flow. */
+.reset-step__intro {
+  margin: 0 0 var(--space-4) 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+/* The verification code: wide tracking and a monospace face so six digits are
+   easy to check against the email without miscounting. */
+.input--code {
+  font-family: var(--font-mono, ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  /* The tracking adds a trailing gap after the last digit; a little left
+     padding keeps the group looking centred rather than shifted. */
+  text-indent: 0.35em;
+}

@@ -172,10 +172,46 @@ export async function changePassword({ currentPassword, newPassword, confirmPass
   return { updated: true };
 }
 
-/** No reset email in the prototype; the message is unchanged. */
-export async function requestPasswordReset(email) {
-  if (!isValidEmail(email)) throw new ServiceError('Enter a valid email address.');
-  return {
-    message: 'Password reset is not available in the prototype. Please contact your administrator.',
-  };
+/**
+ * Forgotten-password flow, in three steps.
+ *
+ * Step one deliberately resolves the same way for a registered account and an
+ * unregistered one — the server will not say which exist, so neither will
+ * this. Anything that looks like "no such account" here would only be this
+ * client guessing.
+ */
+
+/** Number of digits in the emailed code; the server generates the same length. */
+export const RESET_CODE_LENGTH = 6;
+
+/** Step 1: ask for a code. `identifier` is an email address or a school ID. */
+export async function requestPasswordReset(identifier) {
+  const value = String(identifier ?? '').trim();
+  if (isBlank(value)) throw new ServiceError('Enter your email address or school ID.');
+  // An identifier with no "@" is treated as a school ID by the server, so the
+  // only thing worth checking here is that an email-shaped one is well formed.
+  if (value.includes('@') && !isValidEmail(value)) throw new ServiceError('Enter a valid email address.');
+
+  return api.post('/auth/forgot-password', { identifier: value });
+}
+
+/** Step 2: exchange the emailed code for a short-lived reset token. */
+export async function verifyResetCode({ identifier, code }) {
+  const digits = String(code ?? '').trim();
+  if (digits.length !== RESET_CODE_LENGTH || !/^\d+$/.test(digits)) {
+    throw new ServiceError(`Enter the ${RESET_CODE_LENGTH}-digit code from your email.`);
+  }
+
+  return api.post('/auth/verify-reset-code', { identifier: String(identifier ?? '').trim(), code: digits });
+}
+
+/** Step 3: set the new password using the token from step 2. */
+export async function resetPassword({ resetToken, newPassword, confirmPassword }) {
+  if (String(newPassword ?? '').length < MIN_PASSWORD_LENGTH) {
+    throw new ServiceError(`New password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+  }
+  if (newPassword !== confirmPassword) throw new ServiceError('New passwords do not match.');
+
+  await api.post('/auth/reset-password', { resetToken, newPassword });
+  return { updated: true };
 }

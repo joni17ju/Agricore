@@ -9,7 +9,13 @@ import { ROLE_HOME, ROLE_LABELS, ROLES } from '../../constants/roles.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useAsync } from '../../hooks/useAsync.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
-import { getDemoAccounts, requestPasswordReset } from '../../services/authService.js';
+import {
+  RESET_CODE_LENGTH,
+  getDemoAccounts,
+  requestPasswordReset,
+  resetPassword,
+  verifyResetCode,
+} from '../../services/authService.js';
 
 /**
  * Drop your own hero image here and it appears in the right panel:
@@ -209,48 +215,194 @@ export default function LoginPage() {
   );
 }
 
-function ForgotPasswordModal({ isOpen, onClose }) {
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+/**
+ * Forgotten-password flow: ask for a code, type the code, choose a password.
+ *
+ * Three steps rather than one form so the emailed code is exchanged for a
+ * reset token before any password is typed — the code never travels together
+ * with the new password, and the browser stops holding it once it is spent.
+ */
+const RESET_STEPS = { REQUEST: 'request', CODE: 'code', PASSWORD: 'password', DONE: 'done' };
 
-  const submit = async () => {
+const EMPTY_RESET = {
+  identifier: '',
+  code: '',
+  resetToken: '',
+  newPassword: '',
+  confirmPassword: '',
+};
+
+function ForgotPasswordModal({ isOpen, onClose }) {
+  const [step, setStep] = useState(RESET_STEPS.REQUEST);
+  const [form, setForm] = useState(EMPTY_RESET);
+  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
+  const [isBusy, setIsBusy] = useState(false);
+
+  const set = (patch) => setForm((current) => ({ ...current, ...patch }));
+
+  /** Every step does the same thing around its own request. */
+  const run = async (action) => {
     setError('');
+    setIsBusy(true);
     try {
-      const result = await requestPasswordReset(email);
-      setMessage(result.message);
+      await action();
     } catch (err) {
       setError(err.message);
+    } finally {
+      setIsBusy(false);
     }
   };
 
+  const sendCode = () =>
+    run(async () => {
+      const result = await requestPasswordReset(form.identifier);
+      setNotice(result.message);
+      setStep(RESET_STEPS.CODE);
+    });
+
+  const checkCode = () =>
+    run(async () => {
+      const { resetToken } = await verifyResetCode({ identifier: form.identifier, code: form.code });
+      set({ resetToken });
+      setNotice('');
+      setStep(RESET_STEPS.PASSWORD);
+    });
+
+  const savePassword = () =>
+    run(async () => {
+      await resetPassword({
+        resetToken: form.resetToken,
+        newPassword: form.newPassword,
+        confirmPassword: form.confirmPassword,
+      });
+      setStep(RESET_STEPS.DONE);
+    });
+
   const close = () => {
-    setMessage('');
+    setStep(RESET_STEPS.REQUEST);
+    setForm(EMPTY_RESET);
+    setNotice('');
     setError('');
     onClose();
   };
 
+  /** Back to step one, keeping the identifier so it need not be retyped. */
+  const startOver = () => {
+    setForm({ ...EMPTY_RESET, identifier: form.identifier });
+    setNotice('');
+    setError('');
+    setStep(RESET_STEPS.REQUEST);
+  };
+
+  const TITLES = {
+    [RESET_STEPS.REQUEST]: 'Reset password',
+    [RESET_STEPS.CODE]: 'Enter your code',
+    [RESET_STEPS.PASSWORD]: 'Choose a new password',
+    [RESET_STEPS.DONE]: 'Password updated',
+  };
+
+  const footers = {
+    [RESET_STEPS.REQUEST]: (
+      <>
+        <Button variant="secondary" onClick={close}>Cancel</Button>
+        <Button onClick={sendCode} isLoading={isBusy}>Send code</Button>
+      </>
+    ),
+    [RESET_STEPS.CODE]: (
+      <>
+        <Button variant="secondary" onClick={startOver} disabled={isBusy}>Back</Button>
+        <Button onClick={checkCode} isLoading={isBusy}>Verify code</Button>
+      </>
+    ),
+    [RESET_STEPS.PASSWORD]: (
+      <>
+        <Button variant="secondary" onClick={close} disabled={isBusy}>Cancel</Button>
+        <Button onClick={savePassword} isLoading={isBusy}>Save password</Button>
+      </>
+    ),
+    [RESET_STEPS.DONE]: <Button onClick={close}>Back to sign in</Button>,
+  };
+
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={close}
-      title="Reset password"
-      size="sm"
-      footer={
-        message ? (
-          <Button onClick={close}>Done</Button>
-        ) : (
-          <>
-            <Button variant="secondary" onClick={close}>Cancel</Button>
-            <Button onClick={submit}>Send reset link</Button>
-          </>
-        )
-      }
-    >
-      {message ? (
-        <p className="text-muted">{message}</p>
-      ) : (
-        <TextInput label="Email address" type="email" value={email} onChange={(e) => setEmail(e.target.value)} error={error} />
+    <Modal isOpen={isOpen} onClose={close} title={TITLES[step]} size="sm" footer={footers[step]}>
+      {/* The error belongs to the step, not to one field: an expired code and a
+          rejected token are both step-level problems. */}
+      {error && (
+        <div className="form-error" role="alert">
+          <Icon name="alert" size={16} /> {error}
+        </div>
+      )}
+
+      {step === RESET_STEPS.REQUEST && (
+        <>
+          <p className="text-muted reset-step__intro">
+            Enter your email address or school ID and we will send a {RESET_CODE_LENGTH}-digit
+            verification code to the email address on your account.
+          </p>
+          <TextInput
+            label="Email or school ID"
+            /* Not type="email": a school ID would fail the browser's check. */
+            type="text"
+            autoComplete="username"
+            placeholder="juan.delacruz@dorsu.edu.ph or 2023-0101"
+            value={form.identifier}
+            onChange={(event) => set({ identifier: event.target.value })}
+            required
+          />
+        </>
+      )}
+
+      {step === RESET_STEPS.CODE && (
+        <>
+          {notice && <p className="text-muted reset-step__intro">{notice}</p>}
+          <TextInput
+            label="Verification code"
+            /* inputMode brings up the number pad without type="number", which
+               would strip a leading zero and add stepper arrows. */
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={RESET_CODE_LENGTH}
+            placeholder="123456"
+            className="input--code"
+            hint="The code expires 15 minutes after it is sent. You can request up to 3 codes every 15 minutes."
+            value={form.code}
+            // Digits only, so a pasted code with stray spaces still works.
+            onChange={(event) => set({ code: event.target.value.replace(/\D/g, '').slice(0, RESET_CODE_LENGTH) })}
+            required
+          />
+        </>
+      )}
+
+      {step === RESET_STEPS.PASSWORD && (
+        <>
+          <p className="text-muted reset-step__intro">
+            Code accepted. Choose a new password for your account.
+          </p>
+          <TextInput
+            label="New password"
+            type="password"
+            autoComplete="new-password"
+            value={form.newPassword}
+            onChange={(event) => set({ newPassword: event.target.value })}
+            required
+          />
+          <TextInput
+            label="Confirm new password"
+            type="password"
+            autoComplete="new-password"
+            value={form.confirmPassword}
+            onChange={(event) => set({ confirmPassword: event.target.value })}
+            required
+          />
+        </>
+      )}
+
+      {step === RESET_STEPS.DONE && (
+        <p className="text-muted reset-step__intro">
+          Your password has been updated. Sign in with your new password to continue.
+        </p>
       )}
     </Modal>
   );
