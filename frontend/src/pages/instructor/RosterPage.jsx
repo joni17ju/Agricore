@@ -9,7 +9,7 @@ import { listRoster, removeRosterStudent, updateRosterStudent } from '../../serv
 import Button, { IconButton } from '../../components/common/Button.jsx';
 import Card from '../../components/common/Card.jsx';
 import DataTable from '../../components/common/DataTable.jsx';
-import { Avatar, ErrorState, LoadingState, PageHeader, StatusPill } from '../../components/common/Display.jsx';
+import { Avatar, ErrorState, LoadingState, PageHeader, Skeleton, StatusPill } from '../../components/common/Display.jsx';
 import { SearchInput, SelectInput, TextInput } from '../../components/common/Form.jsx';
 import Icon from '../../components/common/Icon.jsx';
 import Modal, { ConfirmDialog } from '../../components/common/Modal.jsx';
@@ -39,6 +39,16 @@ export default function RosterPage() {
   );
   const sections = performance.data?.sections ?? [];
   const sectionName = (id) => sections.find((s) => s._id === id)?.sectionName ?? '—';
+
+  /*
+   * The roster list and the per-student analytics load independently, and the
+   * analytics call is much the slower of the two. Until it lands, the Section
+   * and Progress columns have nothing real to show — rendering their empty
+   * values ("—" and 0%) made a loading table look like a broken one. Falls
+   * back to those values if the call fails, so an actual failure still reads
+   * as missing data rather than as a placeholder that never resolves.
+   */
+  const analyticsPending = performance.isLoading && !performance.data;
 
   const rows = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -95,16 +105,23 @@ export default function RosterPage() {
       ),
     },
     { key: 'schoolId', header: 'School ID', render: (s) => s.schoolId ?? '—' },
-    { key: 'section', header: 'Section', render: (s) => sectionName(s.sectionId) },
+    {
+      key: 'section',
+      header: 'Section',
+      render: (s) => (analyticsPending ? <Skeleton width="4.5rem" label="Loading section" /> : sectionName(s.sectionId)),
+    },
     { key: 'email', header: 'Email Address', hideOnMobile: true },
     {
       key: 'progress',
       header: 'Progress',
-      render: (s) => (
-        <div className="cell-progress">
-          <ProgressBar value={progressById.get(s._id) ?? 0} size="sm" tone="dark" label={`${progressById.get(s._id) ?? 0}%`} />
-        </div>
-      ),
+      render: (s) =>
+        analyticsPending ? (
+          <Skeleton width="100%" label="Loading progress" />
+        ) : (
+          <div className="cell-progress">
+            <ProgressBar value={progressById.get(s._id) ?? 0} size="sm" tone="dark" label={`${progressById.get(s._id) ?? 0}%`} />
+          </div>
+        ),
     },
     { key: 'status', header: 'Status', render: (s) => <StatusPill tone={STATUS_TONES[s.status]}>{USER_STATUS_LABELS[s.status]}</StatusPill> },
     {

@@ -107,6 +107,17 @@ export function LoadingState({ label = 'Loading…', compact = false }) {
   );
 }
 
+/**
+ * Placeholder bar for a value that has not arrived yet.
+ *
+ * For cells whose data loads separately from the rows around them: rendering
+ * the eventual empty value ("—", 0%) makes a still-loading table look like a
+ * table with missing data. `width` is any CSS length.
+ */
+export function Skeleton({ width = '100%', label = 'Loading' }) {
+  return <span className="skeleton" style={{ width }} role="status" aria-label={label} />;
+}
+
 export function ErrorState({ error, onRetry, backTo }) {
   const isLocked = error?.status === 403;
   return (

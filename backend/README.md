@@ -194,9 +194,19 @@ already-ported `scoring.js` and `gamification.js`, evaluate badges inside the
 mission-attempt controller, and drop `earnedBadges` from the editable field
 list in `controllers/user.controller.js`.
 
-Lower priority: the instructor analytics screens issue one activity request per
-student (roughly 50 requests for 21 students), which makes them take a few
-seconds to settle. Correct, but a bulk endpoint would fix it.
+**A bulk activity endpoint for instructor analytics — still open.** The
+analytics screens issue one activity request per student (roughly 50 requests
+for 21 students), so they take a few seconds to settle. The results are
+correct; it is the number of round trips that is wrong, and one endpoint
+returning activity for a set of students would remove them.
+
+The visible symptom is handled for now but the cause is not. On the roster, the
+Section and Progress columns arrive from this slow call while the rest of the
+row arrives from the much faster roster call, so they used to render "—" and 0%
+for several seconds and read as missing data. They now show a loading
+placeholder (`Skeleton` in `components/common/Display.jsx`) until the call
+lands. That is presentation only — the requests are unchanged, and the other
+instructor analytics screens still have the same lag.
 
 ## Deployment notes
 
