@@ -8,7 +8,7 @@ import { ROLES } from '../../constants/roles.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useAsync } from '../../hooks/useAsync.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
-import { listSections } from '../../services/sectionService.js';
+import { listSectionOptions } from '../../services/sectionService.js';
 
 /**
  * Right-panel image. Drop your own file at either path:
@@ -29,7 +29,9 @@ export default function RegisterPage() {
   useDocumentTitle('Create account');
   const { register } = useAuth();
   const navigate = useNavigate();
-  const sections = useAsync(listSections, []);
+  // Public endpoint: this page is reached signed out, so it cannot use the
+  // authenticated section list.
+  const sections = useAsync(listSectionOptions, []);
   const [role, setRole] = useState(ROLES.STUDENT);
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState('');
@@ -143,12 +145,22 @@ export default function RegisterPage() {
                         maxLength={9}
                         required
                       />
+                      {/* A failed load used to leave an empty dropdown with no
+                          explanation, so the state is named here instead. */}
                       <SelectInput
-                        label="Section | Batch"
+                        label="Section"
                         value={form.sectionId}
                         onChange={update('sectionId')}
-                        placeholder="Select your section"
+                        placeholder={
+                          sections.isLoading
+                            ? 'Loading sections…'
+                            : sections.error
+                              ? 'Sections unavailable'
+                              : 'Select your section'
+                        }
                         options={(sections.data ?? []).map((section) => ({ value: section._id, label: section.sectionName }))}
+                        error={sections.error ? 'Could not load sections. Check your connection and refresh.' : undefined}
+                        disabled={sections.isLoading || Boolean(sections.error)}
                         required
                       />
                     </div>

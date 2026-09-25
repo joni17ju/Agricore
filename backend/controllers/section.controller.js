@@ -7,6 +7,19 @@ export async function listSections(req, res) {
   res.json(sections);
 }
 
+/**
+ * GET /api/sections/options — public.
+ *
+ * The registration form has to offer real sections to someone who is not
+ * signed in yet, so it cannot use GET /sections. Rather than opening that
+ * route up, this one returns only what a dropdown needs: the id and the name.
+ * Instructor assignment and timestamps stay behind authentication.
+ */
+export async function listSectionOptions(req, res) {
+  const sections = await Section.find().select('sectionName').sort({ sectionName: 1 });
+  res.json(sections.map((section) => ({ _id: section._id, sectionName: section.sectionName })));
+}
+
 /** GET /api/sections/:id */
 export async function getSection(req, res) {
   res.json(await findOr404(Section, req.params.id, 'Section'));

@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { Section, User } from '../models/index.js';
 import { issueToken } from '../middleware/auth.js';
-import { httpError } from '../utils/http.js';
+import { httpError, toObjectId } from '../utils/http.js';
 import { SCHOOL_ID_FORMAT, buildIdentifierQuery, isValidStudentId, normalizeSchoolId } from '../utils/identifiers.js';
 import { MIN_PASSWORD_LENGTH, PLACEHOLDER_HASH, SALT_ROUNDS } from '../constants/auth.js';
 
@@ -81,9 +81,22 @@ export async function register(req, res) {
     normalisedSchoolId = normalizeSchoolId(schoolId);
   }
 
-  if (sectionId) {
-    const section = await Section.findById(sectionId);
+  /*
+   * The section is chosen from a dropdown of real sections, so it is a
+   * controlled value and treated as one: required for students, and resolved
+   * against the collection rather than trusted as a string. toObjectId is what
+   * turns a junk value into a 400 — Section.findById would raise a CastError
+   * and surface as a 500 instead.
+   */
+  let resolvedSectionId = null;
+  if (role === 'student') {
+    if (isBlankValue(sectionId)) throw httpError(400, 'Select your section.');
+    const section = await Section.findById(toObjectId(sectionId, 'section id'));
     if (!section) throw httpError(400, 'That section does not exist.');
+    resolvedSectionId = section._id;
+  } else if (!isBlankValue(sectionId)) {
+    // Instructors are attached to sections by an administrator, not at sign-up.
+    throw httpError(400, 'Instructor accounts are assigned to sections by an administrator.');
   }
 
   const user = await User.create({
@@ -93,7 +106,7 @@ export async function register(req, res) {
     email: normalisedEmail,
     passwordHash: await bcrypt.hash(String(password), SALT_ROUNDS),
     schoolId: normalisedSchoolId,
-    sectionId: role === 'student' ? sectionId : null,
+    sectionId: resolvedSectionId,
     assignedSectionIds: [],
     status: role === 'instructor' ? 'pending' : 'active',
     earnedBadges: [],

@@ -51,6 +51,18 @@ export async function listSections() {
   return [...sections].sort((a, b) => a.sectionName.localeCompare(b.sectionName));
 }
 
+/**
+ * Sections for a dropdown, as `{ _id, sectionName }`.
+ *
+ * Its own public endpoint because registration has to offer real sections to
+ * someone with no account yet, and `GET /sections` requires a session. Use
+ * this anywhere the caller may be signed out; use `listSections` when the full
+ * record is needed.
+ */
+export function listSectionOptions() {
+  return api.get('/sections/options');
+}
+
 /** Sections with their instructor and enrolled student counts. */
 export async function listSectionsWithDetails() {
   const [sections, students, instructors] = await Promise.all([

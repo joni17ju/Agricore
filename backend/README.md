@@ -68,8 +68,9 @@ in is signed out.
 
 All routes are prefixed `/api`. Every route requires
 `Authorization: Bearer <token>` except `/api/health`, `/api/auth/login`,
-`/api/auth/register` and the three password-reset routes — someone who has
-forgotten their password cannot hold a session, so those have to be public.
+`/api/auth/register`, `/api/sections/options` and the three password-reset
+routes. Those have to be public: someone registering or recovering a password
+does not have a session yet.
 
 ### Auth
 | Method | Path | Access |
@@ -88,7 +89,8 @@ forgotten their password cannot hold a session, so those have to be public.
 | GET | `/users?role=&sectionId=&status=&search=` | instructor, admin |
 | GET/PATCH | `/users/:id` | any signed-in user |
 | DELETE | `/users/:id` | admin |
-| GET | `/sections`, `/sections/:id` | any |
+| GET | `/sections`, `/sections/:id` | any signed-in user |
+| GET | `/sections/options` | public — `{ _id, sectionName }` only, for the registration dropdown |
 | POST/PATCH | `/sections`, `/sections/:id` | admin |
 | GET | `/modules`, `/modules/:id` | any |
 | POST/PATCH | `/modules`, `/modules/:id` | instructor, admin |
