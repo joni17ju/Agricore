@@ -579,3 +579,122 @@ html:has(.landing) {
     transform: none;
   }
 }
+
+/* ───────── Auth modal views ───────── */
+
+/* The modal is portaled outside .landing, so these stay unnested. */
+.auth-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.auth-view__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.auth-pending {
+  align-items: center;
+  text-align: center;
+}
+
+.auth-pending__icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: var(--radius-full);
+  background: var(--green-50);
+  color: var(--green-700);
+}
+
+.auth-pending p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+.auth-pending .auth-view__actions {
+  justify-content: center;
+}
+
+/* The forms were built for a full page; inside a dialog they need no extra
+   top margin and the demo-account block should not run edge to edge. */
+.modal .login-form {
+  gap: var(--space-5);
+}
+
+.modal .login-demo {
+  margin-top: var(--space-5);
+}
+
+/* ───────── Scroll-reveal ───────── */
+
+/*
+ * A richer entrance than the app's default anim-fade-up: the element rises
+ * further, settles from slightly small and sharpens from a short blur, on a
+ * decelerating curve. Scoped to landing sections so the rest of the app keeps
+ * the quicker, plainer animation it already uses.
+ */
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 34px, 0) scale(0.975);
+    filter: blur(7px);
+  }
+  55% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+.landing-section.is-visible .anim-fade-up {
+  animation: landing-rise 780ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+
+/* The device mockup carries more visual weight, so it drifts in a little
+   further and a little later than the text beside it. */
+@keyframes landing-rise-visual {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 46px, 0) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.landing-section.is-visible .landing-hero__visual.anim-fade-up {
+  animation: landing-rise-visual 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 180ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The global reduced-motion rule already collapses durations; this makes
+     sure nothing is left blurred or offset if that rule ever changes. */
+  .landing-section.is-visible .anim-fade-up,
+  .landing-section.is-visible .landing-hero__visual.anim-fade-up {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* Placeholder rows while the demo accounts are still being fetched. */
+.login-demo__account.is-loading {
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}

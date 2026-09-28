@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
+import AuthModal, { AUTH_VIEWS } from '../components/auth/AuthModal.jsx';
 import Button from '../components/common/Button.jsx';
 import { Logo } from '../components/common/Display.jsx';
 import Icon from '../components/common/Icon.jsx';
@@ -12,11 +13,13 @@ import { useInView } from '../hooks/useInView.js';
 /**
  * Public landing page at "/".
  *
- * Sits in front of the app rather than replacing any of it: the login and
- * register pages are untouched and still reached by their own routes. Unlike
- * those two this page is not behind RedirectIfSignedIn — a marketing page
- * should stay readable when you happen to be signed in, so the navbar offers
- * the dashboard instead of a login button in that case.
+ * Signing in and registering happen in a dialog on this page rather than on
+ * pages of their own; /login and /register are kept only as redirects here, so
+ * existing links and the route guards' redirects still work.
+ *
+ * This page is not behind RedirectIfSignedIn — a marketing page should stay
+ * readable when you happen to be signed in, so the navbar offers the dashboard
+ * instead of a login button in that case.
  */
 
 const NAV_LINKS = [
@@ -68,7 +71,7 @@ function Section({ id, className = '', children }) {
   );
 }
 
-function LandingNav() {
+function LandingNav({ onSignIn }) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -106,7 +109,7 @@ function LandingNav() {
           {user ? (
             <Button to={ROLE_HOME[user.role]} size="sm" iconRight="arrow-right">Go to dashboard</Button>
           ) : (
-            <Button to="/login" size="sm">Login</Button>
+            <Button size="sm" onClick={onSignIn}>Login</Button>
           )}
           <button
             type="button"
@@ -151,10 +154,29 @@ function DeviceMockup() {
 
 export default function LandingPage() {
   useDocumentTitle('AgriCore — gamified learning for Principles of Crop Protection I');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [authView, setAuthView] = useState(null);
+
+  /*
+   * ?auth=login|register opens the matching form. It is an entry point only —
+   * it is what /login and /register redirect to — so it is consumed once and
+   * removed from the URL, leaving component state as the single source of
+   * truth for which view is showing. Keeping both in sync instead would mean
+   * two places to get wrong, and the mid-flow views (password reset, pending
+   * approval) have nothing worth linking to anyway.
+   */
+  useEffect(() => {
+    const requested = searchParams.get('auth');
+    if (requested !== AUTH_VIEWS.LOGIN && requested !== AUTH_VIEWS.REGISTER) return;
+    setAuthView(requested);
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const openAuth = (view) => setAuthView(view);
 
   return (
     <div className="landing">
-      <LandingNav />
+      <LandingNav onSignIn={() => openAuth(AUTH_VIEWS.LOGIN)} />
 
       <main>
         {/* ── Hero ── */}
@@ -170,10 +192,6 @@ export default function LandingPage() {
               AgriCore turns Principles of Crop Protection I into hands-on practice. Work through interactive
               missions, make real calls on pests, diseases and weeds, and watch your progress build lesson by lesson.
             </p>
-            <div className="landing-hero__actions anim-fade-up" style={{ '--i': 3 }}>
-              <Button to="/login" size="lg" iconRight="arrow-right">Get started</Button>
-              <a href="#features" className="btn btn--secondary btn--lg">See how it works</a>
-            </div>
           </div>
 
           <div className="landing-hero__visual anim-fade-up" style={{ '--i': 4 }}>
@@ -246,8 +264,8 @@ export default function LandingPage() {
               Sign in with your student account, or create one in about a minute.
             </p>
             <div className="landing-cta__actions anim-fade-up" style={{ '--i': 2 }}>
-              <Button to="/register" size="lg">Create account</Button>
-              <Button to="/login" variant="secondary" size="lg">Sign in</Button>
+              <Button size="lg" onClick={() => openAuth(AUTH_VIEWS.REGISTER)}>Create account</Button>
+              <Button variant="secondary" size="lg" onClick={() => openAuth(AUTH_VIEWS.LOGIN)}>Sign in</Button>
             </div>
           </div>
         </Section>
@@ -259,13 +277,13 @@ export default function LandingPage() {
           <p>
             Davao Oriental State University · Principles of Crop Protection I
           </p>
-          <p className="landing-footer__meta">
-            © {new Date().getFullYear()} AgriCore · <Link to="/login">Sign in</Link> · <Link to="/register">Create account</Link>
-          </p>
+          <p className="landing-footer__meta">© {new Date().getFullYear()} AgriCore</p>
         </div>
       </footer>
 
       <ScrollToTopButton />
+
+      <AuthModal view={authView} onChangeView={setAuthView} onClose={() => setAuthView(null)} />
     </div>
   );
 }
