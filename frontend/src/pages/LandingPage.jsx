@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import AuthModal, { AUTH_VIEWS } from '../components/auth/AuthModal.jsx';
 import Button from '../components/common/Button.jsx';
 import { Logo } from '../components/common/Display.jsx';
@@ -13,9 +12,9 @@ import { useInView } from '../hooks/useInView.js';
 /**
  * Public landing page at "/".
  *
- * Signing in and registering happen in a dialog on this page rather than on
- * pages of their own; /login and /register are kept only as redirects here, so
- * existing links and the route guards' redirects still work.
+ * Signing in and registering open as a dialog over this page. The same split
+ * panel is also served at /login and /register as standalone pages, so direct
+ * links and the route guards' redirects still work.
  *
  * This page is not behind RedirectIfSignedIn — a marketing page should stay
  * readable when you happen to be signed in, so the navbar offers the dashboard
@@ -154,23 +153,12 @@ function DeviceMockup() {
 
 export default function LandingPage() {
   useDocumentTitle('AgriCore — gamified learning for Principles of Crop Protection I');
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [authView, setAuthView] = useState(null);
-
   /*
-   * ?auth=login|register opens the matching form. It is an entry point only —
-   * it is what /login and /register redirect to — so it is consumed once and
-   * removed from the URL, leaving component state as the single source of
-   * truth for which view is showing. Keeping both in sync instead would mean
-   * two places to get wrong, and the mid-flow views (password reset, pending
-   * approval) have nothing worth linking to anyway.
+   * Which auth view is showing, or null for none. Plain state rather than the
+   * URL: /login and /register are real pages of their own, so there is nothing
+   * this dialog needs to be addressable for.
    */
-  useEffect(() => {
-    const requested = searchParams.get('auth');
-    if (requested !== AUTH_VIEWS.LOGIN && requested !== AUTH_VIEWS.REGISTER) return;
-    setAuthView(requested);
-    setSearchParams({}, { replace: true });
-  }, [searchParams, setSearchParams]);
+  const [authView, setAuthView] = useState(null);
 
   const openAuth = (view) => setAuthView(view);
 

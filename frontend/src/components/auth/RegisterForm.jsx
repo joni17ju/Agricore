@@ -14,7 +14,10 @@ import { listSectionOptions } from '../../services/sectionService.js';
  * not always mean a session: `onSuccess` is called only when the account is
  * usable, and `onPendingApproval` when it is waiting to be approved.
  *
- * @param {{ onSuccess: () => void, onPendingApproval: () => void, onSignIn: () => void }} props
+ * Switching to sign-in is the panel's job, so there is no secondary action
+ * here — just the one primary button.
+ *
+ * @param {{ onSuccess: () => void, onPendingApproval: () => void }} props
  */
 
 const ROLE_OPTIONS = [
@@ -32,7 +35,7 @@ const EMPTY_FORM = {
   confirmPassword: '',
 };
 
-export default function RegisterForm({ onSuccess, onPendingApproval, onSignIn }) {
+export default function RegisterForm({ onSuccess, onPendingApproval }) {
   const { register } = useAuth();
   // Public endpoint: whoever is filling this in has no account yet.
   const sections = useAsync(listSectionOptions, []);
@@ -166,9 +169,8 @@ export default function RegisterForm({ onSuccess, onPendingApproval, onSignIn })
           : 'Use at least 8 characters. Instructor accounts need administrator approval.'}
       </p>
 
-      <div className="login-actions">
+      <div className="login-actions login-actions--single">
         <Button type="submit" size="lg" isLoading={isSubmitting}>Create account</Button>
-        <Button variant="secondary" size="lg" onClick={onSignIn}>Sign in instead</Button>
       </div>
     </form>
   );

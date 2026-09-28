@@ -437,6 +437,12 @@
 .modal__description { color: var(--text-muted); font-size: var(--text-sm); margin-top: 2px; }
 .modal__body { padding: 0 var(--space-5) var(--space-5); overflow-y: auto; }
 .modal__footer { display: flex; justify-content: flex-end; gap: var(--space-2); padding: var(--space-4) var(--space-5); border-top: 1px solid var(--border); flex-wrap: wrap; }
+
+/* A modal whose content supplies its own chrome: no header, no padding, and
+   the child fills the surface. Overflow is clipped so a child's own corners
+   cannot escape the dialog's radius. */
+.modal--bare { overflow: hidden; }
+.modal--bare > * { flex: 1; min-height: 0; }
 @media (max-width: 560px) {
   .modal-backdrop { place-items: end center; padding: 0; }
   .modal { border-radius: var(--radius-xl) var(--radius-xl) 0 0; max-height: 92vh; }

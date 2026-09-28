@@ -15,7 +15,10 @@ import { getDemoAccounts } from '../../services/authService.js';
  * share one implementation — the form logic should not be duplicated just
  * because it is presented in two places.
  *
- * @param {{ onSuccess: (user) => void, onForgotPassword: () => void, onRegister: () => void }} props
+ * Switching to registration is the panel's job, not the form's, so there is
+ * no secondary action here — just the one primary button.
+ *
+ * @param {{ onSuccess: (user) => void, onForgotPassword: () => void }} props
  */
 
 const ROLE_OPTIONS = [
@@ -25,7 +28,7 @@ const ROLE_OPTIONS = [
 
 const DEMO_ICONS = { student: 'sprout', instructor: 'user-check', admin: 'shield' };
 
-export default function LoginForm({ onSuccess, onForgotPassword, onRegister }) {
+export default function LoginForm({ onSuccess, onForgotPassword }) {
   const { login, loginAsDemo } = useAuth();
   const [role, setRole] = useState(ROLES.STUDENT);
   const [form, setForm] = useState({ identifier: '', password: '' });
@@ -115,9 +118,8 @@ export default function LoginForm({ onSuccess, onForgotPassword, onRegister }) {
           <button type="button" className="link-button" onClick={onForgotPassword}>Forgot password?</button>
         </div>
 
-        <div className="login-actions">
+        <div className="login-actions login-actions--single">
           <Button type="submit" size="lg" isLoading={isSubmitting}>Login</Button>
-          <Button variant="secondary" size="lg" onClick={onRegister}>Create account</Button>
         </div>
       </form>
 

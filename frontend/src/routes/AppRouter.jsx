@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import { ROLES } from '../constants/roles.js';
 import RequireRole, { RedirectIfSignedIn } from './RequireRole.jsx';
 
@@ -6,6 +6,7 @@ import StudentLayout from '../layouts/StudentLayout.jsx';
 import InstructorLayout from '../layouts/InstructorLayout.jsx';
 import AdminLayout from '../layouts/AdminLayout.jsx';
 
+import AuthPage from '../pages/auth/AuthPage.jsx';
 import LandingPage from '../pages/LandingPage.jsx';
 import NotFoundPage from '../pages/NotFoundPage.jsx';
 
@@ -41,13 +42,13 @@ export default function AppRouter() {
           dashboard instead of offering a login button. */}
       <Route path="/" element={<LandingPage />} />
 
-      {/* Signing in and registering are a dialog on the landing page now, not
-          pages. These stay as redirects so existing links, bookmarks and the
-          route guards' own redirects to /login all still arrive somewhere
-          useful — the landing page with the right form already open. */}
+      {/* The landing page shows these as a dialog, but they stay addressable
+          as pages too: a bookmark, a shared link or a route guard's redirect
+          to /login all render the same split panel, just without a dialog
+          around it. */}
       <Route element={<RedirectIfSignedIn />}>
-        <Route path="/login" element={<Navigate to="/?auth=login" replace />} />
-        <Route path="/register" element={<Navigate to="/?auth=register" replace />} />
+        <Route path="/login" element={<AuthPage initialView="login" />} />
+        <Route path="/register" element={<AuthPage initialView="register" />} />
       </Route>
 
       <Route element={<RequireRole role={ROLES.STUDENT} />}>
