@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import { ROLES } from '../constants/roles.js';
 import RequireRole, { RedirectIfSignedIn } from './RequireRole.jsx';
 
@@ -6,6 +6,7 @@ import StudentLayout from '../layouts/StudentLayout.jsx';
 import InstructorLayout from '../layouts/InstructorLayout.jsx';
 import AdminLayout from '../layouts/AdminLayout.jsx';
 
+import LandingPage from '../pages/LandingPage.jsx';
 import LoginPage from '../pages/auth/LoginPage.jsx';
 import RegisterPage from '../pages/auth/RegisterPage.jsx';
 import NotFoundPage from '../pages/NotFoundPage.jsx';
@@ -37,7 +38,10 @@ import SectionManagementPage from '../pages/admin/SectionManagementPage.jsx';
 export default function AppRouter() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* Public marketing page. Deliberately not behind RedirectIfSignedIn:
+          it stays readable when signed in, and its navbar links to the
+          dashboard instead of offering a login button. */}
+      <Route path="/" element={<LandingPage />} />
 
       <Route element={<RedirectIfSignedIn />}>
         <Route path="/login" element={<LoginPage />} />

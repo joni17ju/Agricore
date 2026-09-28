@@ -12,6 +12,7 @@ import './components/leaderboard/leaderboard.css';
 import './components/missions/missions.css';
 import './components/instructor/instructor.css';
 import './components/admin/admin.css';
+import './pages/landing.css';
 
 import App from './App.jsx';
 
