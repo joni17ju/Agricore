@@ -8,6 +8,7 @@ import AdminLayout from '../layouts/AdminLayout.jsx';
 
 import AuthPage from '../pages/auth/AuthPage.jsx';
 import LandingPage from '../pages/LandingPage.jsx';
+import NotificationsPage from '../pages/NotificationsPage.jsx';
 import NotFoundPage from '../pages/NotFoundPage.jsx';
 
 import StudentDashboard from '../pages/student/StudentDashboard.jsx';
@@ -63,6 +64,7 @@ export default function AppRouter() {
           <Route path="leaderboard" element={<LeaderboardPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="achievements" element={<AchievementsPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
         </Route>
       </Route>
 
@@ -76,6 +78,7 @@ export default function AppRouter() {
           <Route path="performance" element={<StudentPerformancePage />} />
           <Route path="leaderboard" element={<InstructorLeaderboardPage />} />
           <Route path="profile" element={<InstructorProfilePage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
         </Route>
       </Route>
 
@@ -85,6 +88,7 @@ export default function AppRouter() {
           <Route path="users" element={<UserManagementPage />} />
           <Route path="sections" element={<SectionManagementPage />} />
           <Route path="profile" element={<AdminProfilePage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
         </Route>
       </Route>
 

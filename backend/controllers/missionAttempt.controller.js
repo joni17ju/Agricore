@@ -110,7 +110,7 @@ export async function createMissionAttempt(req, res) {
 
     // First pass of this mission: replays should not notify again.
     if (isPassed && !previousAttempts.some((a) => a.isPassed)) {
-      await notifyMissionPassed(student, { mission, module, score, xpEarned });
+      await notifyMissionPassed(student, { mission, lesson, module, score, xpEarned });
     }
 
     // Module cleared, only on the attempt that completed it.

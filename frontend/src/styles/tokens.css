@@ -35,6 +35,21 @@
   --red-100: #fde4e3;
   --blue-600: #2463d1;
   --blue-100: #e0ebfd;
+  /*
+   * Notification palette. Everything else in the app is green, so the bell and
+   * its rows use indigo as a single non-green accent, with violet and slate
+   * for per-type icon chips. Kept out of the green scale on purpose.
+   */
+  --indigo-700: #3f37c9;
+  --indigo-600: #4f46e5;
+  --indigo-200: #c7d2fe;
+  --indigo-100: #e0e7ff;
+  --indigo-50: #eef2ff;
+  --violet-600: #7c3aed;
+  --violet-100: #ede9fe;
+  --slate-900: #1e293b;
+  --slate-700: #475569;
+  --slate-100: #f1f5f9;
   --gold-500: #f2b300;
   --gold-100: #fff4cc;
   --silver-400: #a9b4bf;

@@ -219,59 +219,181 @@
   .role-toggle__option { min-height: 42px; font-size: var(--text-sm); }
 }
 
-/* ───────── Navbar notifications ─────────
+/* ───────── Notifications ─────────
+   Deliberately off-brand. Every other surface in AgriCore is green, so the
+   bell, its panel and the notification rows use indigo as their accent with a
+   per-type colour on the icon chip. Green here would make notifications read
+   as more of the same furniture instead of as something that wants attention.
+
    Panel is anchored to the bell and sits above the topbar's own stacking
    context, so it is never clipped by the sticky header. */
 .notif { position: relative; display: flex; }
-.notif__trigger { position: relative; width: 42px; height: 42px; color: var(--green-800); }
-.notif__trigger.is-open { background: var(--green-50); border-color: var(--green-200); color: var(--green-700); }
+.notif__trigger { position: relative; width: 42px; height: 42px; color: var(--slate-700); }
+.notif__trigger:hover { background: var(--indigo-50); border-color: var(--indigo-200); color: var(--indigo-700); }
+.notif__trigger.is-open { background: var(--indigo-50); border-color: var(--indigo-200); color: var(--indigo-700); }
 .notif__badge {
   position: absolute;
-  top: -3px;
-  right: -3px;
-  min-width: 18px;
-  height: 18px;
+  top: -5px;
+  right: -5px;
+  min-width: 19px;
+  height: 19px;
   padding: 0 5px;
+  display: grid;
+  place-items: center;
   border-radius: var(--radius-full);
+  background: var(--indigo-600);
   border: 2px solid var(--surface);
-  background: var(--red-500);
   color: #fff;
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   font-weight: 700;
-  line-height: 14px;
-  text-align: center;
+  line-height: 1;
 }
+
 .notif__panel {
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-  z-index: 70;
-  width: min(330px, calc(100vw - 2 * var(--space-4)));
+  z-index: 60;
+  width: 360px;
+  max-width: calc(100vw - 2 * var(--space-4));
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
-  animation: scale-in var(--duration-base) var(--ease-out);
+  box-shadow: 0 18px 44px rgba(20, 24, 45, 0.16);
   transform-origin: top right;
+  animation: scale-in 180ms var(--ease-out) both;
 }
-.notif__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border); }
-.notif__count { padding: 2px 8px; border-radius: var(--radius-full); background: var(--red-100); color: var(--red-600); font-size: var(--text-xs); font-weight: 700; }
+
+.notif__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.notif__head strong { font-size: var(--text-sm); }
+.notif__mark-all {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--indigo-600);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+.notif__mark-all:hover { color: var(--indigo-700); text-decoration: underline; }
+
+.notif__group-head,
+.notif-page__group-head {
+  margin: 0;
+  padding: var(--space-3) var(--space-4) 6px;
+  color: var(--text-subtle);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 .notif__list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
-.notif__item { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle, var(--border)); }
-.notif__item:last-child { border-bottom: 0; }
-.notif__item.is-unread { background: var(--green-50); }
-.notif__icon { display: grid; place-items: center; flex: 0 0 auto; width: 30px; height: 30px; border-radius: var(--radius-full); background: var(--green-100); color: var(--green-700); }
-.notif__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.notif__text strong { font-size: var(--text-sm); }
-.notif__text small { color: var(--text-muted); font-size: var(--text-xs); overflow-wrap: anywhere; }
-.notif__when { flex: 0 0 auto; margin-left: auto; color: var(--text-subtle); font-size: var(--text-xs); white-space: nowrap; }
-.notif__foot { padding: 10px var(--space-4); background: var(--surface-muted); color: var(--text-subtle); font-size: var(--text-xs); text-align: center; }
+
+.notif__empty {
+  margin: 0;
+  padding: var(--space-6) var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+.notif__empty--none { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); color: var(--text-subtle); }
+.notif__empty--none .icon { color: var(--indigo-200); }
+
+.notif__foot {
+  position: sticky;
+  bottom: 0;
+  padding: 10px var(--space-4);
+  background: var(--surface-muted);
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.notif__foot a { color: var(--indigo-600); font-size: var(--text-xs); font-weight: 700; }
+
+/* ── A notification row, shared by the panel and the page ── */
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-left: 3px solid transparent;
+  background: var(--surface);
+  text-align: left;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) ease;
+}
+.notif-item:hover { background: var(--indigo-50); text-decoration: none; }
+/* Unread carries an indigo edge and a faint tint — legible at a glance
+   without turning the whole panel into a wall of colour. */
+.notif-item.is-unread { border-left-color: var(--indigo-600); background: var(--indigo-50); }
+.notif-item.is-unread:hover { background: var(--indigo-100); }
+.notif-item.is-unread .notif-item__text strong { color: var(--slate-900); font-weight: 700; }
+.notif-item__text strong { font-size: var(--text-sm); font-weight: 600; color: var(--text); }
+
+.notif-item__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+}
+.notif-item--compact .notif-item__icon { width: 30px; height: 30px; }
+.notif-item__icon--violet { background: var(--violet-100); color: var(--violet-600); }
+.notif-item__icon--blue { background: var(--blue-100); color: var(--blue-600); }
+.notif-item__icon--indigo { background: var(--indigo-100); color: var(--indigo-600); }
+.notif-item__icon--amber { background: var(--amber-100); color: var(--amber-600); }
+.notif-item__icon--slate { background: var(--slate-100); color: var(--slate-700); }
+
+.notif-item__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.notif-item__text small { color: var(--text-muted); font-size: var(--text-xs); line-height: 1.45; overflow-wrap: anywhere; }
+
+.notif-item__meta { display: flex; align-items: center; gap: var(--space-2); flex: 0 0 auto; margin-left: auto; }
+.notif-item__meta time { color: var(--text-subtle); font-size: var(--text-xs); white-space: nowrap; }
+.notif-item__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--indigo-600); flex: 0 0 auto; }
+
+/* ── Full notifications page ── */
+.notif-page__filters { display: flex; gap: var(--space-2); margin-bottom: var(--space-4); }
+.notif-page__filter {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease, border-color var(--duration-fast) ease;
+}
+.notif-page__filter:hover { border-color: var(--indigo-200); color: var(--indigo-700); }
+.notif-page__filter.is-active { background: var(--indigo-600); border-color: var(--indigo-600); color: #fff; }
+
+.notif-page__group + .notif-page__group { margin-top: var(--space-4); }
+.notif-page__group-head { padding-inline: 0; }
+.notif-page__list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.notif-page__list .notif-item { border: 1px solid var(--border); border-left-width: 3px; border-radius: var(--radius-md); }
+.notif-page__more { display: flex; justify-content: center; margin-top: var(--space-5); }
 
 @media (max-width: 768px) {
   .notif__trigger { width: 38px; height: 38px; }
   /* The bell is not the right-most navbar item, so anchoring the panel to it
-     would push a 330px panel off the left edge of a phone. Dropping the
+     would push a 360px panel off the left edge of a phone. Dropping the
      wrapper out of the positioning flow anchors the panel to the sticky
      topbar instead, letting it span the viewport just below the header. */
   .notif { position: static; }

@@ -10,7 +10,6 @@
  */
 import { BADGES_BY_CODE } from '../constants/badges.js';
 import { LESSON_STATE } from '../constants/rules.js';
-import { evaluateNewBadges } from '../utils/badgeRules.js';
 import {
   buildStudentCurriculum,
   canAccessMission,
@@ -151,31 +150,13 @@ export async function submitAttempt({ studentId, missionId, answers, timeSpentSe
   const rankAfter = await sectionRankOf(student);
 
   /*
-   * TODO(security): badges are not authoritative yet.
-   *
-   * Scoring was moved server-side so a tampered client cannot award itself XP,
-   * but badge evaluation still runs here and is persisted through
-   * PATCH /users/:id, which accepts earnedBadges. A crafted request could grant
-   * itself any badge. Fix the same way as scoring: evaluate inside the
-   * mission-attempt controller and drop earnedBadges from the editable fields.
-   * Tracked in backend/README.md under "Known follow-ups".
+   * Badges come from the server now. They used to be evaluated here and written
+   * back through PATCH /users/:id, which meant a crafted request could grant
+   * itself any badge; that route no longer accepts earnedBadges at all. The
+   * mission-attempt response carries the codes the server awarded, and this
+   * only turns them into the definitions the unlock animation needs.
    */
-  const newCodes = evaluateNewBadges({
-    attempts: after.attempts,
-    curriculum: curriculumAfter,
-    missionsById: course.missionsById,
-    earnedCodes: (student.earnedBadges ?? []).map((b) => b.code),
-    sectionRank: rankAfter,
-    now: new Date(),
-  });
-  if (newCodes.length) {
-    await api.patch(`/users/${studentId}`, {
-      earnedBadges: [
-        ...(student.earnedBadges ?? []),
-        ...newCodes.map((code) => ({ code, earnedAt: attempt.attemptedAt })),
-      ],
-    });
-  }
+  const newCodes = submitted.newBadges ?? [];
 
   const moduleBefore = curriculumBefore.find((entry) => String(entry.module._id) === String(module._id));
   const moduleAfter = curriculumAfter.find((entry) => String(entry.module._id) === String(module._id));

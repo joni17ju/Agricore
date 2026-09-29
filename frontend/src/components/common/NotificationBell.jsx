@@ -1,35 +1,50 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Icon from './Icon.jsx';
+import NotificationItem from './NotificationItem.jsx';
+import { ROLE_HOME } from '../../constants/roles.js';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { useNotifications } from '../../context/NotificationContext.jsx';
+import { PANEL_LIMIT, listNotifications } from '../../services/notificationService.js';
+import { dayGroupLabel } from '../../utils/format.js';
 
 /**
  * Navbar notification bell.
  *
- * ── MOCK / PLACEHOLDER ────────────────────────────────────────────────
- * Nothing here is wired to real data yet: there is no notifications
- * collection, service or backend. The unread count and the rows below are
- * hardcoded so the navbar is visually complete while the feature is built.
- *
- * To wire this up later, replace MOCK_UNREAD_COUNT and MOCK_NOTIFICATIONS
- * with data from a notificationService (and drop the "not connected" note
- * at the bottom of the panel). The markup and styles can stay as they are.
- * ──────────────────────────────────────────────────────────────────────
+ * The badge count comes from NotificationContext, which polls, so it stays
+ * current without this component doing anything. The rows themselves are only
+ * fetched when the panel is opened — there is no reason to carry a list around
+ * for a dropdown most page views never open.
  */
-const MOCK_UNREAD_COUNT = 3;
-
-/**
- * MOCK: sample rows, shaped the way real notifications would be.
- * Kept role-neutral on purpose — the same three rows are shown to students,
- * instructors and admins, so nothing here should read as wrong for any role.
- */
-const MOCK_NOTIFICATIONS = [
-  { id: 'mock-1', icon: 'file', title: 'New topic published', detail: 'Lesson 3.4 · Vertebrate Pests', when: '2h ago', isUnread: true },
-  { id: 'mock-2', icon: 'layers', title: 'Module content updated', detail: 'Module 3 · Agricultural Entomology', when: 'Yesterday', isUnread: true },
-  { id: 'mock-3', icon: 'chart', title: 'Weekly summary ready', detail: 'Section BSA 1-A', when: '3d ago', isUnread: true },
-];
-
 export default function NotificationBell() {
+  const { user } = useAuth();
+  const { unreadCount, markRead, markAllRead, refresh } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
+  const [rows, setRows] = useState([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const wrapperRef = useRef(null);
+
+  const load = useCallback(async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const data = await listNotifications({ limit: PANEL_LIMIT });
+      setRows(data.notifications);
+      setHasMore(data.hasMore);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Fetch on open, and again whenever the count changes while open — that is
+  // what makes a notification arriving mid-session show up without a refresh.
+  useEffect(() => {
+    if (isOpen) load();
+  }, [isOpen, unreadCount, load]);
 
   // Close on outside click or Escape, the same way the drawer and modals behave.
   useEffect(() => {
@@ -48,8 +63,33 @@ export default function NotificationBell() {
     };
   }, [isOpen]);
 
-  const count = MOCK_UNREAD_COUNT;
-  const label = count > 0 ? `Notifications (${count} unread)` : 'Notifications';
+  const activate = (notification) => {
+    if (!notification.isRead) {
+      markRead(notification._id);
+      setRows((current) =>
+        current.map((row) => (row._id === notification._id ? { ...row, isRead: true } : row)),
+      );
+    }
+    setIsOpen(false);
+  };
+
+  const readEverything = async () => {
+    await markAllRead();
+    setRows((current) => current.map((row) => ({ ...row, isRead: true })));
+    refresh();
+  };
+
+  const label = unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications';
+  const allPath = `${ROLE_HOME[user.role]}/notifications`;
+
+  // Group by day so a long-ish list still reads as a timeline.
+  const groups = [];
+  for (const row of rows) {
+    const heading = dayGroupLabel(row.createdAt);
+    const last = groups[groups.length - 1];
+    if (last?.heading === heading) last.items.push(row);
+    else groups.push({ heading, items: [row] });
+  }
 
   return (
     <div className="notif" ref={wrapperRef}>
@@ -63,8 +103,8 @@ export default function NotificationBell() {
         onClick={() => setIsOpen((open) => !open)}
       >
         <Icon name="bell" size={21} />
-        {count > 0 && (
-          <span className="notif__badge" aria-hidden="true">{count > 9 ? '9+' : count}</span>
+        {unreadCount > 0 && (
+          <span className="notif__badge" aria-hidden="true">{unreadCount > 9 ? '9+' : unreadCount}</span>
         )}
       </button>
 
@@ -72,24 +112,41 @@ export default function NotificationBell() {
         <div className="notif__panel" role="dialog" aria-label="Notifications">
           <header className="notif__head">
             <strong>Notifications</strong>
-            {count > 0 && <span className="notif__count">{count} new</span>}
+            {unreadCount > 0 && (
+              <button type="button" className="notif__mark-all" onClick={readEverything}>
+                Mark all as read
+              </button>
+            )}
           </header>
 
-          <ul className="notif__list">
-            {MOCK_NOTIFICATIONS.map((item, index) => (
-              <li key={item.id} className={`notif__item ${item.isUnread ? 'is-unread' : ''} anim-fade-up`} style={{ '--i': index }}>
-                <span className="notif__icon"><Icon name={item.icon} size={16} /></span>
-                <span className="notif__text">
-                  <strong>{item.title}</strong>
-                  <small>{item.detail}</small>
-                </span>
-                <time className="notif__when">{item.when}</time>
-              </li>
-            ))}
-          </ul>
+          {isLoading && rows.length === 0 && <p className="notif__empty">Loading…</p>}
+          {error && !isLoading && <p className="notif__empty">{error}</p>}
 
-          {/* Remove once notifications are backed by real data. */}
-          <footer className="notif__foot">Sample items — notifications are not connected yet.</footer>
+          {!isLoading && !error && rows.length === 0 && (
+            <div className="notif__empty notif__empty--none">
+              <Icon name="bell" size={24} />
+              <p>Nothing yet. Finish a mission and this is where it shows up.</p>
+            </div>
+          )}
+
+          {groups.map((group) => (
+            <section key={group.heading} className="notif__group">
+              <h3 className="notif__group-head">{group.heading}</h3>
+              <ul className="notif__list">
+                {group.items.map((row, index) => (
+                  <li key={row._id} className="anim-fade-up" style={{ '--i': index }}>
+                    <NotificationItem notification={row} onActivate={activate} compact />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+
+          {(hasMore || rows.length > 0) && (
+            <footer className="notif__foot">
+              <Link to={allPath} onClick={() => setIsOpen(false)}>View all notifications</Link>
+            </footer>
+          )}
         </div>
       )}
     </div>

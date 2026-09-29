@@ -62,12 +62,18 @@ export function notifyBadgesEarned(student, badges) {
   );
 }
 
-/** First time a student passes a given mission — replays do not notify. */
-export function notifyMissionPassed(student, { mission, module, score, xpEarned }) {
+/**
+ * First time a student passes a given mission — replays do not notify.
+ *
+ * A mission has no title column of its own; the name shown in the game lives
+ * in scenarioData, so fall back to the lesson and level if it is missing.
+ */
+export function notifyMissionPassed(student, { mission, lesson, module, score, xpEarned }) {
+  const name = mission.scenarioData?.title || `${lesson?.title ?? 'Mission'} · Level ${mission.levelNumber}`;
   return create({
     userId: student._id,
     type: NOTIFICATION_TYPES.MISSION_PASSED,
-    title: `Mission passed: ${mission.title}`,
+    title: `Mission passed: ${name}`,
     body: `${module.title} · scored ${score}%${xpEarned > 0 ? ` · +${xpEarned} XP` : ''}`,
     link: '/student/missions',
     meta: { missionId: String(mission._id), score, xpEarned },

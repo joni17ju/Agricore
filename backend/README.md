@@ -1,7 +1,8 @@
 # AgriCore API
 
-Express + Mongoose backend over the seven-collection MongoDB schema:
-`users`, `sections`, `modules`, `lessons`, `missions`, `missionAttempts`, `progress`.
+Express + Mongoose backend over the MongoDB schema:
+`users`, `sections`, `modules`, `lessons`, `missions`, `missionAttempts`, `progress`,
+`notifications`.
 
 Nothing derived is stored. Total XP, level, streak, best score, section averages
 and leaderboard rank are all computed from `missionAttempts` at request time.
@@ -53,6 +54,7 @@ shape without real values.
 | `node scripts/set-passwords.js` | Resets account passwords. `seed.js` already sets them, so this is only needed to change a password or repair an account. Defaults to `agricore123`; pass `--password "…"`, `--email "…"` or `--all`. |
 | `node scripts/smoke-test.js` | End-to-end check against a running API: auth, role guards, data routes, the leaderboard aggregation, and that a tampered score is ignored. It submits one real attempt and deletes it again, so it leaves no trace. |
 | `node scripts/remove-test-attempts.js` | Clears zero-score attempts left by older smoke-test runs. Reports by default; pass `--apply` to delete. |
+| `node --env-file=.env scripts/test-notifications.js` | Submits a real mission attempt for a throwaway student and checks that badges are awarded, notifications are written, replays do not duplicate, marking read works and one user cannot touch another's rows. Removes everything it created. |
 | `TEST_EMAIL=you@example.com node --env-file=.env scripts/test-password-reset.js` | Checks the reset rate limit, attempt budget, expiry and enumeration behaviour against a running API. `TEST_EMAIL` must name an existing account on an inbox you can read; two of the checks send real mail. |
 
 The seed data is generated from the frontend mock files, so the mission
@@ -103,6 +105,10 @@ does not have a session yet.
 | GET | `/progress?studentId=&lessonId=` | own records, or any for staff |
 | PATCH | `/progress` | own records, or any for staff |
 | GET | `/leaderboard?sectionId=&limit=` | any |
+| GET | `/notifications?limit=&before=&unreadOnly=` | own only |
+| GET | `/notifications/unread-count` | own only |
+| PATCH | `/notifications/:id/read` | own only |
+| PATCH | `/notifications/read-all` | own only |
 
 ### Two routes worth knowing about
 
@@ -140,6 +146,49 @@ it returned real names, emails and roles to anyone unauthenticated, so both it
 and the buttons were removed once the app moved to real authentication. Seeded
 accounts still exist and are signed into by typing the email or school ID and
 password like any other account.
+
+## Notifications
+
+Events on the server write a row per recipient; nothing is created from the
+client. There is deliberately no create endpoint — a client that can post its
+own notifications is a client that can lie to the person reading them.
+
+| Event | Goes to |
+|---|---|
+| Badge earned | the student |
+| Mission passed, first time only | the student |
+| Module cleared | the student |
+| A student crosses into at-risk | instructors of that section |
+| A student registers into a section | instructors of that section |
+| An instructor registers | active administrators |
+| An account is approved | the approved user |
+
+Replays are excluded on purpose: passing the same mission again does not notify
+a second time, or grinding one mission would fill the bell. At-risk fires on the
+transition into it, not on every later attempt while the student stays below the
+line.
+
+Every read and write is scoped to `req.user._id` inside the controller, so no
+route exists on which one user can see or mark another's rows — not even an
+administrator.
+
+Delivery to the browser is polled, not pushed: there is no socket layer and one
+bell does not justify adding one. `NotificationContext` asks for the unread
+count every 30 seconds, pauses while the tab is hidden, and refreshes on focus.
+Worst case a notification raised by someone else's action appears within that
+window.
+
+## Badges
+
+Badges are awarded by the server, inside `POST /api/missionAttempts`, from
+stored attempts. `utils/badgeRules.js` and `constants/badges.js` are ports of
+their frontend counterparts and must be kept in step with them — the frontend
+still reads the catalogue for names, icons and artwork, it just no longer
+decides who has earned what.
+
+This closed a real hole: badges used to be evaluated in the browser and written
+back through `PATCH /api/users/:id`, so a crafted request could grant itself
+any badge. `earnedBadges` is no longer in that route's editable field list.
 
 ## Password reset
 
@@ -186,20 +235,6 @@ part). The template's palette is copied from the frontend's design tokens by
 hand and has to be updated by hand if the brand colours change.
 
 ## Known follow-ups
-
-**Badges are not yet authoritative on the server.** Mission scoring was
-deliberately moved server-side so a tampered client cannot award itself XP —
-`POST /api/missionAttempts` ignores any score in the request and re-scores the
-answers itself. Badge evaluation did *not* move: the frontend still runs
-`utils/badgeRules.js` after a submit and writes the result through
-`PATCH /api/users/:id`, which accepts `earnedBadges`. A crafted request could
-therefore grant itself any badge.
-
-This is the same class of trust problem as the XP one, and it should be closed
-the same way before any final defence: port `badgeRules.js` alongside the
-already-ported `scoring.js` and `gamification.js`, evaluate badges inside the
-mission-attempt controller, and drop `earnedBadges` from the editable field
-list in `controllers/user.controller.js`.
 
 **A bulk activity endpoint for instructor analytics — still open.** The
 analytics screens issue one activity request per student (roughly 50 requests
