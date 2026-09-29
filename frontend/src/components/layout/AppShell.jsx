@@ -23,17 +23,59 @@ export default function AppShell(props) {
   );
 }
 
+/**
+ * Remembers the desktop sidebar choice between visits.
+ *
+ * Read once during the initial state, so a collapsed sidebar is collapsed on
+ * the very first paint rather than flashing open. Storage can throw in a
+ * private window or with site data blocked, so every access is guarded and the
+ * fallback is simply "expanded".
+ */
+const SIDEBAR_KEY = 'agricore.sidebar-collapsed';
+
+function readCollapsedPreference() {
+  try {
+    return window.localStorage.getItem(SIDEBAR_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
 function AppShellInner({ navGroups, topbarRight, homePath, outletContext }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(readCollapsedPreference);
+  /*
+   * The width transition is suppressed until after the first paint. Without
+   * this, loading a page with the sidebar already collapsed animates it in
+   * from full width on every single navigation, which reads as a glitch.
+   */
+  const [canAnimate, setCanAnimate] = useState(false);
   const pageTrail = useBreadcrumbTrail();
 
   useEffect(() => {
     setIsDrawerOpen(false);
     window.scrollTo({ top: 0 });
   }, [location.pathname]);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setCanAnimate(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  const toggleCollapsed = () => {
+    setIsCollapsed((collapsed) => {
+      const next = !collapsed;
+      try {
+        window.localStorage.setItem(SIDEBAR_KEY, String(next));
+      } catch {
+        // Storage unavailable: the choice still applies for this session.
+      }
+      return next;
+    });
+  };
 
   const items = navGroups.flatMap((group) => group.items);
   const current = [...items]
@@ -49,7 +91,16 @@ function AppShellInner({ navGroups, topbarRight, homePath, outletContext }) {
   };
 
   return (
-    <div className={`app-shell ${isDrawerOpen ? 'drawer-open' : ''}`}>
+    <div
+      className={[
+        'app-shell',
+        isDrawerOpen ? 'drawer-open' : '',
+        isCollapsed ? 'sidebar-collapsed' : '',
+        canAnimate ? 'sidebar-animated' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <aside className="sidebar" aria-label="Main navigation">
         <div className="sidebar__brand">
           <NavLink to={homePath} className="sidebar__logo">
@@ -57,6 +108,23 @@ function AppShellInner({ navGroups, topbarRight, homePath, outletContext }) {
           </NavLink>
           <IconButton icon="x" label="Close menu" className="sidebar__close" onClick={() => setIsDrawerOpen(false)} />
         </div>
+
+        {/*
+          Docked on the seam rather than inside the brand row: it keeps the
+          same position and size in both states, so it never moves out from
+          under the cursor. Hidden by CSS below the desktop breakpoint, where
+          the rail and drawer already decide the width themselves.
+        */}
+        <button
+          type="button"
+          className="sidebar__collapse"
+          onClick={toggleCollapsed}
+          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-expanded={!isCollapsed}
+          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          <Icon name={isCollapsed ? 'chevron-right' : 'chevron-left'} size={16} />
+        </button>
 
         <nav className="sidebar__nav">
           {navGroups.map((group) => (
@@ -68,7 +136,9 @@ function AppShellInner({ navGroups, topbarRight, homePath, outletContext }) {
                   to={item.to}
                   end={item.end}
                   className={({ isActive }) => `sidebar__link ${isActive ? 'is-active' : ''}`}
-                  title={item.label}
+                  // data-label feeds the CSS tooltip shown when the sidebar is
+                  // collapsed; no title, whose delay makes it useless here.
+                  data-label={item.label}
                 >
                   <Icon name={item.icon} size={20} />
                   <span className="sidebar__link-label">{item.label}</span>
@@ -86,7 +156,7 @@ function AppShellInner({ navGroups, topbarRight, homePath, outletContext }) {
               <span>{ROLE_LABELS[user.role]}</span>
             </div>
           </div>
-          <button type="button" className="sidebar__logout" onClick={handleLogout} title="Log out">
+          <button type="button" className="sidebar__logout" onClick={handleLogout} data-label="Log out">
             <Icon name="logout" size={18} />
             <span className="sidebar__link-label">Log out</span>
           </button>
