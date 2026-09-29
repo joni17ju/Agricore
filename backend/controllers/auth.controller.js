@@ -4,6 +4,7 @@ import { issueToken } from '../middleware/auth.js';
 import { httpError, toObjectId } from '../utils/http.js';
 import { SCHOOL_ID_FORMAT, buildIdentifierQuery, isValidStudentId, normalizeSchoolId } from '../utils/identifiers.js';
 import { MIN_PASSWORD_LENGTH, PLACEHOLDER_HASH, SALT_ROUNDS } from '../constants/auth.js';
+import { notifyInstructorPending, notifyStudentJoined } from '../utils/notify.js';
 
 const isBlankValue = (value) => value === undefined || value === null || String(value).trim() === '';
 
@@ -111,6 +112,18 @@ export async function register(req, res) {
     status: role === 'instructor' ? 'pending' : 'active',
     earnedBadges: [],
   });
+
+  /*
+   * Tell the people who need to act on this. A student joining is news for the
+   * instructors of that section; an instructor registering is news for the
+   * administrators who have to approve them. Best-effort inside notify.js, so
+   * a notification failure cannot fail the registration itself.
+   */
+  if (user.role === 'student') {
+    await notifyStudentJoined(user, await Section.findById(resolvedSectionId));
+  } else if (user.status === 'pending') {
+    await notifyInstructorPending(user);
+  }
 
   // A pending instructor gets no token — there is nothing to sign in to yet.
   const requiresApproval = user.status === 'pending';

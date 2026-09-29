@@ -1,6 +1,13 @@
 import { PROGRESS_STATUS } from '../constants/rules.js';
 import { Lesson, Mission, MissionAttempt, Module, Progress, User } from '../models/index.js';
 import { calculateXpAward } from '../utils/gamification.js';
+import { detectAtRiskTransition, findClearedModuleNumbers, findNewBadges } from '../utils/awards.js';
+import {
+  notifyBadgesEarned,
+  notifyMissionPassed,
+  notifyModuleCleared,
+  notifyStudentAtRisk,
+} from '../utils/notify.js';
 import { scoreMission } from '../utils/scoring.js';
 import { httpError, toObjectId } from '../utils/http.js';
 
@@ -81,6 +88,58 @@ export async function createMissionAttempt(req, res) {
     { upsert: true, new: true, setDefaultsOnInsert: true },
   );
 
+  /*
+   * Awards and notifications.
+   *
+   * Badges are decided here, from stored attempts, rather than by the client.
+   * They used to be evaluated in the browser and written back through
+   * PATCH /api/users/:id, which meant a crafted request could grant itself any
+   * badge; `earnedBadges` is no longer editable through that route.
+   *
+   * All of this runs after the attempt and progress are saved, and every step
+   * is best-effort: the attempt has already been scored and recorded, so a
+   * failure to award or notify must not turn a successful submission into an
+   * error. Anything that goes wrong is logged and the response still carries
+   * the score.
+   */
+  let newBadges = [];
+  try {
+    const attempts = await MissionAttempt.find({ studentId: student._id });
+    const modules = await Module.find().select('_id moduleNumber title');
+    const clearedModuleNumbers = await findClearedModuleNumbers(student._id, modules);
+
+    // First pass of this mission: replays should not notify again.
+    if (isPassed && !previousAttempts.some((a) => a.isPassed)) {
+      await notifyMissionPassed(student, { mission, module, score, xpEarned });
+    }
+
+    // Module cleared, only on the attempt that completed it.
+    const clearedBefore = new Set(
+      await findClearedModuleNumbersBefore(student._id, modules, attempt._id),
+    );
+    for (const moduleNumber of clearedModuleNumbers) {
+      if (clearedBefore.has(moduleNumber)) continue;
+      const cleared = modules.find((m) => m.moduleNumber === moduleNumber);
+      if (cleared) await notifyModuleCleared(student, cleared);
+    }
+
+    newBadges = await findNewBadges({ student, attempts, clearedModuleNumbers });
+    if (newBadges.length > 0) {
+      const earnedAt = new Date();
+      await User.updateOne(
+        { _id: student._id },
+        { $push: { earnedBadges: { $each: newBadges.map((b) => ({ code: b.code, earnedAt })) } } },
+      );
+      await notifyBadgesEarned(student, newBadges);
+    }
+
+    // Instructors hear about a student crossing into at-risk, once.
+    const atRisk = detectAtRiskTransition({ attempts, previousAttempts });
+    if (atRisk) await notifyStudentAtRisk(student, atRisk);
+  } catch (error) {
+    console.error('[missionAttempt] awards/notifications failed', error.message);
+  }
+
   res.status(201).json({
     attempt,
     score,
@@ -90,5 +149,36 @@ export async function createMissionAttempt(req, res) {
     lessonStatus: status,
     lessonId: lesson._id,
     moduleId: module._id,
+    // The client shows an unlock animation for these; it no longer decides them.
+    newBadges: newBadges.map((badge) => badge.code),
   });
+}
+
+/**
+ * Which modules were already cleared before the given attempt existed.
+ *
+ * Used to tell "you have just cleared this module" from "you replayed a
+ * mission in a module you cleared last week".
+ */
+async function findClearedModuleNumbersBefore(studentId, modules, excludeAttemptId) {
+  const passedIds = new Set(
+    (
+      await MissionAttempt.distinct('missionId', {
+        studentId,
+        isPassed: true,
+        _id: { $ne: excludeAttemptId },
+      })
+    ).map(String),
+  );
+  if (passedIds.size === 0) return [];
+
+  const cleared = [];
+  for (const module of modules) {
+    const lessons = await Lesson.find({ moduleId: module._id }, { _id: 1 });
+    if (lessons.length === 0) continue;
+    const missions = await Mission.find({ lessonId: { $in: lessons.map((l) => l._id) } }, { _id: 1 });
+    if (missions.length === 0) continue;
+    if (missions.every((m) => passedIds.has(String(m._id)))) cleared.push(module.moduleNumber);
+  }
+  return cleared;
 }

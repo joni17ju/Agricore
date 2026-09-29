@@ -1,11 +1,12 @@
 import bcrypt from 'bcryptjs';
 import { User } from '../models/index.js';
 import { findOr404, httpError, toObjectId } from '../utils/http.js';
+import { notifyAccountApproved } from '../utils/notify.js';
 
 /** Never send the password hash to a client. */
 const PUBLIC_FIELDS = '-passwordHash';
 
-/** Shared prototype password given to accounts an administrator creates. */
+/** Starting password given to accounts an administrator creates directly. */
 const DEFAULT_NEW_USER_PASSWORD = 'agricore123';
 
 /** GET /api/users?role=&sectionId=&status=&search= */
@@ -29,8 +30,16 @@ export async function getUser(req, res) {
   res.json(user);
 }
 
-/** Fields a client may change; role and status have their own guarded paths. */
-const EDITABLE = ['firstName', 'lastName', 'email', 'schoolId', 'sectionId', 'assignedSectionIds', 'avatarUrl', 'status', 'role', 'earnedBadges'];
+/**
+ * Fields a client may change; role and status have their own guarded paths.
+ *
+ * `earnedBadges` is deliberately absent. Badges used to be evaluated in the
+ * browser and written back through this route, which meant a crafted request
+ * could award itself any badge. They are now decided server side inside the
+ * mission-attempt controller, from stored attempts, and this route will not
+ * write them at all.
+ */
+const EDITABLE = ['firstName', 'lastName', 'email', 'schoolId', 'sectionId', 'assignedSectionIds', 'avatarUrl', 'status', 'role'];
 
 /** PATCH /api/users/:id — admin and instructor management screens, and avatar upload. */
 export async function updateUser(req, res) {
@@ -42,8 +51,14 @@ export async function updateUser(req, res) {
     if (clash) throw httpError(409, 'That email address is already in use.');
     updates.email = email;
   }
+  // Captured before the write so "has just been approved" is a real transition.
+  const wasPending = user.status === 'pending';
+
   Object.assign(user, updates);
   await user.save();
+
+  if (wasPending && user.status === 'active') await notifyAccountApproved(user);
+
   res.json(await User.findById(user._id).select(PUBLIC_FIELDS));
 }
 
