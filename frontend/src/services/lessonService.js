@@ -100,7 +100,7 @@ export async function uploadMediaAsset(lessonId, file, { title, caption = '', ty
   }
   if (file.size > MAX_MOCK_UPLOAD_BYTES) {
     const limitMb = (MAX_MOCK_UPLOAD_BYTES / 1024 / 1024).toFixed(1);
-    throw new ServiceError(`Files must be ${limitMb} MB or smaller in the prototype.`, 413);
+    throw new ServiceError(`Files must be ${limitMb} MB or smaller.`, 413);
   }
 
   const url = await readFileAsDataUrl(file);

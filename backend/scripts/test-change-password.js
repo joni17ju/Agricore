@@ -1,7 +1,7 @@
 /**
  * Verifies the change-password endpoint end to end against a running API.
  *
- * It changes a demo account's password and puts it back, asserting at each
+ * It changes a seeded account's password and puts it back, asserting at each
  * step that a wrong current password is refused and that the old password
  * genuinely stops working once changed.
  *
@@ -75,11 +75,11 @@ check('new password works', newAccepted.status === 200, `${newAccepted.status}`)
 console.log('\nRestore:');
 if (newAccepted.status === 200) {
   const restored = await change(newAccepted.data.token, TEMP, ORIGINAL);
-  check('changed back to the demo password', restored.status === 200, `${restored.status}`);
+  check('changed back to the original password', restored.status === 200, `${restored.status}`);
   const finalLogin = await login(ORIGINAL);
-  check('demo password works again', finalLogin.status === 200, `${finalLogin.status}`);
+  check('original password works again', finalLogin.status === 200, `${finalLogin.status}`);
 } else {
-  check('changed back to the demo password', false, 'could not sign in with the new password');
+  check('changed back to the original password', false, 'could not sign in with the new password');
 }
 
 console.log(`\n${failures === 0 ? 'All checks passed.' : `${failures} check(s) FAILED.`}`);

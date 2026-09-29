@@ -1,10 +1,9 @@
 import { Router } from 'express';
-import { changePassword, demoAccounts, login, me, register } from '../controllers/auth.controller.js';
+import { changePassword, login, me, register } from '../controllers/auth.controller.js';
 import { requestPasswordReset, resetPassword, verifyResetCode } from '../controllers/passwordReset.controller.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
-router.get('/auth/demo-accounts', demoAccounts);
 router.post('/auth/login', login);
 router.post('/auth/register', register);
 // Public by necessity: someone who has forgotten their password cannot hold

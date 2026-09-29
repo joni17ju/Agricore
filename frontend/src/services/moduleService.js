@@ -57,7 +57,7 @@ export async function updateModuleCover(moduleId, file) {
     if (!file.type.startsWith('image/')) throw new ServiceError('Choose an image file (PNG, JPG or WebP).');
     if (file.size > MAX_MOCK_UPLOAD_BYTES) {
       const limitMb = (MAX_MOCK_UPLOAD_BYTES / 1024 / 1024).toFixed(1);
-      throw new ServiceError(`Images must be ${limitMb} MB or smaller in the prototype.`, 413);
+      throw new ServiceError(`Images must be ${limitMb} MB or smaller.`, 413);
     }
     coverImage = await new Promise((resolve, reject) => {
       const reader = new FileReader();

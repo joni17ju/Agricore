@@ -112,7 +112,7 @@ function UploadModal({ lessonId, isOpen, onClose, onUploaded }) {
       isOpen={isOpen}
       onClose={close}
       title="Upload media"
-      description="Prototype upload — files are previewed and saved in this browser only."
+      description="Files are stored with the lesson and shown to your students."
       footer={
         <>
           <Button variant="secondary" onClick={close}>Cancel</Button>
@@ -137,7 +137,7 @@ function UploadModal({ lessonId, isOpen, onClose, onUploaded }) {
             <>
               <span className="dropzone__icon"><Icon name="upload" size={28} /></span>
               <strong>Drop an image or video here</strong>
-              <span className="text-sm text-muted">or click to browse · max 1.5 MB in the prototype</span>
+              <span className="text-sm text-muted">or click to browse · max 1.5 MB</span>
             </>
           )}
         </label>

@@ -47,7 +47,7 @@ shape without real values.
 
 | Command | What it does |
 |---|---|
-| `node scripts/seed.js` | Replaces all seven collections with the content in `frontend/src/data/*.js`, converting the readable string ids to real ObjectIds and rewiring every reference. Activity dates are shifted so the newest attempt is always yesterday, and every account is given the demo password. **Destructive** — it deletes existing documents first. |
+| `node scripts/seed.js` | Replaces all seven collections with the content in `frontend/src/data/*.js`, converting the readable string ids to real ObjectIds and rewiring every reference. Activity dates are shifted so the newest attempt is always yesterday, and every account is given the same starting password. **Destructive** — it deletes existing documents first. |
 | `node scripts/seed.js --dry` | Reports what would be written. Touches nothing. |
 | `node scripts/verify-seed.js` | Read-only. Checks that seeded documents carry the fields the frontend reads, that every `scenarioData` matches its game type, and that no reference is orphaned. |
 | `node scripts/set-passwords.js` | Resets account passwords. `seed.js` already sets them, so this is only needed to change a password or repair an account. Defaults to `agricore123`; pass `--password "…"`, `--email "…"` or `--all`. |
@@ -133,6 +133,13 @@ from the database on every request, so a profile edit takes effect immediately
 and a stale token cannot assert outdated identity. `requireAuth` rejects tokens
 whose user has been deleted or deactivated; `requireRole(...)` returns 403 (not
 401) when a valid session lacks the necessary role.
+
+There is no public endpoint that lists accounts. An earlier
+`GET /auth/demo-accounts` powered one-click sign-in buttons on the login page;
+it returned real names, emails and roles to anyone unauthenticated, so both it
+and the buttons were removed once the app moved to real authentication. Seeded
+accounts still exist and are signed into by typing the email or school ID and
+password like any other account.
 
 ## Password reset
 

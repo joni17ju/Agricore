@@ -14,7 +14,7 @@ const PASSWORD = 'testing-pass-1234';
 const NEW_ID = '2026-9911';
 const EXISTING_ID = '2023-0101';
 const EXISTING_EMAIL = 'juan.delacruz@dorsu.edu.ph';
-const DEMO_PASSWORD = 'agricore123';
+const SEED_PASSWORD = 'agricore123';
 
 let failures = 0;
 const check = (label, ok, detail = '') => {
@@ -34,7 +34,7 @@ async function call(path, { method = 'GET', body } = {}) {
 const login = (identifier, password) => call('/auth/login', { method: 'POST', body: { identifier, password } });
 
 // A section id is needed for student registration.
-const loginAdmin = await call('/auth/login', { method: 'POST', body: { identifier: 'l.mercado@dorsu.edu.ph', password: DEMO_PASSWORD } });
+const loginAdmin = await call('/auth/login', { method: 'POST', body: { identifier: 'l.mercado@dorsu.edu.ph', password: SEED_PASSWORD } });
 const sectionsRes = await fetch(`${BASE}/sections`, { headers: { Authorization: `Bearer ${loginAdmin.data.token}` } });
 const sections = await sectionsRes.json();
 const sectionId = sections[0]?._id;
@@ -61,10 +61,10 @@ const instructor = await call('/auth/register', { method: 'POST', body: { role: 
 check('instructor registers with no school ID → 201', instructor.status === 201, `${instructor.status}`);
 
 console.log('\nLogin — email or school ID:');
-const byEmail = await login(EXISTING_EMAIL, DEMO_PASSWORD);
+const byEmail = await login(EXISTING_EMAIL, SEED_PASSWORD);
 check('login by email → 200', byEmail.status === 200, byEmail.data?.user?.email);
 
-const byId = await login(EXISTING_ID, DEMO_PASSWORD);
+const byId = await login(EXISTING_ID, SEED_PASSWORD);
 check('login by school ID → 200', byId.status === 200, byId.data?.user?.email);
 
 check(
@@ -79,14 +79,14 @@ check('new account signs in by its school ID → 200', newAccountById.status ===
 const wrongPassword = await login(EXISTING_ID, 'not-the-password');
 check('school ID with wrong password → 401', wrongPassword.status === 401, `"${wrongPassword.data?.message}"`);
 
-const unknownId = await login('1999-0001', DEMO_PASSWORD);
+const unknownId = await login('1999-0001', SEED_PASSWORD);
 check('unknown school ID → 401', unknownId.status === 401, `"${unknownId.data?.message}"`);
 check(
   'unknown ID and wrong password share a message (no enumeration)',
   unknownId.data?.message === wrongPassword.data?.message,
 );
 
-const staffById = await login('FAC-2012-014', DEMO_PASSWORD);
+const staffById = await login('FAC-2012-014', SEED_PASSWORD);
 check('staff ID format also works → 200', staffById.status === 200, staffById.data?.user?.email);
 
 // Clean up the accounts this run created.

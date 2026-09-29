@@ -2,7 +2,7 @@
  * Authentication against the real API.
  *
  * Same exported functions and return shapes as the mock version, so pages and
- * components are untouched: login/loginAsDemo resolve with the user record,
+ * components are untouched: login resolves with the user record,
  * register resolves with { user, requiresApproval }, getCurrentUser resolves
  * with the user or null.
  *
@@ -16,13 +16,6 @@ import { api, setToken, getToken } from './apiClient.js';
 import { ServiceError } from './serviceError.js';
 
 const LEGACY_SESSION_KEY = 'agricore.session';
-
-/**
- * Shared password for the seeded demo accounts, set by
- * backend/scripts/set-passwords.js. The login page's one-click demo sign-in
- * performs a real /auth/login with it rather than bypassing authentication.
- */
-const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD ?? 'agricore123';
 
 function clearLegacySession() {
   try {
@@ -84,18 +77,6 @@ export async function login({ identifier, email, password, role }) {
   }
   if (isBlank(password)) throw new ServiceError('Enter your password.');
   return signIn(signInAs, password, role);
-}
-
-/** One-click demo sign-in: a real login using the shared demo password. */
-export async function loginAsDemo(userId) {
-  const accounts = await api.get('/auth/demo-accounts');
-  const account = accounts.find((item) => item._id === userId);
-  if (!account) throw new ServiceError('Demo account not found.', 404);
-  return signIn(account.email, DEMO_PASSWORD);
-}
-
-export function getDemoAccounts() {
-  return api.get('/auth/demo-accounts');
 }
 
 /**

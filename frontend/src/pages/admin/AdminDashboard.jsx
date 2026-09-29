@@ -5,7 +5,6 @@ import { USER_STATUS } from '../../constants/roles.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
 import { getAdminOverview } from '../../services/analyticsService.js';
-import { resetDatabase } from '../../services/mockDb.js';
 import { deleteUser, setUserStatus } from '../../services/userService.js';
 import Button from '../../components/common/Button.jsx';
 import Card from '../../components/common/Card.jsx';
@@ -17,7 +16,6 @@ export default function AdminDashboard() {
   useDocumentTitle('Admin Dashboard');
   const toast = useToast();
   const { data, error, isLoading, reload } = useAsync(getAdminOverview, []);
-  const [resetOpen, setResetOpen] = useState(false);
   const [rejecting, setRejecting] = useState(null);
 
   if (isLoading && !data) return <LoadingState label="Loading overview…" />;
@@ -118,26 +116,10 @@ export default function AdminDashboard() {
           <div className="quick-actions">
             <Link to="/admin/users" className="quick-action"><Icon name="user-plus" size={22} /> Manage users & roles</Link>
             <Link to="/admin/sections" className="quick-action"><Icon name="layers" size={22} /> Sections & instructor assignment</Link>
-            <button type="button" className="quick-action quick-action--danger" onClick={() => setResetOpen(true)}>
-              <Icon name="refresh" size={22} /> Reset demo data
-            </button>
           </div>
         </Card>
       </div>
 
-      <ConfirmDialog
-        isOpen={resetOpen}
-        onClose={() => setResetOpen(false)}
-        onConfirm={() => {
-          resetDatabase();
-          setResetOpen(false);
-          toast.success('Demo data restored to the original seed.');
-          reload();
-        }}
-        title="Reset demo data?"
-        message="All changes made in this browser (accounts, lessons, attempts, uploads) will be replaced with the original mock data."
-        confirmLabel="Reset data"
-      />
       <ConfirmDialog
         isOpen={Boolean(rejecting)}
         onClose={() => setRejecting(null)}

@@ -617,7 +617,7 @@ html:has(.landing) {
   opacity: 0.13;
 }
 
-.auth-brand__shapes .shape { fill: #fff; }
+.auth-brand__shapes .shape { fill: #fff; transform-origin: center; }
 
 .auth-brand__content {
   position: relative;
@@ -768,13 +768,6 @@ html:has(.landing) {
 
 .auth-pending .auth-view__actions { justify-content: center; }
 
-/* Placeholder rows while the demo accounts are still being fetched. */
-.login-demo__account.is-loading {
-  display: flex;
-  align-items: center;
-  pointer-events: none;
-}
-
 /* ── Standalone /login and /register ── */
 
 .auth-page {
@@ -783,7 +776,10 @@ html:has(.landing) {
   min-height: 100vh;
   min-height: 100dvh;
   padding: var(--space-5);
-  background: var(--green-50);
+  background:
+    radial-gradient(circle at 10% 10%, rgba(76, 201, 127, 0.16), transparent 40%),
+    radial-gradient(circle at 90% 90%, rgba(15, 122, 58, 0.12), transparent 40%),
+    var(--green-50);
 }
 
 .auth-page__card {
@@ -912,11 +908,4 @@ html:has(.landing) {
     transform: none;
     filter: none;
   }
-}
-
-/* Placeholder rows while the demo accounts are still being fetched. */
-.login-demo__account.is-loading {
-  display: flex;
-  align-items: center;
-  pointer-events: none;
 }

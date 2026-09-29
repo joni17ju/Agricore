@@ -4,7 +4,7 @@
  * It submits one real mission attempt — that is the only way to prove the
  * server re-scores answers instead of trusting the client — and then deletes
  * that attempt directly so repeated runs do not accumulate junk activity on a
- * demo account and skew its stats. There is deliberately no DELETE route for
+ * seeded account and skew its stats. There is deliberately no DELETE route for
  * attempts, so the cleanup goes through Mongoose.
  *
  * Usage: node scripts/smoke-test.js [baseUrl]
@@ -12,7 +12,7 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
 const BASE = process.argv[2] ?? 'http://localhost:5000/api';
-const DEMO = { email: 'juan.delacruz@dorsu.edu.ph', password: 'agricore123' };
+const ACCOUNT = { email: 'juan.delacruz@dorsu.edu.ph', password: 'agricore123' };
 
 let failures = 0;
 const check = (label, ok, detail = '') => {
@@ -46,19 +46,19 @@ const health = await call('/health');
 check('GET /health', health.status === 200 && health.data.database === 'connected', `${health.status} ${health.data.database}`);
 
 console.log('\nAuth:');
-const login = await call('/auth/login', { method: 'POST', body: DEMO });
+const login = await call('/auth/login', { method: 'POST', body: ACCOUNT });
 check('POST /auth/login', login.status === 200 && Boolean(login.data.token), `${login.status} ${login.data.user?.firstName ?? login.data.message ?? ''}`);
 const token = login.data.token;
 check('token payload has no password hash', !JSON.stringify(login.data.user ?? {}).includes('passwordHash'));
 
-const wrong = await call('/auth/login', { method: 'POST', body: { ...DEMO, password: 'definitely-wrong' } });
+const wrong = await call('/auth/login', { method: 'POST', body: { ...ACCOUNT, password: 'definitely-wrong' } });
 check('wrong password rejected', wrong.status === 401, `${wrong.status} "${wrong.data.message}"`);
 
 const unknown = await call('/auth/login', { method: 'POST', body: { email: 'nobody@example.com', password: 'whatever12' } });
 check('unknown email gives same message (no enumeration)', unknown.data.message === wrong.data.message, `"${unknown.data.message}"`);
 
 const me = await call('/auth/me', { token });
-check('GET /auth/me', me.status === 200 && me.data.user?.email === DEMO.email, `${me.status}`);
+check('GET /auth/me', me.status === 200 && me.data.user?.email === ACCOUNT.email, `${me.status}`);
 
 console.log('\nAuthorisation:');
 const noToken = await call('/modules');
