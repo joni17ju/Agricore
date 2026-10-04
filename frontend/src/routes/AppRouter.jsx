@@ -4,7 +4,6 @@ import RequireRole, { RedirectIfSignedIn } from './RequireRole.jsx';
 
 import StudentLayout from '../layouts/StudentLayout.jsx';
 import InstructorLayout from '../layouts/InstructorLayout.jsx';
-import AdminLayout from '../layouts/AdminLayout.jsx';
 
 import AuthPage from '../pages/auth/AuthPage.jsx';
 import LandingPage from '../pages/LandingPage.jsx';
@@ -20,7 +19,6 @@ import MissionPlayPage from '../pages/student/MissionPlayPage.jsx';
 import LeaderboardPage from '../pages/student/LeaderboardPage.jsx';
 import ProfilePage from '../pages/student/ProfilePage.jsx';
 import InstructorProfilePage from '../pages/instructor/InstructorProfilePage.jsx';
-import AdminProfilePage from '../pages/admin/AdminProfilePage.jsx';
 import AchievementsPage from '../pages/student/AchievementsPage.jsx';
 
 import InstructorDashboard from '../pages/instructor/InstructorDashboard.jsx';
@@ -28,12 +26,11 @@ import ModulesOverviewPage from '../pages/instructor/ModulesOverviewPage.jsx';
 import ModuleLessonsPage from '../pages/instructor/ModuleLessonsPage.jsx';
 import LessonEditorPage from '../pages/instructor/LessonEditorPage.jsx';
 import RosterPage from '../pages/instructor/RosterPage.jsx';
+import AccountRequestsPage from '../pages/instructor/AccountRequestsPage.jsx';
+import SectionsPage from '../pages/instructor/SectionsPage.jsx';
 import StudentPerformancePage from '../pages/instructor/StudentPerformancePage.jsx';
 import InstructorLeaderboardPage from '../pages/instructor/InstructorLeaderboardPage.jsx';
 
-import AdminDashboard from '../pages/admin/AdminDashboard.jsx';
-import UserManagementPage from '../pages/admin/UserManagementPage.jsx';
-import SectionManagementPage from '../pages/admin/SectionManagementPage.jsx';
 
 export default function AppRouter() {
   return (
@@ -75,19 +72,11 @@ export default function AppRouter() {
           <Route path="modules/:moduleId" element={<ModuleLessonsPage />} />
           <Route path="modules/:moduleId/lessons/:lessonId" element={<LessonEditorPage />} />
           <Route path="roster" element={<RosterPage />} />
+          <Route path="requests" element={<AccountRequestsPage />} />
+          <Route path="sections" element={<SectionsPage />} />
           <Route path="performance" element={<StudentPerformancePage />} />
           <Route path="leaderboard" element={<InstructorLeaderboardPage />} />
           <Route path="profile" element={<InstructorProfilePage />} />
-          <Route path="notifications" element={<NotificationsPage />} />
-        </Route>
-      </Route>
-
-      <Route element={<RequireRole role={ROLES.ADMIN} />}>
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="users" element={<UserManagementPage />} />
-          <Route path="sections" element={<SectionManagementPage />} />
-          <Route path="profile" element={<AdminProfilePage />} />
           <Route path="notifications" element={<NotificationsPage />} />
         </Route>
       </Route>

@@ -1,6 +1,6 @@
 /**
  * Performance analytics for instructors (Proposal Figs 24, 27) and the
- * administrator overview.
+ * instructor overview.
  */
 import { BADGES_BY_CODE } from '../constants/badges.js';
 import { ROLES, USER_STATUS } from '../constants/roles.js';
@@ -35,7 +35,7 @@ const STATUS_SEVERITY = {
 
 /** Metrics, statuses and course-level analytics for a group of students. */
 async function analyzeStudents(students, course, now = new Date()) {
-  // One activity fetch per student, in parallel. Instructors and admins are
+  // One activity fetch per student, in parallel. Instructors are
   // allowed to read any student's records, so this needs no special scoping.
   const studentData = await Promise.all(
     students.map(async (student) => {
@@ -178,29 +178,6 @@ export async function getStudentPerformanceDetail(instructorId, studentId) {
           return { attempt, mission, ...(mission ? getMissionContext(mission, course) : {}) };
         }),
       badges: (student.earnedBadges ?? []).map((badge) => ({ ...BADGES_BY_CODE[badge.code], earnedAt: badge.earnedAt })),
-    };
-  }
-}
-
-/** Administrator dashboard counts. */
-export async function getAdminOverview() {
-  {
-    const [users, sections, course] = await Promise.all([api.get('/users'), api.get('/sections'), getCourse()]);
-    const count = (predicate) => users.filter(predicate).length;
-    const sectionIds = new Set(sections.map((s) => String(s._id)));
-    return {
-      students: count((u) => u.role === ROLES.STUDENT),
-      activeStudents: count((u) => u.role === ROLES.STUDENT && u.status === USER_STATUS.ACTIVE),
-      instructors: count((u) => u.role === ROLES.INSTRUCTOR),
-      pendingInstructors: users.filter((u) => u.role === ROLES.INSTRUCTOR && u.status === USER_STATUS.PENDING),
-      administrators: count((u) => u.role === ROLES.ADMIN),
-      inactiveUsers: count((u) => u.status === USER_STATUS.INACTIVE),
-      sections: sections.length,
-      sectionsWithoutInstructor: sections.filter((s) => !s.instructorId),
-      studentsWithoutSection: count((u) => u.role === ROLES.STUDENT && !sectionIds.has(String(u.sectionId))),
-      modules: course.modules.length,
-      lessons: course.lessons.length,
-      missions: course.missions.length,
     };
   }
 }

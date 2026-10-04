@@ -6,12 +6,12 @@ import Card from '../components/common/Card.jsx';
 import SecurityCard from '../components/common/SecurityCard.jsx';
 
 /**
- * Account page shared by the instructor and admin profiles: the avatar
+ * The instructor account page: the avatar
  * uploader, the account fields as a labelled grid, and the security section.
  * Students have their own richer profile page with XP, badges and progress.
  *
  * `showIdNumber` is off for instructors, who are not identified by a school ID
- * in this app — only students and administrators carry one worth showing.
+ * in this app — only students carry one worth showing.
  *
  * @param {{ extraFields?: { label: string, value: React.ReactNode, icon?: string }[], showIdNumber?: boolean }} props
  */

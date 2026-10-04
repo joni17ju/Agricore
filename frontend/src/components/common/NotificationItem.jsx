@@ -16,9 +16,8 @@ export const NOTIFICATION_STYLES = {
   'mission-passed': { icon: 'target', tone: 'blue' },
   'module-cleared': { icon: 'layers', tone: 'indigo' },
   'student-at-risk': { icon: 'alert', tone: 'amber' },
-  'student-joined': { icon: 'user-plus', tone: 'slate' },
+  'account-request': { icon: 'user-plus', tone: 'amber' },
   'account-approved': { icon: 'check-circle', tone: 'indigo' },
-  'instructor-pending': { icon: 'user-check', tone: 'amber' },
 };
 
 const FALLBACK = { icon: 'bell', tone: 'slate' };

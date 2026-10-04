@@ -505,3 +505,48 @@
      padding keeps the group looking centred rather than shifted. */
   text-indent: 0.35em;
 }
+
+/* Count of items waiting on a nav page (pending account requests). Indigo so it
+   reads as an alert rather than more of the sidebar's green furniture. */
+.sidebar__badge {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-full);
+  background: var(--indigo-600);
+  color: #fff;
+  font-size: 0.64rem;
+  font-weight: 700;
+  line-height: 1;
+}
+/* Collapsed to the rail there is no label to sit beside, so it tucks into the
+   icon's top-right corner instead of pushing the layout around. */
+.sidebar-collapsed .sidebar__badge,
+.sidebar .sidebar__link { position: relative; }
+@media (min-width: 1101px) {
+  .sidebar-collapsed .sidebar__badge {
+    position: absolute;
+    top: 4px;
+    right: 10px;
+    margin-left: 0;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 0.58rem;
+  }
+}
+@media (max-width: 1100px) and (min-width: 769px) {
+  .sidebar__badge {
+    position: absolute;
+    top: 4px;
+    right: 10px;
+    margin-left: 0;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 0.58rem;
+  }
+}

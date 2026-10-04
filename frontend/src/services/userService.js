@@ -1,8 +1,8 @@
 /**
  * User accounts, roles and enrollment.
- * Used by Administrators (all users) and Instructors (their section rosters).
+ * Used by instructors: the full account list, and their own section rosters.
  *
- * GET /users is open to instructors and admins only, which is exactly who uses
+ * GET /users is open to instructors only, which is exactly who uses
  * these screens. Avatar upload is the one function a student calls, and it
  * touches only their own record through PATCH /users/:id.
  */
@@ -44,17 +44,24 @@ export function getUser(userId) {
   return requireUser(userId);
 }
 
-export async function createUser({ role, firstName, lastName, email, schoolId, sectionId, status = USER_STATUS.ACTIVE }) {
-  if (!Object.values(ROLES).includes(role)) throw new ServiceError('Choose a valid role.');
+/**
+ * An instructor adds a student directly.
+ *
+ * Students only — instructor accounts come from the seed or the database, and
+ * the server refuses anything else here. An account made this way is active
+ * straight away: an instructor creating it is the approval.
+ */
+export async function createStudent({ firstName, lastName, email, schoolId, sectionId }) {
   if (isBlank(firstName) || isBlank(lastName)) throw new ServiceError('First and last name are required.');
+  if (isBlank(sectionId)) throw new ServiceError('Choose a section.');
   return api.post('/users', {
-    role,
+    role: ROLES.STUDENT,
     firstName: String(firstName).trim(),
     lastName: String(lastName).trim(),
     email: validateEmail(email),
     schoolId: isBlank(schoolId) ? null : String(schoolId).trim(),
-    sectionId: role === ROLES.STUDENT ? sectionId ?? null : null,
-    status,
+    sectionId,
+    status: USER_STATUS.ACTIVE,
   });
 }
 
@@ -96,33 +103,55 @@ export async function setUserStatus(userId, status) {
   return api.patch(`/users/${userId}`, { status });
 }
 
-export async function changeUserRole(userId, role, { sectionId } = {}) {
-  if (!Object.values(ROLES).includes(role)) throw new ServiceError('Choose a valid role.');
-  const user = await requireUser(userId);
-  if (user.role === ROLES.ADMIN && role !== ROLES.ADMIN) {
-    const admins = await api.get('/users', { role: ROLES.ADMIN });
-    if (admins.length === 1) throw new ServiceError('There must be at least one administrator.', 409);
-  }
-  return api.patch(`/users/${userId}`, {
-    role,
-    sectionId: role === ROLES.STUDENT ? sectionId ?? user.sectionId ?? null : null,
-    assignedSectionIds: role === ROLES.INSTRUCTOR ? user.assignedSectionIds ?? [] : [],
-  });
-}
-
 export async function enrollStudent(studentId, sectionId) {
   await requireUser(studentId, ROLES.STUDENT);
   return api.patch(`/users/${studentId}`, { sectionId });
 }
 
+/**
+ * Permanently removes an account.
+ *
+ * The server enforces who may do this: instructors only, students only, and
+ * never their own account.
+ */
 export async function deleteUser(userId) {
-  const user = await requireUser(userId);
-  if (user.role === ROLES.ADMIN) {
-    const admins = await api.get('/users', { role: ROLES.ADMIN });
-    if (admins.length === 1) throw new ServiceError('There must be at least one administrator.', 409);
-  }
   // The server removes the account; its attempts and progress go with it.
   return api.del(`/users/${userId}`);
+}
+
+// ───────── Account requests ─────────
+
+/**
+ * Students waiting to be approved.
+ *
+ * Every pending student, not only those in the instructor's own sections: a
+ * section with no assigned instructor would otherwise leave its requests
+ * invisible and the accounts stuck pending forever.
+ */
+export function listPendingStudents() {
+  return api.get('/users', { role: ROLES.STUDENT, status: USER_STATUS.PENDING });
+}
+
+/** Approve a pending student. The server notifies them. */
+export async function approveStudent(studentId) {
+  await requireUser(studentId, ROLES.STUDENT);
+  return api.patch(`/users/${studentId}`, { status: USER_STATUS.ACTIVE });
+}
+
+/**
+ * Reject a request by deleting the pending record.
+ *
+ * Deliberately a delete rather than a "rejected" status: the account was never
+ * usable, nothing references it, and removing it frees the email and school ID
+ * so the person can register again after fixing whatever was wrong. A rejected
+ * row would sit in the table forever blocking both.
+ */
+export async function rejectStudent(studentId) {
+  const student = await requireUser(studentId, ROLES.STUDENT);
+  if (student.status !== USER_STATUS.PENDING) {
+    throw new ServiceError('Only a pending request can be rejected.', 409);
+  }
+  return api.del(`/users/${studentId}`);
 }
 
 // ───────── Instructor roster (Proposal Fig 26) ─────────

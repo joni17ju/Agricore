@@ -9,9 +9,9 @@ import Button, { IconButton } from '../../components/common/Button.jsx';
 import { Avatar, EmptyState, ErrorState, LoadingState, PageHeader, StatusPill } from '../../components/common/Display.jsx';
 import Icon from '../../components/common/Icon.jsx';
 import { ConfirmDialog } from '../../components/common/Modal.jsx';
-import { AssignInstructorModal, SectionFormModal } from '../../components/admin/AdminModals.jsx';
+import { AssignInstructorModal, SectionFormModal } from '../../components/instructor/ManagementModals.jsx';
 
-export default function SectionManagementPage() {
+export default function SectionsPage() {
   useDocumentTitle('Sections');
   const toast = useToast();
   const sections = useAsync(listSectionsWithDetails, []);
@@ -32,8 +32,8 @@ export default function SectionManagementPage() {
   return (
     <div className="page">
       <PageHeader
-        title="Section Management"
-        subtitle="Academic sections and instructor assignment. Leaderboards are grouped by section."
+        title="Sections"
+        subtitle="Create, rename and assign sections. A section can only be deleted once no students are enrolled in it."
         actions={<Button icon="plus" onClick={() => setModal({ type: 'create' })}>Create Section</Button>}
       />
 
@@ -106,7 +106,7 @@ export default function SectionManagementPage() {
         onClose={() => setModal(null)}
         onConfirm={() => run(() => deleteSection(modal.section._id), 'Section deleted.').catch((err) => { toast.error(err.message); setModal(null); })}
         title="Delete section?"
-        message={`${modal?.section?.sectionName} can only be deleted when no students are enrolled in it.`}
+        message={`${modal?.section?.sectionName} will be removed. A section can only be deleted once every student in it has been moved somewhere else — the server refuses otherwise and will tell you how many are left.`}
         confirmLabel="Delete section"
       />
     </div>

@@ -1,5 +1,5 @@
 /**
- * Instructor/admin analytics derived from attempts and progress.
+ * Instructor analytics derived from attempts and progress.
  * All functions are pure and take already-loaded records.
  */
 import { MASTERY_BANDS, PERFORMANCE_RULES, PERFORMANCE_STATUS } from '../constants/rules.js';

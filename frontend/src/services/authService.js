@@ -28,10 +28,10 @@ function clearLegacySession() {
 /** Keeps the prototype's per-status messages, which are friendlier than the API's. */
 function assertCanSignIn(user) {
   if (user.status === USER_STATUS.PENDING) {
-    throw new ServiceError('Your account is waiting for administrator approval.', 403);
+    throw new ServiceError('Your account is waiting for approval by your instructor.', 403);
   }
   if (user.status === USER_STATUS.INACTIVE) {
-    throw new ServiceError('This account has been deactivated. Please contact the administrator.', 403);
+    throw new ServiceError('This account has been deactivated. Please contact your instructor.', 403);
   }
 }
 
@@ -67,7 +67,7 @@ async function signIn(identifier, password, role) {
  * keeps working. Anything containing "@" is validated as an email, everything
  * else is passed through as an ID for the server to look up.
  *
- * @param {{ identifier?: string, email?: string, password: string, role?: 'student' | 'instructor' | 'admin' }} credentials
+ * @param {{ identifier?: string, email?: string, password: string, role?: 'student' | 'instructor' }} credentials
  */
 export async function login({ identifier, email, password, role }) {
   const signInAs = String(identifier ?? email ?? '').trim();

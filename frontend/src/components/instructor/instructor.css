@@ -318,3 +318,32 @@ a.module-card:hover .module-card__edit { transform: scale(1.12); background: #ff
 @media (max-width: 560px) {
   .module-cover-edit__preview { width: 100%; }
 }
+
+/* ───────── Sections management ─────────
+   Moved here from the removed admin stylesheet when section management
+   became an instructor responsibility. */
+.section-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-4); }
+@media (max-width: 400px) { .section-grid { grid-template-columns: 1fr; } }
+.section-card { display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-5); border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm); transition: transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base) ease; }
+.section-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.section-card__header { display: flex; align-items: center; gap: var(--space-3); }
+.section-card__header > div:nth-child(2) { flex: 1; }
+.section-card__header h2 { font-size: var(--text-lg); }
+.section-card__icon { display: grid; place-items: center; width: 46px; height: 46px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--green-600), var(--green-800)); color: #fff; flex-shrink: 0; }
+.section-card__instructor { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border-radius: var(--radius-md); background: var(--green-50); }
+.section-card__instructor div { display: flex; flex-direction: column; min-width: 0; }
+.section-card__instructor strong { font-size: var(--text-sm); }
+.section-card__instructor small { font-size: var(--text-xs); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; }
+.section-card__instructor.is-empty { background: var(--amber-100); color: var(--amber-600); }
+.section-card__footer { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+
+/* ───────── Pending approvals panel ─────────
+   Amber rather than green: it is a queue of work waiting on the instructor,
+   not another progress readout. */
+.pending-approvals { border-color: #f6dca3; }
+.pending-approvals__intro { margin-bottom: var(--space-3); }
+.pending-approvals__list { list-style: none; margin: 0 0 var(--space-2); padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.pending-approvals__list li { display: flex; align-items: center; gap: var(--space-3); padding: 8px 10px; border-radius: var(--radius-md); background: var(--amber-100); }
+.pending-approvals__list span { display: flex; flex-direction: column; min-width: 0; }
+.pending-approvals__list strong { font-size: var(--text-sm); }
+.pending-approvals__list small { font-size: var(--text-xs); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; }

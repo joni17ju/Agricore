@@ -13,7 +13,7 @@ import ScrollToTopButton from '../common/ScrollToTopButton.jsx';
  * Shared shell for the three role layouts: sidebar navigation, top bar with
  * breadcrumb, and the animated content area.
  *
- * @param {{ label: string, items: { to: string, label: string, icon: string, end?: boolean }[] }[]} navGroups
+ * @param {{ label: string, items: { to: string, label: string, icon: string, end?: boolean, badge?: number }[] }[]} navGroups
  */
 export default function AppShell(props) {
   return (
@@ -142,6 +142,14 @@ function AppShellInner({ navGroups, topbarRight, homePath, outletContext }) {
                 >
                   <Icon name={item.icon} size={20} />
                   <span className="sidebar__link-label">{item.label}</span>
+                  {/* Count of things waiting on this page, e.g. pending account
+                      requests. Stays visible when the sidebar is collapsed,
+                      where it is the only hint the page needs attention. */}
+                  {item.badge > 0 && (
+                    <span className="sidebar__badge" aria-label={`${item.badge} waiting`}>
+                      {item.badge > 9 ? '9+' : item.badge}
+                    </span>
+                  )}
                 </NavLink>
               ))}
             </div>

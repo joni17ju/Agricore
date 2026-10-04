@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useAsync } from '../../hooks/useAsync.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
 import { getInstructorDashboard } from '../../services/analyticsService.js';
+import { listPendingStudents } from '../../services/userService.js';
 import Card from '../../components/common/Card.jsx';
 import { CountUp, ErrorState, LoadingState } from '../../components/common/Display.jsx';
 import {
@@ -54,8 +56,43 @@ export default function InstructorDashboard() {
         </div>
       </section>
 
+      {/* Only shown when something is actually waiting, so the dashboard does
+          not carry a permanent empty box. */}
+      {(pending.data ?? []).length > 0 && (
+        <Card
+          title="Pending approvals"
+          icon="user-check"
+          className="anim-fade-up pending-approvals"
+          actions={
+            <Button size="sm" to="/instructor/requests" iconRight="arrow-right">
+              Review {pending.data.length} request{pending.data.length === 1 ? '' : 's'}
+            </Button>
+          }
+        >
+          <p className="text-sm text-muted pending-approvals__intro">
+            These students cannot sign in until you approve them.
+          </p>
+          <ul className="pending-approvals__list">
+            {pending.data.slice(0, 4).map((student) => (
+              <li key={student._id}>
+                <Avatar firstName={student.firstName} lastName={student.lastName} size={30} src={student.avatarUrl} />
+                <span>
+                  <strong>{student.firstName} {student.lastName}</strong>
+                  <small>{student.email}</small>
+                </span>
+              </li>
+            ))}
+          </ul>
+          {pending.data.length > 4 && (
+            <Link to="/instructor/requests" className="text-sm">
+              and {pending.data.length - 4} more
+            </Link>
+          )}
+        </Card>
+      )}
+
       {data.sections.length === 0 ? (
-        <Card><p className="text-muted">You have no assigned sections yet. Ask the administrator to assign you to a section.</p></Card>
+        <Card><p className="text-muted">You have no assigned sections yet. Assign yourself to one from the Sections page.</p></Card>
       ) : (
         <div className="dashboard-grid">
           <Card title="Syllabus Descriptive Analytics" icon="chart" className="span-8 anim-fade-up" style={{ '--i': 1 }}>

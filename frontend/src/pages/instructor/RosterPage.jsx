@@ -5,7 +5,14 @@ import { USER_STATUS, USER_STATUS_LABELS } from '../../constants/roles.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
 import { getStudentPerformance } from '../../services/analyticsService.js';
-import { listRoster, removeRosterStudent, updateRosterStudent } from '../../services/userService.js';
+import {
+  createStudent,
+  deleteUser,
+  listRoster,
+  removeRosterStudent,
+  setUserStatus,
+  updateRosterStudent,
+} from '../../services/userService.js';
 import Button, { IconButton } from '../../components/common/Button.jsx';
 import Card from '../../components/common/Card.jsx';
 import DataTable from '../../components/common/DataTable.jsx';
@@ -15,6 +22,7 @@ import Icon from '../../components/common/Icon.jsx';
 import Modal, { ConfirmDialog } from '../../components/common/Modal.jsx';
 import { ProgressBar } from '../../components/common/Progress.jsx';
 import { SectionFilter } from '../../components/instructor/InstructorWidgets.jsx';
+import { StudentFormModal } from '../../components/instructor/ManagementModals.jsx';
 
 const STATUS_TONES = { active: 'green', inactive: 'neutral', pending: 'amber' };
 
@@ -28,6 +36,8 @@ export default function RosterPage() {
   const [selectedKeys, setSelectedKeys] = useState(new Set());
   const [editing, setEditing] = useState(null);
   const [removing, setRemoving] = useState(null);
+  const [deleting, setDeleting] = useState(null);
+  const [isAdding, setIsAdding] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
 
   const roster = useAsync(() => listRoster(user._id, { sectionId: sectionId || undefined }), [user._id, sectionId]);
@@ -73,6 +83,39 @@ export default function RosterPage() {
       toast.error(err.message);
     }
     setRemoving(null);
+  };
+
+  const addStudent = async (form) => {
+    await createStudent(form);
+    toast.success(`${form.firstName} ${form.lastName} was added and can sign in straight away.`);
+    setIsAdding(false);
+    refresh();
+  };
+
+  /** Deactivate and reactivate are the same call with a different status. */
+  const changeStatus = async (student, next) => {
+    try {
+      await setUserStatus(student._id, next);
+      toast.success(
+        next === USER_STATUS.ACTIVE
+          ? `${student.firstName} ${student.lastName} is active again.`
+          : `${student.firstName} ${student.lastName} was deactivated.`,
+      );
+      refresh();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await deleteUser(deleting._id);
+      toast.success(`${deleting.firstName} ${deleting.lastName} was deleted.`);
+      refresh();
+    } catch (err) {
+      toast.error(err.message);
+    }
+    setDeleting(null);
   };
 
   const bulkDeactivate = async () => {
@@ -130,7 +173,23 @@ export default function RosterPage() {
       render: (s) => (
         <div className="cell-actions">
           <IconButton icon="edit" label={`Edit ${s.firstName}`} size="sm" onClick={() => setEditing(s)} />
-          <IconButton icon="trash" label={`Remove ${s.firstName}`} size="sm" variant="danger" onClick={() => setRemoving(s)} disabled={s.status === USER_STATUS.INACTIVE} />
+          {s.status === USER_STATUS.INACTIVE ? (
+            <IconButton
+              icon="refresh"
+              label={`Reactivate ${s.firstName}`}
+              size="sm"
+              onClick={() => changeStatus(s, USER_STATUS.ACTIVE)}
+            />
+          ) : (
+            <IconButton
+              icon="ban"
+              label={`Deactivate ${s.firstName}`}
+              size="sm"
+              onClick={() => setRemoving(s)}
+            />
+          )}
+          {/* Deactivating keeps their work; deleting does not, so it is separate. */}
+          <IconButton icon="trash" label={`Delete ${s.firstName}`} size="sm" variant="danger" onClick={() => setDeleting(s)} />
         </div>
       ),
     },
@@ -138,7 +197,11 @@ export default function RosterPage() {
 
   return (
     <div className="page">
-      <PageHeader title="Manage Roster and Enrollment" subtitle="Students enrolled in your assigned sections." />
+      <PageHeader
+        title="Manage Roster and Enrollment"
+        subtitle="Students enrolled in your assigned sections."
+        actions={<Button icon="user-plus" onClick={() => setIsAdding(true)}>Add student</Button>}
+      />
       <Card
         title="Active Student Roster"
         icon="users"
@@ -185,13 +248,28 @@ export default function RosterPage() {
           refresh();
         }}
       />
+      <StudentFormModal
+        isOpen={isAdding}
+        student={null}
+        sections={sections}
+        onClose={() => setIsAdding(false)}
+        onSubmit={addStudent}
+      />
+      <ConfirmDialog
+        isOpen={Boolean(deleting)}
+        onClose={() => setDeleting(null)}
+        onConfirm={confirmDelete}
+        title="Delete this student?"
+        message={`${deleting?.firstName} ${deleting?.lastName}'s account, attempts and progress will be permanently removed. Deactivate instead if you only want to remove their access.`}
+        confirmLabel="Delete permanently"
+      />
       <ConfirmDialog
         isOpen={Boolean(removing)}
         onClose={() => setRemoving(null)}
         onConfirm={confirmRemove}
-        title="Remove student from roster?"
+        title="Deactivate this student?"
         message={`${removing?.firstName} ${removing?.lastName} will be marked inactive. Their progress is kept and they can be reactivated later.`}
-        confirmLabel="Remove"
+        confirmLabel="Deactivate"
       />
       <ConfirmDialog
         isOpen={bulkOpen}

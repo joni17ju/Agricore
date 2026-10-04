@@ -1,10 +1,10 @@
 /**
- * Academic sections and instructor assignment (Administrator).
+ * Academic sections and instructor assignment.
  * The section ↔ instructor link is stored on both sides
  * (`sections.instructorId` and `users.assignedSectionIds`) and kept in sync here.
  *
- * Admin-only screens, so reading the full user list is permitted — GET /users
- * is open to instructors and admins.
+ * Instructor-only screens, so reading the full user list is permitted —
+ * GET /users is open to instructors.
  */
 import { ROLES, USER_STATUS } from '../constants/roles.js';
 import { isBlank } from '../utils/validation.js';

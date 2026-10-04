@@ -34,8 +34,8 @@ export default function LoginForm({ onSuccess, onForgotPassword }) {
    * The toggle tailors the field label and placeholder, but it is deliberately
    * not sent as a filter: passing it made the service reject any account whose
    * role did not match, and the toggle only offers Student and Instructor.
-   * Administrators used to get in through the one-click demo buttons, so when
-   * those were removed they were locked out entirely. The server authenticates
+   * An account whose role did not match the toggle was refused outright, which
+   * locked out anyone the toggle has no option for. The server authenticates
    * on credentials alone and onSuccess routes by the account's real role.
    */
   const handleSubmit = async (event) => {

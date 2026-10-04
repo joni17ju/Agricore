@@ -27,7 +27,7 @@ export const AUTH_VIEWS = { LOGIN: 'login', REGISTER: 'register', FORGOT: 'forgo
 const HEADINGS = {
   [AUTH_VIEWS.LOGIN]: { title: 'Welcome back', subtitle: 'Sign in to your AgriCore account.' },
   [AUTH_VIEWS.REGISTER]: { title: 'Create your account', subtitle: 'Join AgriCore for Principles of Crop Protection I.' },
-  [AUTH_VIEWS.PENDING]: { title: 'Registration received', subtitle: null },
+  [AUTH_VIEWS.PENDING]: { title: 'Request sent', subtitle: null },
 };
 
 export default function AuthPanel({ view, onChangeView, onClose }) {
@@ -132,7 +132,7 @@ export default function AuthPanel({ view, onChangeView, onClose }) {
                 <Icon name="user-check" size={28} />
               </span>
               <p>
-                Instructor accounts are reviewed by the administrator. You can sign in as soon as your account is
+                Your account is waiting for approval by an instructor. You can sign in as soon as it has been
                 approved.
               </p>
               <div className="auth-view__actions">

@@ -1,20 +1,22 @@
+/**
+ * Two account types. The administrator role was removed once the programme
+ * head took those duties over as an instructor; everything the administrator
+ * could do is now an instructor action.
+ */
 export const ROLES = Object.freeze({
   STUDENT: 'student',
   INSTRUCTOR: 'instructor',
-  ADMIN: 'admin',
 });
 
 export const ROLE_LABELS = Object.freeze({
   [ROLES.STUDENT]: 'Student',
   [ROLES.INSTRUCTOR]: 'Instructor',
-  [ROLES.ADMIN]: 'Administrator',
 });
 
 /** Where each role lands after signing in. */
 export const ROLE_HOME = Object.freeze({
   [ROLES.STUDENT]: '/student',
   [ROLES.INSTRUCTOR]: '/instructor',
-  [ROLES.ADMIN]: '/admin',
 });
 
 export const USER_STATUS = Object.freeze({
