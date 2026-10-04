@@ -4,7 +4,7 @@ import { issueToken } from '../middleware/auth.js';
 import { httpError, toObjectId } from '../utils/http.js';
 import { SCHOOL_ID_FORMAT, buildIdentifierQuery, isValidStudentId, normalizeSchoolId } from '../utils/identifiers.js';
 import { MIN_PASSWORD_LENGTH, PLACEHOLDER_HASH, SALT_ROUNDS } from '../constants/auth.js';
-import { notifyInstructorPending, notifyStudentJoined } from '../utils/notify.js';
+import { notifyAccountRequest } from '../utils/notify.js';
 
 const isBlankValue = (value) => value === undefined || value === null || String(value).trim() === '';
 
@@ -38,17 +38,30 @@ export async function login(req, res) {
     throw httpError(403, 'This account has no password yet. Run scripts/set-passwords.js to set one.');
   }
   if (!(await bcrypt.compare(password, user.passwordHash))) throw invalid;
-  if (user.status !== 'active') throw httpError(403, 'This account is not active yet.');
+  /*
+   * Correct credentials but not usable yet. Pending and deactivated are
+   * different situations and get different wording — "waiting for approval"
+   * is actionable, "contact your instructor" is not the same message.
+   */
+  if (user.status === 'pending') {
+    throw httpError(403, 'Your account is waiting for approval by your instructor.');
+  }
+  if (user.status !== 'active') {
+    throw httpError(403, 'This account has been deactivated. Please contact your instructor.');
+  }
 
   res.json({ token: issueToken(user), user: publicUser(user) });
 }
 
 /**
- * POST /api/auth/register  { firstName, lastName, email, password, role?, schoolId?, sectionId? }
+ * POST /api/auth/register  { firstName, lastName, email, password, schoolId, sectionId }
  *
- * Students join active; instructors register as pending so an administrator
- * approves them, mirroring the approval flow the prototype already had.
- * Admin accounts are never self-registered.
+ * Students only. Instructor accounts are created from the seed or directly in
+ * the database, never through this route, so an attempt to register as one is
+ * refused rather than quietly downgraded to a student.
+ *
+ * A new student lands as `pending` and cannot sign in until an instructor
+ * approves them, so no token is issued here.
  */
 export async function register(req, res) {
   const { firstName, lastName, email, password, role = 'student', schoolId = null, sectionId = null } = req.body ?? {};
@@ -58,78 +71,61 @@ export async function register(req, res) {
   if (!password || String(password).length < MIN_PASSWORD_LENGTH) {
     throw httpError(400, `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
   }
-  if (!['student', 'instructor'].includes(role)) throw httpError(403, 'You cannot register with that role.');
+  /*
+   * Only students self-register. The role is still read from the body so a
+   * request asking for anything else gets a clear refusal instead of silently
+   * being granted a student account it did not ask for.
+   */
+  if (role !== 'student') {
+    throw httpError(403, 'Only student accounts can be created here. Instructor accounts are set up by the school.');
+  }
 
   const normalisedEmail = String(email).trim().toLowerCase();
   if (await User.findOne({ email: normalisedEmail })) throw httpError(409, 'That email address is already registered.');
 
-  /*
-   * Students must supply a school ID in the YYYY-NNNN format, and it must be
-   * unique. Instructors register without one — their IDs are issued by the
-   * institution, not chosen at sign-up.
-   */
-  let normalisedSchoolId = null;
-  if (role === 'student') {
-    normalisedSchoolId = normalizeSchoolId(schoolId);
-    if (!normalisedSchoolId) throw httpError(400, 'School ID number is required.');
-    if (!isValidStudentId(normalisedSchoolId)) {
-      throw httpError(400, `School ID number must be in the format ${SCHOOL_ID_FORMAT}.`);
-    }
-    if (await User.findOne({ schoolId: normalisedSchoolId })) {
-      throw httpError(409, 'That school ID number is already registered.');
-    }
-  } else if (!isBlankValue(schoolId)) {
-    normalisedSchoolId = normalizeSchoolId(schoolId);
+  // Students are identified by a school ID in the YYYY-NNNN format, and it
+  // must be unique.
+  const normalisedSchoolId = normalizeSchoolId(schoolId);
+  if (!normalisedSchoolId) throw httpError(400, 'School ID number is required.');
+  if (!isValidStudentId(normalisedSchoolId)) {
+    throw httpError(400, `School ID number must be in the format ${SCHOOL_ID_FORMAT}.`);
+  }
+  if (await User.findOne({ schoolId: normalisedSchoolId })) {
+    throw httpError(409, 'That school ID number is already registered.');
   }
 
   /*
-   * The section is chosen from a dropdown of real sections, so it is a
-   * controlled value and treated as one: required for students, and resolved
-   * against the collection rather than trusted as a string. toObjectId is what
-   * turns a junk value into a 400 — Section.findById would raise a CastError
-   * and surface as a 500 instead.
+   * The section comes from a dropdown of real sections, so it is a controlled
+   * value and treated as one: resolved against the collection rather than
+   * trusted as a string. toObjectId is what turns a junk value into a 400 —
+   * Section.findById would raise a CastError and surface as a 500 instead.
    */
-  let resolvedSectionId = null;
-  if (role === 'student') {
-    if (isBlankValue(sectionId)) throw httpError(400, 'Select your section.');
-    const section = await Section.findById(toObjectId(sectionId, 'section id'));
-    if (!section) throw httpError(400, 'That section does not exist.');
-    resolvedSectionId = section._id;
-  } else if (!isBlankValue(sectionId)) {
-    // Instructors are attached to sections by an administrator, not at sign-up.
-    throw httpError(400, 'Instructor accounts are assigned to sections by an administrator.');
-  }
+  if (isBlankValue(sectionId)) throw httpError(400, 'Select your section.');
+  const section = await Section.findById(toObjectId(sectionId, 'section id'));
+  if (!section) throw httpError(400, 'That section does not exist.');
 
   const user = await User.create({
-    role,
+    role: 'student',
     firstName: firstName.trim(),
     lastName: lastName.trim(),
     email: normalisedEmail,
     passwordHash: await bcrypt.hash(String(password), SALT_ROUNDS),
     schoolId: normalisedSchoolId,
-    sectionId: resolvedSectionId,
+    sectionId: section._id,
     assignedSectionIds: [],
-    status: role === 'instructor' ? 'pending' : 'active',
+    // Waits for an instructor. Seeded students are untouched and stay active.
+    status: 'pending',
     earnedBadges: [],
   });
 
-  /*
-   * Tell the people who need to act on this. A student joining is news for the
-   * instructors of that section; an instructor registering is news for the
-   * administrators who have to approve them. Best-effort inside notify.js, so
-   * a notification failure cannot fail the registration itself.
-   */
-  if (user.role === 'student') {
-    await notifyStudentJoined(user, await Section.findById(resolvedSectionId));
-  } else if (user.status === 'pending') {
-    await notifyInstructorPending(user);
-  }
+  // Best-effort inside notify.js, so a notification failure cannot fail the
+  // registration itself.
+  await notifyAccountRequest(user, section);
 
-  // A pending instructor gets no token — there is nothing to sign in to yet.
-  const requiresApproval = user.status === 'pending';
+  // No token: the account cannot be used until an instructor approves it.
   res.status(201).json({
-    requiresApproval,
-    token: requiresApproval ? null : issueToken(user),
+    requiresApproval: true,
+    token: null,
     user: publicUser(user),
   });
 }

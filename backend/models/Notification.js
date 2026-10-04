@@ -23,9 +23,8 @@ export const NOTIFICATION_TYPES = Object.freeze({
   MISSION_PASSED: 'mission-passed',
   MODULE_CLEARED: 'module-cleared',
   STUDENT_AT_RISK: 'student-at-risk',
-  STUDENT_JOINED: 'student-joined',
+  ACCOUNT_REQUEST: 'account-request',
   ACCOUNT_APPROVED: 'account-approved',
-  INSTRUCTOR_PENDING: 'instructor-pending',
 });
 
 const notificationSchema = new Schema(

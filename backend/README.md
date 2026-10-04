@@ -88,18 +88,19 @@ does not have a session yet.
 ### Data
 | Method | Path | Access |
 |---|---|---|
-| GET | `/users?role=&sectionId=&status=&search=` | instructor, admin |
+| GET | `/users?role=&sectionId=&status=&search=` | instructor |
 | GET/PATCH | `/users/:id` | any signed-in user |
-| DELETE | `/users/:id` | admin |
+| POST | `/users` | instructor — students only |
+| DELETE | `/users/:id` | instructor — students only |
 | GET | `/sections`, `/sections/:id` | any signed-in user |
 | GET | `/sections/options` | public — `{ _id, sectionName }` only, for the registration dropdown |
-| POST/PATCH | `/sections`, `/sections/:id` | admin |
+| POST/PATCH/DELETE | `/sections`, `/sections/:id` | instructor |
 | GET | `/modules`, `/modules/:id` | any |
-| POST/PATCH | `/modules`, `/modules/:id` | instructor, admin |
+| POST/PATCH | `/modules`, `/modules/:id` | instructor |
 | GET | `/lessons?moduleId=`, `/lessons/:id` | any |
-| POST/PATCH/DELETE | `/lessons`, `/lessons/:id` | instructor, admin |
+| POST/PATCH/DELETE | `/lessons`, `/lessons/:id` | instructor |
 | GET | `/missions?lessonId=`, `/missions/:id` | any |
-| POST/PATCH/DELETE | `/missions`, `/missions/:id` | instructor, admin |
+| POST/PATCH/DELETE | `/missions`, `/missions/:id` | instructor |
 | GET | `/missionAttempts?studentId=&missionId=` | own records, or any for staff |
 | POST | `/missionAttempts` | student (own records only) |
 | GET | `/progress?studentId=&lessonId=` | own records, or any for staff |
@@ -131,7 +132,7 @@ Passwords are hashed with bcrypt (10 rounds). Login returns a JWT whose payload
 is deliberately minimal:
 
 ```json
-{ "sub": "<user _id>", "role": "student|instructor|admin" }
+{ "sub": "<user _id>", "role": "student|instructor" }
 ```
 
 Only the id and role are in the token. Name, email, section and avatar are read
@@ -147,6 +148,36 @@ and the buttons were removed once the app moved to real authentication. Seeded
 accounts still exist and are signed into by typing the email or school ID and
 password like any other account.
 
+## Accounts and approval
+
+Two roles: **student** and **instructor**. The administrator role was removed
+once the programme head took those duties over as an instructor, so everything
+the administrator did — adding students, changing sections, managing sections —
+is now an instructor action.
+
+Students self-register through `POST /auth/register` and land as `pending`.
+They cannot sign in until an instructor approves them; a correct password on a
+pending account returns 403 with "waiting for approval by your instructor"
+rather than a generic refusal, so the person knows it is not a typo.
+
+**Instructors are never self-registered.** `/auth/register` refuses any role
+but student, and `POST /users` refuses any role but student, so no route in
+the app can mint an account with management permissions. Instructor accounts
+come from the seed or directly from the database.
+
+Three rules guard the management routes, enforced per target in
+`controllers/user.controller.js`:
+
+- an instructor cannot change another instructor's account,
+- an instructor cannot deactivate or delete their own account,
+- a student may only ever change their own record.
+
+Roles cannot be changed through `PATCH /users/:id` at all — promoting a
+student would hand out every management permission in the app.
+
+To clear the administrator out of an existing database, see
+`scripts/remove-admin-role.js`.
+
 ## Notifications
 
 Events on the server write a row per recipient; nothing is created from the
@@ -159,9 +190,8 @@ own notifications is a client that can lie to the person reading them.
 | Mission passed, first time only | the student |
 | Module cleared | the student |
 | A student crosses into at-risk | instructors of that section |
-| A student registers into a section | instructors of that section |
-| An instructor registers | active administrators |
-| An account is approved | the approved user |
+| A student registers | every active instructor |
+| A student account is approved | that student |
 
 Replays are excluded on purpose: passing the same mission again does not notify
 a second time, or grinding one mission would fill the bell. At-risk fires on the
@@ -170,7 +200,7 @@ line.
 
 Every read and write is scoped to `req.user._id` inside the controller, so no
 route exists on which one user can see or mark another's rows — not even an
-administrator.
+instructor.
 
 Delivery to the browser is polled, not pushed: there is no socket layer and one
 bell does not justify adding one. `NotificationContext` asks for the unread

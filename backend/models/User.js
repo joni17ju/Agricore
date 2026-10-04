@@ -8,7 +8,9 @@ const { Schema } = mongoose;
  */
 const userSchema = new Schema(
   {
-    role: { type: String, enum: ['student', 'instructor', 'admin'], required: true },
+    // Two account types only. The administrator role was removed once the
+    // programme head took over those duties as an instructor.
+    role: { type: String, enum: ['student', 'instructor'], required: true },
     firstName: { type: String, required: true, trim: true },
     lastName: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },

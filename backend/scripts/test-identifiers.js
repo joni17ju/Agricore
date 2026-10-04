@@ -34,8 +34,10 @@ async function call(path, { method = 'GET', body } = {}) {
 const login = (identifier, password) => call('/auth/login', { method: 'POST', body: { identifier, password } });
 
 // A section id is needed for student registration.
-const loginAdmin = await call('/auth/login', { method: 'POST', body: { identifier: 'l.mercado@dorsu.edu.ph', password: SEED_PASSWORD } });
-const sectionsRes = await fetch(`${BASE}/sections`, { headers: { Authorization: `Bearer ${loginAdmin.data.token}` } });
+// Any signed-in account can read sections; an instructor is used now that
+// the administrator role is gone.
+const loginStaff = await call('/auth/login', { method: 'POST', body: { identifier: 'c.reyes@dorsu.edu.ph', password: SEED_PASSWORD } });
+const sectionsRes = await fetch(`${BASE}/sections`, { headers: { Authorization: `Bearer ${loginStaff.data.token}` } });
 const sections = await sectionsRes.json();
 const sectionId = sections[0]?._id;
 

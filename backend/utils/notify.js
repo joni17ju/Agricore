@@ -39,11 +39,12 @@ async function instructorsForSection(sectionId) {
   }
 }
 
-async function activeAdmins() {
+/** Every instructor who can act on an account request. */
+async function activeInstructors() {
   try {
-    return await User.find({ role: 'admin', status: 'active' }).select('_id');
+    return await User.find({ role: 'instructor', status: 'active' }).select('_id');
   } catch (error) {
-    console.error('[notify] could not resolve admins', error.message);
+    console.error('[notify] could not resolve instructors', error.message);
     return [];
   }
 }
@@ -111,44 +112,36 @@ export async function notifyStudentAtRisk(student, { reason, averageScore }) {
   );
 }
 
-/** A new student registered into a section. */
-export async function notifyStudentJoined(student, section) {
-  const instructors = await instructorsForSection(student.sectionId);
+/**
+ * A student registered and is waiting to be approved.
+ *
+ * Goes to every active instructor, not only those assigned to the chosen
+ * section: a section with no assigned instructor would otherwise leave the
+ * request invisible, and the account would sit pending forever.
+ */
+export async function notifyAccountRequest(student, section) {
+  const instructors = await activeInstructors();
   return create(
     instructors.map((instructor) => ({
       userId: instructor._id,
-      type: NOTIFICATION_TYPES.STUDENT_JOINED,
-      title: 'New student enrolled',
-      body: `${student.firstName} ${student.lastName} joined ${section?.sectionName ?? 'your section'}.`,
-      link: '/instructor/roster',
+      type: NOTIFICATION_TYPES.ACCOUNT_REQUEST,
+      title: 'New account request',
+      body: `${student.firstName} ${student.lastName} signed up for ${section?.sectionName ?? 'a section'} and is waiting for approval.`,
+      link: '/instructor/requests',
       meta: { studentId: String(student._id) },
     })),
   );
 }
 
-/** An instructor registered and is waiting for an administrator. */
-export async function notifyInstructorPending(instructor) {
-  const admins = await activeAdmins();
-  return create(
-    admins.map((admin) => ({
-      userId: admin._id,
-      type: NOTIFICATION_TYPES.INSTRUCTOR_PENDING,
-      title: 'Instructor awaiting approval',
-      body: `${instructor.firstName} ${instructor.lastName} registered and cannot sign in until approved.`,
-      link: '/admin/users',
-      meta: { instructorId: String(instructor._id) },
-    })),
-  );
-}
 
-/** An administrator approved a pending account. */
+/** An instructor approved a pending account. */
 export function notifyAccountApproved(user) {
   return create({
     userId: user._id,
     type: NOTIFICATION_TYPES.ACCOUNT_APPROVED,
-    title: 'Your account has been approved',
-    body: 'You can now sign in and start setting up your sections.',
-    link: '/instructor',
+    title: 'Your account was approved',
+    body: 'You can sign in now and start working through the course.',
+    link: '/student',
     meta: {},
   });
 }

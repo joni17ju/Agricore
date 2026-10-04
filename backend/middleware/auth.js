@@ -98,7 +98,7 @@ export async function requireAuth(req, res, next) {
 }
 
 /**
- * Role gate, used after requireAuth:  router.get('/x', requireAuth, requireRole('instructor','admin'), handler)
+ * Role gate, used after requireAuth:  router.get('/x', requireAuth, requireRole('instructor'), handler)
  * A student's token on an instructor-only route gets 403, not 401 — it is a
  * valid session without the necessary permission.
  */

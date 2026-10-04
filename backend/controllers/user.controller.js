@@ -41,10 +41,56 @@ export async function getUser(req, res) {
  */
 const EDITABLE = ['firstName', 'lastName', 'email', 'schoolId', 'sectionId', 'assignedSectionIds', 'avatarUrl', 'status', 'role'];
 
-/** PATCH /api/users/:id — admin and instructor management screens, and avatar upload. */
+/**
+ * Who may change whose account.
+ *
+ * Anyone may edit their own record — that is how avatar upload and profile
+ * edits work. Changing someone *else* is a management action, and since the
+ * administrator role was removed those belong to instructors, with three
+ * limits that stop the role being used against itself:
+ *
+ *   - an instructor cannot change another instructor's account,
+ *   - an instructor cannot deactivate or delete their own account,
+ *   - students may only ever change their own.
+ *
+ * Returned as a message rather than a boolean so the refusal says which rule
+ * was hit instead of a flat "forbidden".
+ */
+function managementRefusal(actor, target, { isDestructive = false } = {}) {
+  const isSelf = String(actor._id) === String(target._id);
+
+  if (isSelf) {
+    if (isDestructive) return 'You cannot delete or deactivate your own account.';
+    return null;
+  }
+
+  if (actor.role !== 'instructor') return 'You can only change your own account.';
+  if (target.role !== 'student') return 'Instructors can only manage student accounts.';
+  return null;
+}
+
+/** Fields that deactivate an account, which is destructive for the actor. */
+function isDeactivating(updates, target) {
+  return 'status' in updates && updates.status !== 'active' && target.status === 'active';
+}
+
+/** PATCH /api/users/:id — the instructor management screens, and avatar upload. */
 export async function updateUser(req, res) {
   const user = await findOr404(User, req.params.id, 'User');
   const updates = Object.fromEntries(Object.entries(req.body ?? {}).filter(([key]) => EDITABLE.includes(key)));
+
+  const refusal = managementRefusal(req.user, user, { isDestructive: isDeactivating(updates, user) });
+  if (refusal) throw httpError(403, refusal);
+
+  /*
+   * Role is in EDITABLE for the instructor screens, but nobody may mint an
+   * instructor through this route — instructor accounts come from the seed or
+   * the database. Promoting a student here would hand out every management
+   * permission in the app.
+   */
+  if ('role' in updates && updates.role !== user.role) {
+    throw httpError(403, 'Account roles cannot be changed here.');
+  }
   if ('email' in updates) {
     const email = String(updates.email).trim().toLowerCase();
     const clash = await User.findOne({ email, _id: { $ne: user._id } });
@@ -62,22 +108,31 @@ export async function updateUser(req, res) {
   res.json(await User.findById(user._id).select(PUBLIC_FIELDS));
 }
 
-/** DELETE /api/users/:id */
+/** DELETE /api/users/:id — instructors removing a student account. */
 export async function deleteUser(req, res) {
   const user = await findOr404(User, req.params.id, 'User');
+
+  const refusal = managementRefusal(req.user, user, { isDestructive: true });
+  if (refusal) throw httpError(403, refusal);
+
   await user.deleteOne();
   res.json({ deleted: true });
 }
 
 /**
- * POST /api/users — administrator creates an account directly.
+ * POST /api/users — an instructor adds a student directly.
  *
- * Accounts made this way get the shared prototype password so the person can
- * sign in; a real deployment would email an invite or force a reset instead.
+ * Students added this way skip the approval queue, because an instructor
+ * creating the account *is* the approval. They get the shared starting
+ * password so they can sign in; a real deployment would email an invite or
+ * force a reset instead.
+ *
+ * Only students can be created here. Instructor accounts come from the seed or
+ * the database, so this route cannot be used to grant management permissions.
  */
 export async function createUser(req, res) {
-  const { role, firstName, lastName, email, schoolId = null, sectionId = null, status = 'active' } = req.body ?? {};
-  if (!['student', 'instructor', 'admin'].includes(role)) throw httpError(400, 'Choose a valid role.');
+  const { role = 'student', firstName, lastName, email, schoolId = null, sectionId = null, status = 'active' } = req.body ?? {};
+  if (role !== 'student') throw httpError(403, 'Only student accounts can be created here.');
   if (!firstName?.trim() || !lastName?.trim()) throw httpError(400, 'First and last name are required.');
   if (!email?.trim()) throw httpError(400, 'Email is required.');
 

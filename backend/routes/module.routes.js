@@ -5,6 +5,6 @@ import { requireAuth, requireRole } from '../middleware/auth.js';
 const router = Router();
 router.get('/modules', requireAuth, listModules);
 router.get('/modules/:id', requireAuth, getModule);
-router.post('/modules', requireAuth, requireRole('instructor', 'admin'), createModule);
-router.patch('/modules/:id', requireAuth, requireRole('instructor', 'admin'), updateModule);
+router.post('/modules', requireAuth, requireRole('instructor'), createModule);
+router.patch('/modules/:id', requireAuth, requireRole('instructor'), updateModule);
 export default router;
