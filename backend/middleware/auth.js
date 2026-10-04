@@ -5,7 +5,7 @@ import { httpError } from '../utils/http.js';
 /**
  * JWT payload — deliberately small.
  *
- *   { sub: <user _id>, role: <student|instructor|admin> }
+ *   { sub: <user _id>, role: <student|instructor> }
  *
  * Only the id and role go in the token. Everything else (name, email, section,
  * avatar) is read from the database per request, so a profile edit takes effect

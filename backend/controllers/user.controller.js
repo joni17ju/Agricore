@@ -6,7 +6,7 @@ import { notifyAccountApproved } from '../utils/notify.js';
 /** Never send the password hash to a client. */
 const PUBLIC_FIELDS = '-passwordHash';
 
-/** Starting password given to accounts an administrator creates directly. */
+/** Starting password given to accounts an instructor creates directly. */
 const DEFAULT_NEW_USER_PASSWORD = 'agricore123';
 
 /** GET /api/users?role=&sectionId=&status=&search= */

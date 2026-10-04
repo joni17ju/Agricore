@@ -54,6 +54,8 @@ shape without real values.
 | `node scripts/set-passwords.js` | Resets account passwords. `seed.js` already sets them, so this is only needed to change a password or repair an account. Defaults to `agricore123`; pass `--password "…"`, `--email "…"` or `--all`. |
 | `node scripts/smoke-test.js` | End-to-end check against a running API: auth, role guards, data routes, the leaderboard aggregation, and that a tampered score is ignored. It submits one real attempt and deletes it again, so it leaves no trace. |
 | `node scripts/remove-test-attempts.js` | Clears zero-score attempts left by older smoke-test runs. Reports by default; pass `--apply` to delete. |
+| `node --env-file=.env scripts/remove-admin-role.js` | Reports administrator and pending-instructor accounts left in the database. Add `--apply` to delete them and unassign any sections they held. |
+| `node --env-file=.env scripts/test-roles.js` | Checks student approval, the instructor's management powers, and the safety rules — that a student is refused on every instructor-only route, and that an instructor cannot promote a student, edit another instructor, or delete themselves. Removes everything it creates. |
 | `node --env-file=.env scripts/test-notifications.js` | Submits a real mission attempt for a throwaway student and checks that badges are awarded, notifications are written, replays do not duplicate, marking read works and one user cannot touch another's rows. Removes everything it created. |
 | `TEST_EMAIL=you@example.com node --env-file=.env scripts/test-password-reset.js` | Checks the reset rate limit, attempt budget, expiry and enumeration behaviour against a running API. `TEST_EMAIL` must name an existing account on an inbox you can read; two of the checks send real mail. |
 

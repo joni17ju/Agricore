@@ -59,8 +59,9 @@ const created = await call('/auth/register', { method: 'POST', body: { ...base, 
 check('valid school ID → 201', created.status === 201, `${created.status} schoolId=${created.data?.user?.schoolId}`);
 check('stored ID matches what was sent', created.data?.user?.schoolId === NEW_ID, created.data?.user?.schoolId);
 
+// Instructor accounts are no longer self-registered; the route refuses them.
 const instructor = await call('/auth/register', { method: 'POST', body: { role: 'instructor', firstName: 'Test', lastName: 'Instructor', email: 'id.instructor@dorsu.edu.ph', password: PASSWORD } });
-check('instructor registers with no school ID → 201', instructor.status === 201, `${instructor.status}`);
+check('registering as an instructor → 403', instructor.status === 403, `${instructor.status}`);
 
 console.log('\nLogin — email or school ID:');
 const byEmail = await login(EXISTING_EMAIL, SEED_PASSWORD);
@@ -75,8 +76,14 @@ check(
   byId.data?.user?._id,
 );
 
+/*
+ * A freshly registered student is pending, so the identifier resolves but the
+ * account is not usable yet. The 403 is the proof that the school ID matched —
+ * an unknown identifier returns 401 instead, as the checks below show.
+ */
 const newAccountById = await login(NEW_ID, PASSWORD);
-check('new account signs in by its school ID → 200', newAccountById.status === 200, `${newAccountById.status}`);
+check('new account resolves by its school ID → 403 pending', newAccountById.status === 403, `${newAccountById.status}`);
+check('and the reason is approval, not credentials', /waiting for approval/i.test(newAccountById.data?.message ?? ''), newAccountById.data?.message);
 
 const wrongPassword = await login(EXISTING_ID, 'not-the-password');
 check('school ID with wrong password → 401', wrongPassword.status === 401, `"${wrongPassword.data?.message}"`);
@@ -96,8 +103,9 @@ console.log('\nCleanup:');
 await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 10000 });
 const result = await mongoose.connection.db
   .collection('users')
+  // Only the student exists: the instructor registration is refused now.
   .deleteMany({ email: { $in: ['id.newstudent@dorsu.edu.ph', 'id.instructor@dorsu.edu.ph'] } });
-check('test accounts removed', result.deletedCount === 2, `${result.deletedCount} deleted`);
+check('test accounts removed', result.deletedCount === 1, `${result.deletedCount} deleted`);
 await mongoose.disconnect();
 
 console.log(`\n${failures === 0 ? 'All checks passed.' : `${failures} check(s) FAILED.`}`);

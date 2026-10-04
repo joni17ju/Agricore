@@ -25,7 +25,7 @@ export async function getSection(req, res) {
   res.json(await findOr404(Section, req.params.id, 'Section'));
 }
 
-/** POST /api/sections — admin creates a class section. */
+/** POST /api/sections — an instructor creates a class section. */
 export async function createSection(req, res) {
   const { sectionName, instructorId = null } = req.body ?? {};
   if (!sectionName?.trim()) throw httpError(400, 'sectionName is required.');

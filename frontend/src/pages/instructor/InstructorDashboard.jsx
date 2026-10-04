@@ -5,8 +5,9 @@ import { useAsync } from '../../hooks/useAsync.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
 import { getInstructorDashboard } from '../../services/analyticsService.js';
 import { listPendingStudents } from '../../services/userService.js';
+import Button from '../../components/common/Button.jsx';
 import Card from '../../components/common/Card.jsx';
-import { CountUp, ErrorState, LoadingState } from '../../components/common/Display.jsx';
+import { Avatar, CountUp, ErrorState, LoadingState } from '../../components/common/Display.jsx';
 import {
   BlindspotList,
   SectionFilter,
@@ -22,6 +23,11 @@ export default function InstructorDashboard() {
     () => getInstructorDashboard(user._id, { sectionId: sectionId || undefined }),
     [user._id, sectionId],
   );
+  /*
+   * Separate from the dashboard analytics on purpose: account requests are not
+   * section-scoped, so the section filter above must not hide them.
+   */
+  const pending = useAsync(listPendingStudents, []);
 
   if (isLoading && !data) return <LoadingState label="Loading dashboard…" />;
   if (error) return <ErrorState error={error} onRetry={reload} />;

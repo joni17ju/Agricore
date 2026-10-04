@@ -6,7 +6,7 @@ import { httpError, toObjectId } from '../utils/http.js';
  *
  * Every query here is scoped to req.user._id rather than to an id from the
  * request, so there is no route on which one user can see or modify another's
- * notifications — not even an administrator. Nothing is created here; rows are
+ * notifications — not even an instructor. Nothing is created here; rows are
  * written only by server-side events through utils/notify.js.
  */
 
