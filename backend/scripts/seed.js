@@ -21,6 +21,8 @@ import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import { MOCK_SEED_ANCHOR_DAY } from '../constants/rules.js';
 import { addDays, calendarDaysBetween } from '../utils/dates.js';
+import { Lesson, Mission, Module, Notification, User } from '../models/index.js';
+import { completeCourseFor } from './lib/studentCompletion.js';
 
 const DATA_DIR = path.resolve(process.cwd(), '..', 'frontend', 'src', 'data');
 const isDryRun = process.argv.includes('--dry');
@@ -34,6 +36,13 @@ const isDryRun = process.argv.includes('--dry');
 const SEED_PASSWORD = process.env.SEED_PASSWORD ?? 'agricore123';
 
 const COLLECTIONS = ['users', 'sections', 'modules', 'lessons', 'missions', 'missionAttempts', 'progress'];
+
+/**
+ * The seeded student's course history is generated rather than listed in the
+ * data files: scores, XP and badges all have to agree with the server's own
+ * rules, and the only way to guarantee that is to run those rules.
+ */
+const SEEDED_STUDENT_EMAIL = 'juan.delacruz@dorsu.edu.ph';
 
 /** Which fields point at which collection, so references can be rewritten. */
 const REFERENCES = {
@@ -130,13 +139,9 @@ const idMap = buildIdMap(data);
 const seedPasswordHash = await bcrypt.hash(SEED_PASSWORD, 10);
 const documents = transform(data, idMap, seedPasswordHash);
 
-const newestAttempt = documents.missionAttempts.reduce(
-  (latest, doc) => (doc.attemptedAt > latest ? doc.attemptedAt : latest),
-  new Date(0),
-);
 console.log(
-  `Loaded from frontend/src/data — activity shifted ${SEED_DATE_OFFSET_DAYS} day(s); ` +
-    `newest attempt ${newestAttempt.toISOString().slice(0, 10)} (today is ${new Date().toISOString().slice(0, 10)}):`,
+  `Loaded from frontend/src/data — any dated content shifted ${SEED_DATE_OFFSET_DAYS} day(s) ` +
+    `(today is ${new Date().toISOString().slice(0, 10)}):`,
 );
 for (const name of COLLECTIONS) console.log(`  ${name.padEnd(16)} ${String(documents[name].length).padStart(4)} documents`);
 
@@ -158,6 +163,35 @@ for (const name of COLLECTIONS) {
   await db.collection(name).insertMany(documents[name]);
   const after = await db.collection(name).countDocuments();
   console.log(`  ${name.padEnd(16)} ${String(before).padStart(4)} → ${String(after).padStart(4)}`);
+}
+
+/*
+ * Notifications are not in COLLECTIONS — nothing seeds them — but every row
+ * points at a user that has just been replaced. Clearing them stops the bell
+ * showing notifications addressed to accounts that no longer exist.
+ */
+const clearedNotifications = await Notification.deleteMany({});
+console.log(`  ${'notifications'.padEnd(16)} ${String(clearedNotifications.deletedCount ?? 0).padStart(4)} →    0`);
+
+/*
+ * The seeded student previews the whole student side, so they finish the
+ * course. Generated through the same helpers the server uses, so XP, badges,
+ * level, rank and streak all agree with the real rules.
+ */
+const student = await User.findOne({ email: SEEDED_STUDENT_EMAIL });
+if (student) {
+  const [missions, lessons, modules] = await Promise.all([
+    Mission.find().select('_id lessonId maxXP scenarioData'),
+    Lesson.find().select('_id'),
+    Module.find().select('_id moduleNumber title'),
+  ]);
+  const completion = await completeCourseFor(student._id, { missions, lessons, modules });
+  console.log(`\n${student.firstName}'s course history:`);
+  console.log(`  ${String(completion.attempts).padStart(4)} passing attempts`);
+  console.log(`  ${String(completion.progress).padStart(4)} completed lessons`);
+  console.log(`  badges: ${completion.badges.join(', ') || 'none'}`);
+} else {
+  console.log(`\nNo ${SEEDED_STUDENT_EMAIL} in the seed data — skipped the course history.`);
 }
 
 await mongoose.disconnect();

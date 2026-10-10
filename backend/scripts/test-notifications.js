@@ -9,7 +9,7 @@
  *   node --env-file=.env scripts/test-notifications.js [baseUrl]
  */
 import mongoose from 'mongoose';
-import { Lesson, Mission, MissionAttempt, Module, Notification, User } from '../models/index.js';
+import { Lesson, Mission, MissionAttempt, Module, Notification, Progress, User } from '../models/index.js';
 
 const BASE = process.argv[2] ?? 'http://localhost:5000/api';
 const PASSWORD = 'agricore123';
@@ -68,6 +68,9 @@ console.log(`test student: ${created.email}\n`);
 
 const cleanup = async () => {
   await MissionAttempt.deleteMany({ studentId: created._id });
+  // Submitting an attempt upserts a progress row; it has to go too, or every
+  // run leaves one behind.
+  await Progress.deleteMany({ studentId: created._id });
   await Notification.deleteMany({ 'meta.studentId': String(created._id) });
   await Notification.deleteMany({ userId: created._id });
   await User.deleteOne({ _id: created._id });

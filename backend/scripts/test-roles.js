@@ -10,13 +10,20 @@
 import mongoose from 'mongoose';
 import { Notification, Section, User } from '../models/index.js';
 
+const stamp = Date.now();
+
 const BASE = process.argv[2] ?? 'http://localhost:5000/api';
 const PASSWORD = 'agricore123';
 const INSTRUCTOR = 'c.reyes@dorsu.edu.ph';
-const OTHER_INSTRUCTOR = 'a.villanueva@dorsu.edu.ph';
+/*
+ * A second instructor is needed to prove one instructor cannot touch another's
+ * account. The database keeps only one, and no API route will mint an
+ * instructor by design, so this test creates one directly and deletes it again
+ * in the cleanup below.
+ */
+const OTHER_INSTRUCTOR = `other.instructor.${stamp}@dorsu.edu.ph`;
 const SEEDED_STUDENT = 'juan.delacruz@dorsu.edu.ph';
 
-const stamp = Date.now();
 const NEW_STUDENT = {
   firstName: 'Rolecheck',
   lastName: 'Probe',
@@ -62,7 +69,22 @@ const createdSectionIds = [];
 
 try {
   const instructor = await signIn(INSTRUCTOR);
-  const other = await signIn(OTHER_INSTRUCTOR);
+  // Created straight in the database: /auth/register and POST /users both
+  // refuse to make an instructor, which is exactly what this test relies on.
+  const reyes = await User.findOne({ email: INSTRUCTOR }).select('passwordHash');
+  const other = { user: await User.create({
+    role: 'instructor',
+    firstName: 'Other',
+    lastName: 'Instructor',
+    email: OTHER_INSTRUCTOR,
+    passwordHash: reyes.passwordHash,
+    schoolId: null,
+    sectionId: null,
+    assignedSectionIds: [],
+    status: 'active',
+    earnedBadges: [],
+  }) };
+  createdIds.push(String(other.user._id));
   const sections = await call('/sections/options');
   const sectionId = sections.data[0]._id;
 
