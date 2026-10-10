@@ -57,7 +57,13 @@ export async function createMissionAttempt(req, res) {
     maxXP: mission.maxXP,
     score,
     isPassed,
-    previousAttempts: previousAttempts.map((a) => ({ score: a.score, xpEarned: a.xpEarned })),
+    /*
+     * isPassed has to travel with each row: the award rule ignores failed
+     * attempts, so dropping the flag made every previous attempt look failed,
+     * the previous best fall to zero, and a replay pay out in full — which is
+     * exactly the XP farming the rule exists to prevent.
+     */
+    previousAttempts: previousAttempts.map((a) => ({ score: a.score, isPassed: a.isPassed })),
   });
 
   const attempt = await MissionAttempt.create({
