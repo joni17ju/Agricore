@@ -3,9 +3,20 @@ import { Link } from 'react-router-dom';
 import Icon from '../common/Icon.jsx';
 import { summarizeHtml } from '../common/SafeHtml.jsx';
 
-/** Hold this long before a press becomes a drag rather than a tap. */
-const LONG_PRESS_MS = 350;
-/** Moving further than this before the timer fires cancels the drag (it was a scroll). */
+/**
+ * Hold this long before a press becomes a drag rather than a tap.
+ *
+ * Short enough that picking a row up feels immediate, long enough that a quick
+ * tap still opens the lesson instead of starting a drag.
+ */
+const HOLD_TO_DRAG_MS = 100;
+/**
+ * Moving further than this before the timer fires cancels the drag — the
+ * gesture was a scroll or a swipe, not a hold. Measured on both axes: with a
+ * hold this short, a touch scroll has barely begun to travel vertically when
+ * the timer would otherwise fire, and a horizontal swipe must not be stolen
+ * either.
+ */
 const CANCEL_SLOP_PX = 10;
 
 /**
@@ -91,6 +102,7 @@ export default function ReorderableLessonList({ module, lessons, onReorder, isSa
 
     const press = {
       lessonId,
+      startX: event.clientX,
       startY: event.clientY,
       isDragging: false,
       timer: null,
@@ -101,7 +113,9 @@ export default function ReorderableLessonList({ module, lessons, onReorder, isSa
     press.onMove = (moveEvent) => {
       if (!press.isDragging) {
         // Moved before the hold completed — treat it as a scroll, not a drag.
-        if (Math.abs(moveEvent.clientY - press.startY) > CANCEL_SLOP_PX) endDrag();
+        const dx = moveEvent.clientX - press.startX;
+        const dy = moveEvent.clientY - press.startY;
+        if (Math.hypot(dx, dy) > CANCEL_SLOP_PX) endDrag();
         return;
       }
       moveEvent.preventDefault();
@@ -131,7 +145,7 @@ export default function ReorderableLessonList({ module, lessons, onReorder, isSa
       overIndexRef.current = start;
       setDraggingId(lessonId);
       setOverIndex(start);
-    }, LONG_PRESS_MS);
+    }, HOLD_TO_DRAG_MS);
 
     pressRef.current = press;
     window.addEventListener('pointermove', press.onMove, { passive: false });
