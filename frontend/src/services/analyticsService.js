@@ -3,7 +3,7 @@
  * instructor overview.
  */
 import { BADGES_BY_CODE } from '../constants/badges.js';
-import { ROLES, USER_STATUS } from '../constants/roles.js';
+import { ROLES } from '../constants/roles.js';
 import { PERFORMANCE_STATUS } from '../constants/rules.js';
 import {
   average,
