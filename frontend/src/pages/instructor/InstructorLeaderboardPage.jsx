@@ -25,15 +25,28 @@ export default function InstructorLeaderboardPage() {
   const modules = useAsync(listModules, []);
   const [sectionId, setSectionId] = useState('');
   const [period, setPeriod] = useState(LEADERBOARD_PERIODS.OVERALL);
-  const [moduleId, setModuleId] = useState('mod_1');
+  /*
+   * Empty until the modules load, then the first one. It used to default to
+   * the mock id "mod_1", which no longer exists in the database — the By
+   * Module board asked for a module that could never be found. Deriving it
+   * from the list also means the filter works whatever modules the course has.
+   */
+  const [moduleId, setModuleId] = useState('');
+  const selectedModuleId = moduleId || modules.data?.[0]?._id || '';
 
   useEffect(() => {
     if (!sectionId && sections.data?.length) setSectionId(sections.data[0]._id);
   }, [sections.data, sectionId]);
 
   const board = useAsync(
-    () => (sectionId ? getSectionLeaderboard(user._id, sectionId, { period, moduleId: period === LEADERBOARD_PERIODS.MODULE ? moduleId : undefined }) : Promise.resolve(null)),
-    [user._id, sectionId, period, moduleId],
+    () =>
+      sectionId
+        ? getSectionLeaderboard(user._id, sectionId, {
+            period,
+            moduleId: period === LEADERBOARD_PERIODS.MODULE ? selectedModuleId : undefined,
+          })
+        : Promise.resolve(null),
+    [user._id, sectionId, period, selectedModuleId],
   );
 
   if (sections.isLoading) return <LoadingState />;
@@ -51,7 +64,7 @@ export default function InstructorLeaderboardPage() {
             </div>
             {period === LEADERBOARD_PERIODS.MODULE && (
               <div className="inline-select">
-                <SelectInput aria-label="Module" value={moduleId} onChange={(e) => setModuleId(e.target.value)} options={(modules.data ?? []).map((m) => ({ value: m._id, label: `Module ${m.moduleNumber}` }))} />
+                <SelectInput aria-label="Module" value={selectedModuleId} onChange={(e) => setModuleId(e.target.value)} options={(modules.data ?? []).map((m) => ({ value: m._id, label: `Module ${m.moduleNumber}` }))} />
               </div>
             )}
           </div>
@@ -61,7 +74,7 @@ export default function InstructorLeaderboardPage() {
       {board.error && <ErrorState error={board.error} onRetry={board.reload} />}
       {board.isLoading && !board.data && <LoadingState />}
       {board.data && (
-        <Card key={`${sectionId}-${period}-${moduleId}`} className="anim-fade-in">
+        <Card key={`${sectionId}-${period}-${selectedModuleId}`} className="anim-fade-in">
           <Podium rows={board.data.rows} />
           <LeaderboardTable rows={board.data.rows} showMovement={period === LEADERBOARD_PERIODS.OVERALL} />
         </Card>

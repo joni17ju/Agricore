@@ -20,11 +20,22 @@ export default function LeaderboardPage() {
   useDocumentTitle('Leaderboard');
   const { user } = useAuth();
   const [period, setPeriod] = useState(LEADERBOARD_PERIODS.OVERALL);
-  const [moduleId, setModuleId] = useState('mod_1');
+  /*
+   * Empty until the modules load, then the first one. It used to default to
+   * the mock id "mod_1", which no longer exists in the database — the By
+   * Module board asked for a module that could never be found. Deriving it
+   * from the list also means the filter works whatever modules the course has.
+   */
+  const [moduleId, setModuleId] = useState('');
   const modules = useAsync(listModules, []);
+  const selectedModuleId = moduleId || modules.data?.[0]?._id || '';
   const board = useAsync(
-    () => getStudentLeaderboard(user._id, { period, moduleId: period === LEADERBOARD_PERIODS.MODULE ? moduleId : undefined }),
-    [user._id, period, moduleId],
+    () =>
+      getStudentLeaderboard(user._id, {
+        period,
+        moduleId: period === LEADERBOARD_PERIODS.MODULE ? selectedModuleId : undefined,
+      }),
+    [user._id, period, selectedModuleId],
   );
 
   const data = board.data;
@@ -41,7 +52,7 @@ export default function LeaderboardPage() {
             <div className="inline-select">
               <SelectInput
                 aria-label="Module"
-                value={moduleId}
+                value={selectedModuleId}
                 onChange={(event) => setModuleId(event.target.value)}
                 options={(modules.data ?? []).map((m) => ({ value: m._id, label: `Module ${m.moduleNumber}: ${m.title}` }))}
               />
@@ -55,7 +66,7 @@ export default function LeaderboardPage() {
       {board.error && <ErrorState error={board.error} onRetry={board.reload} />}
       {data && (
         <div className="leaderboard-layout">
-          <Card key={`${period}-${moduleId}`} className="anim-fade-in">
+          <Card key={`${period}-${selectedModuleId}`} className="anim-fade-in">
             {data.rows.every((row) => row.xp === 0) ? (
               <EmptyState icon="trophy" title="No XP earned yet" message="Rankings appear as students in your section complete missions." />
             ) : (
