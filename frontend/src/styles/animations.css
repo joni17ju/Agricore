@@ -9,7 +9,7 @@
 
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: none; }
 }
 
 @keyframes scale-in {
@@ -95,8 +95,18 @@
   100% { opacity: 0; transform: translateY(-36px); }
 }
 
+/*
+ * "backwards", not "both". The entrance ends where the element's own styles
+ * already are (opacity 1, no transform), so filling forwards changes nothing
+ * visible — but it does keep an identity transform applied for good, and any
+ * transform at all makes the element the containing block for every
+ * position: fixed descendant inside it. Cards and page transitions use this,
+ * and the editor's full-screen layer lives inside one of each. Backwards still
+ * holds the "from" state through the stagger delay, which is all the fill was
+ * doing for us.
+ */
 .anim-fade-up {
-  animation: fade-up var(--duration-slow) var(--ease-out) both;
+  animation: fade-up var(--duration-slow) var(--ease-out) backwards;
   animation-delay: calc(var(--i, 0) * 60ms);
 }
 
@@ -119,7 +129,8 @@
 }
 
 .page-transition {
-  animation: fade-up 360ms var(--ease-out) both;
+  /* Backwards for the same reason as .anim-fade-up above. */
+  animation: fade-up 360ms var(--ease-out) backwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
