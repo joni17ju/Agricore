@@ -33,6 +33,9 @@ const PATHS = {
   timer: <><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2M9 2h6M12 2v3" /></>,
   search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
   plus: <path d="M12 5v14M5 12h14" />,
+  // Enter and leave the editor's full-screen mode: arrows out, arrows in.
+  expand: <><path d="M15 3h6v6M9 21H3v-6" /><path d="m21 3-7 7M3 21l7-7" /></>,
+  collapse: <><path d="M4 14h6v6M20 10h-6V4" /><path d="m14 10 7-7M3 21l7-7" /></>,
   minus: <path d="M5 12h14" />,
   edit: <><path d="M4 20h4L19 9l-4-4L4 16v4Z" /><path d="m13.5 6.5 4 4" /></>,
   trash: <><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /><path d="M10 11v6M14 11v6" /></>,

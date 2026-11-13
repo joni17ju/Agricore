@@ -364,6 +364,83 @@ a.module-card:hover .module-card__edit { transform: scale(1.12); background: #ff
 .rte__menu button:hover { background: var(--green-50); color: var(--green-800); }
 .rte__menu button .icon { color: var(--green-700); }
 .rte__menu-divider { display: block; height: 1px; margin: 4px 0; background: var(--border); }
+
+/* ───────── Full-screen (focus) mode ───────── */
+/* The toggle is the last control; auto margin pins it to the far right. */
+.rte__toolbar-end { display: inline-flex; margin-left: auto; padding-left: 4px; }
+
+/*
+ * The same .rte element, lifted over the page. A class rather than a portal
+ * keeps the editor instance mounted, so the cursor, selection, undo history
+ * and unsaved text all survive the switch. inset: 0 plus an explicit dvh
+ * height: on a phone the layout viewport can be taller than what is visible
+ * behind the address bar, and dvh tracks the visible part.
+ */
+.rte--fullscreen {
+  position: fixed;
+  inset: 0;
+  height: 100vh;
+  height: 100dvh;
+  /* Over the sidebar (60) and topbar (40); under modals (100) and toasts (200). */
+  z-index: 70;
+  border: 0;
+  border-radius: 0;
+  background: var(--surface-muted);
+  animation: rte-fullscreen-in var(--duration-base) var(--ease-out) both;
+}
+.rte--fullscreen.is-closing { animation: rte-fullscreen-out var(--duration-fast) var(--ease-out) both; }
+.rte--fullscreen:focus-within { box-shadow: none; }
+/* Ends on "none": a lingering transform would trap the fixed context menu. */
+@keyframes rte-fullscreen-in { from { opacity: 0; transform: scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes rte-fullscreen-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(0.985); } }
+
+.rte__fsbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 52px;
+  padding: 8px var(--space-5);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.rte__fsbar-text { display: flex; flex-direction: column; min-width: 0; }
+.rte__fsbar-text strong { font-size: var(--text-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rte__fsbar-text small { font-size: var(--text-xs); color: var(--text-muted); }
+.rte__fsbar-status { flex: 1; text-align: center; font-size: var(--text-xs); color: var(--text-muted); }
+.rte__fsbar-status.is-dirty { color: var(--amber-600); font-weight: 600; }
+.rte__fsbar-actions { display: flex; align-items: center; gap: var(--space-2); flex: 0 0 auto; }
+
+/*
+ * The writing area: a paper column on a soft neutral ground, like a page in a
+ * word processor. Reading width is capped so lines stay comfortable on a wide
+ * monitor; narrow screens get the full width back.
+ */
+.rte--fullscreen .rte__surface {
+  background: #eef2ea;
+  padding: var(--space-6) var(--space-4);
+  /* Reserve the gutter on both sides, or the paper sits half a scrollbar
+     left of centre. */
+  scrollbar-gutter: stable both-edges;
+}
+.rte--fullscreen .rte__surface > * { min-height: 100%; }
+.rte--fullscreen .rte__content {
+  max-width: 880px;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: var(--space-8) clamp(var(--space-5), 6vw, 72px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+@media (max-width: 768px) {
+  .rte__fsbar { padding-inline: var(--space-4); }
+  .rte__fsbar-status { display: none; }
+  /* Full-width paper on phones: one gutter is enough, there is nothing to centre. */
+  .rte--fullscreen .rte__surface { padding: 0; scrollbar-gutter: stable; }
+  .rte--fullscreen .rte__content { max-width: none; border: 0; border-radius: 0; box-shadow: none; padding: var(--space-4); }
+}
 @media (max-width: 640px) {
   .rte__content { padding: var(--space-4); }
 }
@@ -387,7 +464,7 @@ a.module-card:hover .module-card__edit { transform: scale(1.12); background: #ff
   .rte__toolbar::-webkit-scrollbar { height: 6px; }
   .rte__toolbar::-webkit-scrollbar-thumb { border-radius: 999px; background: var(--green-200); }
   /* Flex would otherwise shrink every button below its tap target. */
-  .rte__tool, .rte__divider, .rte__swatches { flex: 0 0 auto; }
+  .rte__tool, .rte__divider, .rte__swatches, .rte__toolbar-end { flex: 0 0 auto; }
 }
 
 

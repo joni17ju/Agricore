@@ -56,7 +56,12 @@ export default function MediaManager({ lesson, onChanged, uploadOpen, onUploadOp
   );
 }
 
-function UploadModal({ lessonId, isOpen, onClose, onUploaded }) {
+/**
+ * Exported as well as used here: the editor's full-screen mode opens this
+ * picker directly from its Media button, because switching to the Media tab
+ * would unmount the editor and drop the mode.
+ */
+export function UploadModal({ lessonId, isOpen, onClose, onUploaded }) {
   const toast = useToast();
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');

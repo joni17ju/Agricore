@@ -21,9 +21,10 @@ const MAX_IMAGE_BYTES = 1.5 * 1024 * 1024;
 const HIGHLIGHT_LABELS = { green: 'Green', amber: 'Amber', blue: 'Blue', pink: 'Pink' };
 const LAYOUT_LABELS = { inline: 'Inline (text wraps)', center: 'Centered block', full: 'Full width' };
 
-function ToolButton({ icon, label, onClick, isActive = false, disabled = false, wide = false, children }) {
+function ToolButton({ icon, label, onClick, isActive = false, disabled = false, wide = false, buttonRef, children }) {
   return (
     <button
+      ref={buttonRef}
       type="button"
       className={`rte__tool ${wide ? 'rte__tool--wide' : ''} ${isActive ? 'is-active' : ''}`}
       title={label}
@@ -39,7 +40,26 @@ function ToolButton({ icon, label, onClick, isActive = false, disabled = false, 
   );
 }
 
-export default function RichTextEditor({ documentKey, initialHtml, onChange, onInsertMedia }) {
+/** How long the closing animation of full-screen mode runs (matches the CSS). */
+const FULLSCREEN_CLOSE_MS = 160;
+
+/**
+ * `fullscreenContext` is what the full-screen header shows and does — the
+ * lesson title, its "Module X, Lesson Y" label, the dirty/saving state the
+ * workspace already tracks, and its Save handler. Nothing about saving lives
+ * here; the header only surfaces the workspace's own.
+ *
+ * @param {{ title: string, meta: string, isDirty: boolean, isSaving: boolean, onSave?: () => void } | null} fullscreenContext
+ * @param {(isFullscreen: boolean) => void} [onFullscreenChange]
+ */
+export default function RichTextEditor({
+  documentKey,
+  initialHtml,
+  onChange,
+  onInsertMedia,
+  fullscreenContext = null,
+  onFullscreenChange,
+}) {
   const [linkDialog, setLinkDialog] = useState(null); // { url, text }
   const [imageDialog, setImageDialog] = useState(null); // { url, alt, layout, file }
   const [videoDialog, setVideoDialog] = useState(null); // { url, error }
@@ -100,6 +120,112 @@ export default function RichTextEditor({ documentKey, initialHtml, onChange, onI
       window.removeEventListener('scroll', closeContextMenu, true);
     };
   }, [contextMenu, closeContextMenu]);
+
+  /*
+   * Full-screen (focus) mode.
+   *
+   * 'on' and 'closing' both render the fixed layer; 'closing' only exists so
+   * the exit animation has a frame to play in. The editor element itself never
+   * moves in the tree, which is what keeps its selection and history intact.
+   */
+  const [fullscreenPhase, setFullscreenPhase] = useState('off');
+  const isFullscreen = fullscreenPhase !== 'off';
+  const rootRef = useRef(null);
+  const fullscreenButtonRef = useRef(null);
+  const contextMenuRef = useRef(contextMenu);
+  contextMenuRef.current = contextMenu;
+
+  const enterFullscreen = useCallback(() => setFullscreenPhase('on'), []);
+  const exitFullscreen = useCallback(() => {
+    // No exit animation plays under reduced motion, so do not wait for one.
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    setFullscreenPhase((phase) => (phase === 'on' ? (reduced ? 'off' : 'closing') : phase));
+    if (reduced) requestAnimationFrame(() => fullscreenButtonRef.current?.focus());
+  }, []);
+
+  // Let the closing animation finish, then drop the layer and hand focus back
+  // to the toggle, so a keyboard user lands where they left.
+  useEffect(() => {
+    if (fullscreenPhase !== 'closing') return undefined;
+    const timeout = setTimeout(() => {
+      setFullscreenPhase('off');
+      fullscreenButtonRef.current?.focus();
+    }, FULLSCREEN_CLOSE_MS);
+    return () => clearTimeout(timeout);
+  }, [fullscreenPhase]);
+
+  useEffect(() => {
+    onFullscreenChange?.(isFullscreen);
+  }, [isFullscreen, onFullscreenChange]);
+
+  useEffect(() => {
+    if (!isFullscreen) return undefined;
+
+    /*
+     * Scroll lock on the page behind, restored to exactly what it was — also on
+     * unmount, so navigating away mid-mode cannot leave the page stuck. The
+     * dialogs set and restore the same property around their own lifetime, and
+     * because they restore to the value they found, they hand "hidden" back.
+     */
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    // Keep the caret where it was; the DOM did not move, but be explicit.
+    const focusFrame = requestAnimationFrame(() => {
+      if (!editorRef.current?.isDestroyed) editorRef.current?.commands.focus();
+    });
+
+    const onKeyDown = (event) => {
+      if (event.defaultPrevented) return;
+      // A dialog on top owns the keyboard: Escape closes it, Tab stays in it.
+      if (document.querySelector('.modal-backdrop.is-open')) return;
+
+      if (event.key === 'Escape') {
+        if (contextMenuRef.current) {
+          setContextMenu(null);
+          return;
+        }
+        event.preventDefault();
+        exitFullscreen();
+        return;
+      }
+
+      // Focus trap: Tab cycles through the layer's own controls and the text.
+      if (event.key === 'Tab') {
+        const root = rootRef.current;
+        if (!root) return;
+        const focusable = [...root.querySelectorAll(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [contenteditable="true"], [tabindex]:not([tabindex="-1"])',
+        )].filter((el) => el.offsetParent !== null);
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement;
+        if (!root.contains(active)) {
+          event.preventDefault();
+          first.focus();
+        } else if (event.shiftKey && active === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && active === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    /*
+     * Capture phase: a keydown inside the ProseMirror view does not bubble
+     * back out to the document, so a bubble listener would never hear Escape
+     * pressed while writing — the one place it is pressed most.
+     */
+    document.addEventListener('keydown', onKeyDown, true);
+
+    return () => {
+      cancelAnimationFrame(focusFrame);
+      document.removeEventListener('keydown', onKeyDown, true);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isFullscreen, exitFullscreen]);
 
   if (!editor) return <div className="rte rte--loading">Loading editor…</div>;
 
@@ -168,8 +294,47 @@ export default function RichTextEditor({ documentKey, initialHtml, onChange, onI
   const imageActive = editor.isActive('image');
   const currentLayout = editor.getAttributes('image').layout ?? 'center';
 
+  const fullscreenLabel = fullscreenContext?.title
+    ? `Editing ${fullscreenContext.title} in full screen`
+    : 'Lesson editor in full screen';
+
   return (
-    <div className="rte">
+    <div
+      ref={rootRef}
+      className={`rte ${isFullscreen ? 'rte--fullscreen' : ''} ${fullscreenPhase === 'closing' ? 'is-closing' : ''}`}
+      {...(isFullscreen ? { role: 'dialog', 'aria-modal': 'true', 'aria-label': fullscreenLabel } : {})}
+    >
+      {/* Full-screen header: what is being edited, whether it is saved, and the way out. */}
+      {isFullscreen && (
+        <header className="rte__fsbar">
+          <div className="rte__fsbar-text">
+            <strong>{fullscreenContext?.title ?? 'Lesson content'}</strong>
+            {fullscreenContext?.meta && <small>{fullscreenContext.meta}</small>}
+          </div>
+          {fullscreenContext && (
+            <span className={`rte__fsbar-status ${fullscreenContext.isDirty ? 'is-dirty' : ''}`} aria-live="polite">
+              {fullscreenContext.isDirty ? '● Unsaved changes' : 'All changes saved'}
+            </span>
+          )}
+          <div className="rte__fsbar-actions">
+            {fullscreenContext?.onSave && (
+              <Button
+                size="sm"
+                icon="save"
+                onClick={fullscreenContext.onSave}
+                disabled={!fullscreenContext.isDirty}
+                isLoading={fullscreenContext.isSaving}
+              >
+                Save Lesson
+              </Button>
+            )}
+            <Button size="sm" variant="secondary" icon="collapse" onClick={exitFullscreen}>
+              Exit full screen
+            </Button>
+          </div>
+        </header>
+      )}
+
       {/* Toolbar and contextbar stick together, so neither can cover the other. */}
       <div className="rte__chrome">
         <div className="rte__toolbar" role="toolbar" aria-label="Formatting">
@@ -235,6 +400,17 @@ export default function RichTextEditor({ documentKey, initialHtml, onChange, onI
               </ToolButton>
             </>
           )}
+
+          {/* Always the last control, pinned right, so it never moves between modes. */}
+          <span className="rte__toolbar-end">
+            <ToolButton
+              icon={isFullscreen ? 'collapse' : 'expand'}
+              label={isFullscreen ? 'Exit full screen' : 'Full screen'}
+              isActive={isFullscreen}
+              buttonRef={fullscreenButtonRef}
+              onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+            />
+          </span>
         </div>
 
         {/* Image layout controls appear only while an image is selected. */}

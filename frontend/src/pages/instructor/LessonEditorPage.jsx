@@ -15,6 +15,7 @@ import { ConfirmDialog } from '../../components/common/Modal.jsx';
 import { sanitizeHtml } from '../../components/common/SafeHtml.jsx';
 import Tabs from '../../components/common/Tabs.jsx';
 import MediaManager from '../../components/instructor/MediaManager.jsx';
+import { UploadModal } from '../../components/instructor/MediaManager.jsx';
 import { MissionManager } from '../../components/instructor/MissionManager.jsx';
 import { gameIcon } from '../../components/student/CourseMap.jsx';
 
@@ -76,6 +77,8 @@ function LessonWorkspace({ moduleEntry, lessonEntry, onChanged, onDeleted, toast
   const [isSaving, setIsSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
+  // Mirrors the editor's own mode so the Media button can behave differently in it.
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [revision, setRevision] = useState(0);
   const isDirty = html !== lesson.contentBody || title !== lesson.title;
   const templateMission = moduleEntry.lessons.flatMap((l) => l.missions)[0] ?? null;
@@ -152,11 +155,30 @@ function LessonWorkspace({ moduleEntry, lessonEntry, onChanged, onDeleted, toast
                 initialHtml={html}
                 onChange={setHtml}
                 onInsertMedia={() => {
-                  setTab('media');
+                  /*
+                   * In full screen the picker opens over the editor instead:
+                   * switching tabs would unmount the editor and end the mode.
+                   */
+                  if (!isFullscreen) setTab('media');
                   setUploadOpen(true);
                 }}
+                fullscreenContext={{
+                  title,
+                  meta: `Module ${module.moduleNumber}, Lesson ${lesson.lessonNumber}`,
+                  isDirty,
+                  isSaving,
+                  onSave: save,
+                }}
+                onFullscreenChange={setIsFullscreen}
               />
             </Suspense>
+            {/* The Media picker reached from the toolbar while in full screen. */}
+            <UploadModal
+              lessonId={lesson._id}
+              isOpen={uploadOpen && isFullscreen}
+              onClose={() => setUploadOpen(false)}
+              onUploaded={onChanged}
+            />
             {lesson.mediaAssets.length > 0 && (
               <div className="embed-list">
                 {lesson.mediaAssets.map((asset) => (
