@@ -86,7 +86,15 @@ export function buildStudentCurriculum({ modules, lessons, missions, attempts, p
     const completedLessons = lessonEntries.filter((entry) => entry.state === LESSON_STATE.COMPLETED).length;
     const allLessonsCompleted = completedLessons === moduleLessons.length;
 
-    const isCleared = moduleUnlocked && allLessonsCompleted;
+    /*
+     * A module with no lessons yet is not "cleared" — there is nothing in it
+     * to clear, and counting it would inflate "n of m modules cleared" the
+     * moment an instructor adds an empty module. This matches the server's
+     * own findClearedModuleNumbers, which skips empty modules when awarding
+     * the module badges.
+     */
+    const hasLessons = moduleLessons.length > 0;
+    const isCleared = moduleUnlocked && hasLessons && allLessonsCompleted;
     const totalLevels = lessonEntries.reduce((sum, entry) => sum + entry.totalLevels, 0);
     const passedLevels = lessonEntries.reduce((sum, entry) => sum + entry.passedLevels, 0);
 
@@ -96,7 +104,12 @@ export function buildStudentCurriculum({ modules, lessons, missions, attempts, p
       else if (lessonEntries.some((entry) => entry.state !== LESSON_STATE.AVAILABLE)) state = LESSON_STATE.IN_PROGRESS;
       else state = LESSON_STATE.AVAILABLE;
     }
-    previousModuleCleared = isCleared;
+    /*
+     * An empty module cannot be a prerequisite either: treating it as unmet
+     * would lock every module after it for good, with nothing a student could
+     * do about it. It passes the chain through untouched instead.
+     */
+    previousModuleCleared = hasLessons ? isCleared : previousModuleCleared;
 
     return {
       module,

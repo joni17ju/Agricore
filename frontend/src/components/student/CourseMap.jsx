@@ -70,7 +70,8 @@ export function ModuleCover({ module, isLocked = false }) {
           onError={() => setHasImage(false)}
         />
       ) : (
-        <span className={`module-card__image module-card__image--fallback tint-${module.moduleNumber}`}>
+        // Five tints, cycled, so a sixth or later module still gets one.
+        <span className={`module-card__image module-card__image--fallback tint-${((module.moduleNumber - 1) % 5) + 1}`}>
           <Icon name={gameIcon(module.gameType)} size={34} />
         </span>
       )}

@@ -7,7 +7,7 @@ import { useAsync } from '../../hooks/useAsync.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
 import { useSeenUnlocks } from '../../hooks/useSeenUnlocks.js';
 import { getStudentModule } from '../../services/progressService.js';
-import { ErrorState, LoadingState, PageHeader } from '../../components/common/Display.jsx';
+import { EmptyState, ErrorState, LoadingState, PageHeader } from '../../components/common/Display.jsx';
 import Icon from '../../components/common/Icon.jsx';
 import { ProgressBar } from '../../components/common/Progress.jsx';
 import { StatePill, TopicCard, gameIcon } from '../../components/student/CourseMap.jsx';
@@ -53,6 +53,15 @@ export default function ModuleDetailPage() {
           {GAME_TYPE_INFO[module.gameType].shortDescription}
         </p>
       </section>
+
+      {/* A module an instructor has created but not filled in yet. */}
+      {entry.lessons.length === 0 && (
+        <EmptyState
+          icon="file"
+          title="No topics yet"
+          message="Your instructor is still preparing this module. Check back soon."
+        />
+      )}
 
       <div className="topic-grid">
         {entry.lessons.map((lessonEntry, index) => (
