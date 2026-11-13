@@ -2,7 +2,13 @@ import mongoose from 'mongoose';
 
 const { Schema } = mongoose;
 
-/** The five fixed syllabus modules. gameType picks which mission game the module uses. */
+/**
+ * A syllabus module. The seeded course has five, but instructors can add more
+ * from the Manage Modules page, so nothing here assumes a count — only that
+ * moduleNumber is unique and forms the 1..n order the unlock chain walks.
+ *
+ * gameType picks which mission game the module uses.
+ */
 export const GAME_TYPES = ['decision-making', 'identification', 'matching', 'drag-and-drop', 'strategy-management'];
 
 const moduleSchema = new Schema(
