@@ -6,13 +6,13 @@ import { GAME_TYPE_INFO } from '../../constants/gameTypes.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
 import { createLesson, reorderLessons } from '../../services/lessonService.js';
-import { getCourseStructure, updateModuleCover, updateModuleTitle } from '../../services/moduleService.js';
+import { deleteModule, getCourseStructure, updateModuleCover, updateModuleTitle } from '../../services/moduleService.js';
 import Button from '../../components/common/Button.jsx';
 import Card from '../../components/common/Card.jsx';
 import { EmptyState, ErrorState, LoadingState, PageHeader, StatusPill } from '../../components/common/Display.jsx';
 import { TextArea, TextInput } from '../../components/common/Form.jsx';
 import Icon from '../../components/common/Icon.jsx';
-import Modal from '../../components/common/Modal.jsx';
+import Modal, { ConfirmDialog } from '../../components/common/Modal.jsx';
 import ReorderableLessonList from '../../components/instructor/ReorderableLessonList.jsx';
 import { ModuleCover, gameIcon } from '../../components/student/CourseMap.jsx';
 
@@ -89,7 +89,13 @@ export default function ModuleLessonsPage() {
         )}
       </Card>
 
-      <ModuleSettingsCard module={module} onSaved={reload} toast={toast} />
+      <ModuleSettingsCard
+        module={module}
+        lessonCount={lessons.length}
+        onSaved={reload}
+        onDeleted={() => navigate('/instructor/modules')}
+        toast={toast}
+      />
 
       <AddLessonModal
         isOpen={addOpen}
@@ -112,14 +118,30 @@ export default function ModuleLessonsPage() {
 }
 
 /** Module title is editable; its number and game type follow the syllabus. */
-function ModuleSettingsCard({ module, onSaved, toast }) {
+function ModuleSettingsCard({ module, lessonCount, onSaved, onDeleted, toast }) {
   const [title, setTitle] = useState(module.title);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [coverError, setCoverError] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const coverInputRef = useRef(null);
 
   useEffect(() => setTitle(module.title), [module.title]);
+
+  const remove = async () => {
+    setConfirmDelete(false);
+    setIsDeleting(true);
+    try {
+      await deleteModule(module._id);
+      toast.success(`Module ${module.moduleNumber} deleted.`);
+      onDeleted();
+    } catch (err) {
+      // The server refuses a module that still has lessons; show its reason.
+      toast.error(err.message);
+      setIsDeleting(false);
+    }
+  };
 
   const save = async () => {
     setIsSaving(true);
@@ -199,9 +221,37 @@ function ModuleSettingsCard({ module, onSaved, toast }) {
         </div>
       </div>
       <p className="text-sm text-muted" style={{ marginTop: 'var(--space-3)' }}>
-        <Icon name="info" size={14} style={{ display: 'inline', verticalAlign: '-2px' }} /> Module numbers and game types follow
-        the official syllabus and cannot be changed.
+        <Icon name="info" size={14} style={{ display: 'inline', verticalAlign: '-2px' }} /> A module&rsquo;s number comes from its
+        place in the course and its game type is fixed once missions exist, so neither can be changed here.
       </p>
+
+      <h3 className="section-heading">Delete module</h3>
+      <div className="row">
+        <p className="text-sm text-muted" style={{ flex: 1, minWidth: 220 }}>
+          {lessonCount === 0
+            ? 'This module is empty, so it can be removed. Later modules are renumbered to close the gap.'
+            : `This module has ${lessonCount} lesson${lessonCount === 1 ? '' : 's'}. Delete them first — removing the module
+               would take their missions, student attempts and progress with it.`}
+        </p>
+        <Button
+          variant="danger"
+          icon="trash"
+          disabled={lessonCount > 0 || isDeleting}
+          isLoading={isDeleting}
+          onClick={() => setConfirmDelete(true)}
+        >
+          Delete module
+        </Button>
+      </div>
+
+      <ConfirmDialog
+        isOpen={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={remove}
+        title="Delete this module?"
+        message={`Module ${module.moduleNumber}: ${module.title} will be removed and the modules after it renumbered. It has no lessons, so no student records are affected.`}
+        confirmLabel="Delete module"
+      />
     </Card>
   );
 }

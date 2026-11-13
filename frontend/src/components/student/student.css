@@ -262,6 +262,40 @@ a.objectives__row:hover { text-decoration: none; border-color: var(--green-400);
 }
 a.module-card:hover { text-decoration: none; transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--green-400); }
 a.module-card:active { transform: translateY(-1px); }
+/*
+ * The "add module" slot. A grid cell that reads as a card-shaped placeholder:
+ * dashed rather than solid so it is plainly not a module, and matched to the
+ * cards' aspect ratio so the row keeps its rhythm whatever the card height.
+ */
+.module-card--add {
+  display: grid;
+  place-items: center;
+  /*
+   * No aspect-ratio and no percentage height: as a plain grid item it already
+   * stretches to the column width and the row height, so it matches whatever
+   * the cards beside it measure. Sizing it from its own height instead made it
+   * derive a width from the tall card row and overflow its column.
+   */
+  min-height: 220px;
+  padding: 0;
+  border: 2px dashed var(--border-strong);
+  background: var(--surface-muted);
+  color: var(--text-subtle);
+  box-shadow: none;
+  cursor: pointer;
+}
+.module-card--add:hover {
+  transform: translateY(-4px);
+  border-color: var(--green-400);
+  background: var(--green-50);
+  color: var(--green-700);
+  box-shadow: var(--shadow-sm);
+}
+.module-card--add:active { transform: translateY(-1px); }
+.module-card--add:focus-visible { outline: none; border-color: var(--green-600); box-shadow: var(--focus-ring); }
+.module-card--add__plus { display: grid; place-items: center; transition: transform var(--duration-base) var(--ease-spring); }
+.module-card--add:hover .module-card--add__plus { transform: scale(1.12); }
+
 .module-card--locked { background: #f1f3ef; color: var(--text-muted); box-shadow: none; }
 .module-card--locked h3 { color: var(--text-muted); }
 .module-card--in-progress { border-color: var(--green-400); box-shadow: 0 0 0 3px rgba(34, 179, 94, 0.12); }
