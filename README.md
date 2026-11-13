@@ -16,9 +16,12 @@ missions that use a different game mechanic:
 | IV | Weed Science | Drag-and-Drop |
 | V | Integrated Pest Management | Strategy & Management |
 
+These five ship with the course, but the count is not fixed: an instructor can add further
+modules from Manage Modules, and delete one again while it still has no lessons. The five
+module-completion badges stay tied to modules 1–5.
+
 Students earn XP, levels and badges and are ranked on a section leaderboard. Instructors
-manage lesson content and monitor student performance. Administrators manage accounts,
-roles and sections.
+manage lesson content, accounts, sections and monitor student performance.
 
 ## Project structure
 
