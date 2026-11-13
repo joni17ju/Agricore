@@ -396,6 +396,9 @@
 }
 .notif__empty--none { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); color: var(--text-subtle); }
 .notif__empty--none .icon { color: var(--indigo-200); }
+/* Secondary line sits closer to the first, so the two read as one message. */
+.notif__empty--none p { margin: 0; }
+.notif__empty-hint { margin-top: calc(var(--space-2) * -0.5); font-size: var(--text-xs); }
 
 .notif__foot {
   position: sticky;

@@ -125,7 +125,10 @@ export default function NotificationBell() {
           {!isLoading && !error && rows.length === 0 && (
             <div className="notif__empty notif__empty--none">
               <Icon name="bell" size={24} />
-              <p>Nothing yet. Finish a mission and this is where it shows up.</p>
+              {/* Role-neutral: instructors see this panel too, and they never
+                  finish missions. */}
+              <p>No notifications at the moment.</p>
+              <p className="notif__empty-hint">You&rsquo;re all caught up. New updates will appear here.</p>
             </div>
           )}
 

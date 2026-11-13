@@ -128,12 +128,9 @@ export default function NotificationsPage() {
         {rows.length === 0 ? (
           <EmptyState
             icon="bell"
-            title={showUnreadOnly ? 'Nothing unread' : 'No notifications yet'}
-            message={
-              showUnreadOnly
-                ? 'Everything here has been read.'
-                : 'Finish a mission or earn a badge and it will appear here.'
-            }
+            title={showUnreadOnly ? 'No unread notifications' : 'No notifications at the moment'}
+            /* Role-neutral: this page serves students and instructors alike. */
+            message="You're all caught up. New updates will appear here."
           />
         ) : (
           <>
