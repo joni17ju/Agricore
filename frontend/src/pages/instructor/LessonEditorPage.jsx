@@ -107,7 +107,11 @@ function LessonWorkspace({ moduleEntry, lessonEntry, onChanged, onDeleted, toast
   };
 
   return (
-    <Card className="anim-fade-up" padded={false}>
+    /*
+     * The content tab pins the card to the viewport so the lesson text scrolls
+     * on its own; the Media and Missions tabs stay as tall as they need to be.
+     */
+    <Card className={`anim-fade-up ${tab === 'content' ? 'workspace--editor' : ''}`} padded={false}>
       <div className="workspace-header">
         <div className="workspace-header__crumbs">
           <Button variant="ghost" size="sm" icon="arrow-left" to={`/instructor/modules/${module._id}`}>Back to lessons</Button>
