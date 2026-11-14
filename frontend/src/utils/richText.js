@@ -11,6 +11,8 @@
  * id, so stored content can never carry executable markup.
  */
 
+import { LEGACY_HIGHLIGHTS, sanitizeColorStyle } from './cssColor.js';
+
 export const VIDEO_PROVIDERS = Object.freeze({ YOUTUBE: 'youtube', VIMEO: 'vimeo' });
 
 const YOUTUBE_ID = /^[\w-]{11}$/;
@@ -91,7 +93,8 @@ export function isSafeImageSrc(value) {
 export const ALIGNMENTS = ['left', 'center', 'right'];
 export const IMAGE_LAYOUTS = ['inline', 'center', 'full'];
 export const CALLOUT_VARIANTS = ['info', 'warning', 'tip'];
-export const HIGHLIGHT_COLORS = ['green', 'amber', 'blue', 'pink'];
+/** The legacy named highlight palette; new highlights store a hex colour instead. */
+export const HIGHLIGHT_COLORS = Object.keys(LEGACY_HIGHLIGHTS);
 
 const oneOf = (allowed) => (value) => (allowed.includes(value) ? value : null);
 
@@ -116,7 +119,13 @@ export const ALLOWED_TAGS = Object.freeze({
   BR: {},
   HR: {},
   BLOCKQUOTE: {},
-  MARK: { 'data-color': oneOf(HIGHLIGHT_COLORS) },
+  /*
+   * Colour is the only styling content may carry, one strictly validated
+   * declaration per tag — see cssColor.js. data-color stays for highlights
+   * saved before free colour existed, so they render exactly as they did.
+   */
+  MARK: { 'data-color': oneOf(HIGHLIGHT_COLORS), style: (value) => sanitizeColorStyle('MARK', value) },
+  SPAN: { style: (value) => sanitizeColorStyle('SPAN', value) },
   A: { href: (value) => (isSafeLinkUrl(value) ? value : null) },
   IMG: {
     src: (value) => (isSafeImageSrc(value) ? value : null),
@@ -131,6 +140,13 @@ export const ALLOWED_TAGS = Object.freeze({
     'data-id': (value) => String(value ?? '').slice(0, 40),
   },
 });
+
+/**
+ * An allow-list entry, by own property only. A plain lookup lands on
+ * Object.prototype for names like "constructor" or "toString", which made
+ * <p constructor="x"> keep its attribute.
+ */
+export const ownRule = (rules, key) => (Object.hasOwn(rules, key) ? rules[key] : undefined);
 
 /** A <div> only survives when it is a callout or a video placeholder. */
 function isAllowedDiv(element) {
@@ -154,7 +170,7 @@ export function sanitizeRichHtml(html) {
         child.remove();
         return;
       }
-      const rules = ALLOWED_TAGS[child.tagName];
+      const rules = ownRule(ALLOWED_TAGS, child.tagName);
       const allowed = rules && (child.tagName !== 'DIV' || isAllowedDiv(child));
       if (!allowed) {
         clean(child);
@@ -162,7 +178,7 @@ export function sanitizeRichHtml(html) {
         return;
       }
       for (const attribute of [...child.attributes]) {
-        const validate = rules[attribute.name];
+        const validate = ownRule(rules, attribute.name);
         const value = validate ? validate(attribute.value) : null;
         if (value === null || value === undefined) child.removeAttribute(attribute.name);
         else child.setAttribute(attribute.name, value);

@@ -1,5 +1,6 @@
 import { createElement, useMemo } from 'react';
-import { ALLOWED_TAGS, sanitizeRichHtml } from '../../utils/richText.js';
+import { colorStyleToObject } from '../../utils/cssColor.js';
+import { ALLOWED_TAGS, ownRule, sanitizeRichHtml } from '../../utils/richText.js';
 import Callout from './Callout.jsx';
 import VideoEmbed from './VideoEmbed.jsx';
 
@@ -29,7 +30,7 @@ function toReact(node, key) {
   if (node.nodeType !== Node.ELEMENT_NODE) return null;
 
   const tag = node.tagName;
-  const rules = ALLOWED_TAGS[tag];
+  const rules = ownRule(ALLOWED_TAGS, tag);
   if (!rules) return null;
 
   const children = VOID_TAGS.has(tag)
@@ -64,7 +65,15 @@ function toReact(node, key) {
       props.rel = 'noopener noreferrer nofollow';
     } else if (attribute.name === 'src') props.src = attribute.value;
     else if (attribute.name === 'alt') props.alt = attribute.value;
-    else props[attribute.name] = attribute.value;
+    else if (attribute.name === 'style') {
+      /*
+       * Text and highlight colour. Re-parsed into an object here rather than
+       * passed on: the value was already sanitised, but the only CSS that
+       * ever reaches the page is the one property built from a validated hex.
+       */
+      const style = colorStyleToObject(tag, attribute.value);
+      if (style) props.style = style;
+    } else props[attribute.name] = attribute.value;
   }
   if (tag === 'IMG') {
     props.loading = 'lazy';
