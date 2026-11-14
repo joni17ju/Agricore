@@ -82,3 +82,40 @@ export function strategyInsights(data) {
     return null;
   }
 }
+
+/** A point (in the game's % coordinates) that hits no symptom spot, if any. */
+function pointOffEverySpot(spots) {
+  for (let y = 2; y <= 98; y += 4) {
+    for (let x = 2; x <= 98; x += 4) {
+      if (spots.every((spot) => Math.hypot(x - spot.x, y - spot.y) > spot.radius)) return { x, y };
+    }
+  }
+  return null;
+}
+
+/**
+ * Identification's penalties, measured by the scorer: each is the score lost
+ * by one mistake against a perfect answer, so the labels always match the
+ * rules students are scored by.
+ */
+export function identificationPenalties(data) {
+  try {
+    const spots = data.symptomSpots;
+    const correct = data.correctPathogenId;
+    const wrong = data.pathogenOptions.find((option) => option.id !== correct)?.id ?? null;
+    const marks = spots.map((spot) => ({ x: spot.x, y: spot.y }));
+    const score = (markList, guesses) =>
+      scoreMission({ gameType: 'identification', scenarioData: data, answers: { marks: markList, pathogenGuesses: guesses } }).score;
+    const perfect = score(marks, [correct]);
+    const off = pointOffEverySpot(spots);
+    return {
+      perfect,
+      wrongGuess: wrong ? perfect - score(marks, [correct, wrong]) : null,
+      misplacedMark: off ? perfect - score([...marks, off], [correct]) : null,
+      missedSpot: spots.length ? perfect - score(marks.slice(1), [correct]) : null,
+      wrongPathogenScore: wrong ? score(marks, [wrong]) : null,
+    };
+  } catch {
+    return null;
+  }
+}

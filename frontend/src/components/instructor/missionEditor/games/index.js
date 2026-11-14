@@ -3,6 +3,8 @@
  * Advanced (JSON) view instead.
  */
 import DecisionEditor from './DecisionEditor.jsx';
+import DragDropEditor from './DragDropEditor.jsx';
+import IdentificationEditor from './IdentificationEditor.jsx';
 import MatchingEditor from './MatchingEditor.jsx';
 import StrategyEditor from './StrategyEditor.jsx';
 import { matchingClockBonus } from './scoringInsights.js';
@@ -11,6 +13,8 @@ export const GAME_EDITORS = {
   'decision-making': DecisionEditor,
   matching: MatchingEditor,
   'strategy-management': StrategyEditor,
+  identification: IdentificationEditor,
+  'drag-and-drop': DragDropEditor,
 };
 
 /** One line under the countdown explaining what the clock decides. */
