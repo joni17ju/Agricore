@@ -3,13 +3,21 @@
  * Advanced (JSON) view instead.
  */
 import DecisionEditor from './DecisionEditor.jsx';
+import MatchingEditor from './MatchingEditor.jsx';
+import { matchingClockBonus } from './scoringInsights.js';
 
 export const GAME_EDITORS = {
   'decision-making': DecisionEditor,
+  matching: MatchingEditor,
 };
 
 /** One line under the countdown explaining what the clock decides. */
 export const TIMER_RULES = {
-  matching: 'Finish all columns correctly with time left to earn the +10 bonus.',
-  'drag-and-drop': 'When time runs out, the placements are checked as they stand.',
+  matching: (data) => {
+    const bonus = matchingClockBonus(data);
+    return bonus
+      ? `Finish all columns correctly with time left to earn the +${bonus} bonus.`
+      : 'Finish all columns correctly with time left to earn the clock bonus.';
+  },
+  'drag-and-drop': () => 'When time runs out, the placements are checked as they stand.',
 };

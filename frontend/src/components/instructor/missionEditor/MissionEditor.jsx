@@ -228,7 +228,7 @@ export default function MissionEditor({ source, isNew, lesson, module, onClose, 
             value={draft.timeLimitSeconds}
             onChange={(seconds) => update('timeLimitSeconds', seconds)}
             error={at('timeLimitSeconds').errors[0]}
-            rule={TIMER_RULES[gameType]}
+            rule={TIMER_RULES[gameType]?.(draft)}
           />
         )}
       </div>

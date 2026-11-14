@@ -184,3 +184,6 @@ export default function MatchingGame({ mission, module, totalLevels, onComplete 
     </div>
   );
 }
+
+/** Icons for option keys without a pest drawing — read by the mission editor's picker. */
+MatchingGame.optionIcons = OPTION_ICONS;

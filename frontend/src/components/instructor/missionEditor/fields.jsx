@@ -67,6 +67,40 @@ export function ItemControls({ label, index, count, onMove, onDuplicate, onDelet
 }
 
 /**
+ * A compact picture choice: the current thumbnail beside a grouped select.
+ * For lists with many rows (matching choices, look-alike pests) where a full
+ * strip per row would swamp the form. Unknown keys are kept, as above.
+ */
+export function ImageSelect({ label, value, groups, render, onChange, size = 40 }) {
+  const id = useId();
+  const known = groups.some((group) => group.keys.includes(value));
+  return (
+    <div className="me-image-select">
+      <span className="me-image-select__thumb" style={{ '--thumb': `${size}px` }} aria-hidden="true">
+        {value ? render(value) : <Icon name="image" size={18} />}
+      </span>
+      <label className="field" htmlFor={id}>
+        <span className="field__label">{label}</span>
+        <span className="select">
+          <select id={id} className="input select__control" value={value ?? ''} onChange={(event) => onChange(event.target.value)}>
+            {!known && value && <option value={value}>{humanize(value)} (current)</option>}
+            {!value && <option value="">Choose a picture</option>}
+            {groups.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.keys.map((key) => (
+                  <option key={key} value={key}>{humanize(key)}</option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+          <Icon name="chevron-down" size={16} className="select__chevron" />
+        </span>
+      </label>
+    </div>
+  );
+}
+
+/**
  * Pick one of the app's built-in illustrations by key.
  *
  * The games draw specimens, scenes and pests from these keys, so a picker of
