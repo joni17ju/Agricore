@@ -1,5 +1,17 @@
 import { Lesson, Mission, Progress } from '../models/index.js';
 import { findOr404, httpError, toObjectId } from '../utils/http.js';
+import { sanitizeLessonHtml } from '../utils/lessonHtml.js';
+
+/**
+ * Lesson content as it may be stored: a string, run through the same
+ * allow-list the editor and the viewer use. The editor has already sanitised
+ * what it sends, so for a normal save this changes nothing; it is here for
+ * requests that did not come from the editor.
+ */
+function cleanContentBody(contentBody) {
+  if (typeof contentBody !== 'string') throw httpError(400, 'contentBody must be a string.');
+  return sanitizeLessonHtml(contentBody);
+}
 
 /** GET /api/lessons?moduleId=... */
 export async function listLessons(req, res) {
@@ -23,7 +35,7 @@ export async function createLesson(req, res) {
     moduleId: module,
     lessonNumber: (last?.lessonNumber ?? 0) + 1,
     title: title.trim(),
-    contentBody,
+    contentBody: cleanContentBody(contentBody),
     mediaAssets,
   });
   res.status(201).json(lesson);
@@ -37,7 +49,7 @@ export async function updateLesson(req, res) {
     if (!String(title).trim()) throw httpError(400, 'title cannot be empty.');
     lesson.title = String(title).trim();
   }
-  if (contentBody !== undefined) lesson.contentBody = contentBody;
+  if (contentBody !== undefined) lesson.contentBody = cleanContentBody(contentBody);
   if (mediaAssets !== undefined) lesson.mediaAssets = mediaAssets;
   await lesson.save();
   res.json(lesson);
