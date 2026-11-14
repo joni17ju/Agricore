@@ -202,6 +202,7 @@ function LessonWorkspace({ moduleEntry, lessonEntry, onChanged, onDeleted, toast
             module={module}
             missions={missions}
             templateMission={templateMission}
+            moduleLevelCount={moduleEntry.lessons.reduce((sum, item) => sum + item.missions.length, 0)}
             onChanged={onChanged}
             onDirtyChange={setMissionDirty}
           />

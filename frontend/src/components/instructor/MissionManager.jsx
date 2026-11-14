@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { useToast } from '../../context/ToastContext.jsx';
 import { GAME_TYPE_INFO } from '../../constants/gameTypes.js';
-import { deleteMission } from '../../services/missionService.js';
+import { createMission, deleteMission } from '../../services/missionService.js';
 import { missionCode } from '../../utils/format.js';
 import Button, { IconButton } from '../common/Button.jsx';
 import { EmptyState } from '../common/Display.jsx';
@@ -14,11 +14,32 @@ import { ConfirmDialog } from '../common/Modal.jsx';
 import { cloneData } from './missionEditor/draft.js';
 import MissionEditor from './missionEditor/MissionEditor.jsx';
 
-export function MissionManager({ lesson, module, missions, templateMission, onChanged, onDirtyChange }) {
+export function MissionManager({ lesson, module, missions, templateMission, moduleLevelCount, onChanged, onDirtyChange }) {
   const toast = useToast();
   // { source, isNew } while the editor is open.
   const [editing, setEditing] = useState(null);
   const [toDelete, setToDelete] = useState(null);
+  const [duplicating, setDuplicating] = useState(null);
+
+  /**
+   * Copy a level to the end of this lesson. The server numbers it after the
+   * last level, exactly as for a new one; the copy keeps every setting.
+   */
+  const duplicate = async (mission) => {
+    setDuplicating(mission._id);
+    try {
+      const scenarioData = cloneData(mission.scenarioData);
+      scenarioData.title = `${mission.scenarioData.title} (copy)`.slice(0, 160);
+      const copy = await createMission({ lessonId: lesson._id, maxXP: mission.maxXP, scenarioData });
+      toast.success(`Duplicated as level ${copy.levelNumber}.`);
+      onChanged();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setDuplicating(null);
+    }
+  };
+  const nextLevel = missions.reduce((top, m) => Math.max(top, m.levelNumber), 0) + 1;
 
   const confirmDelete = async () => {
     try {
@@ -46,6 +67,8 @@ export function MissionManager({ lesson, module, missions, templateMission, onCh
         isNew={editing.isNew}
         lesson={lesson}
         module={module}
+        levelNumber={editing.isNew ? nextLevel : editing.source.levelNumber}
+        totalLevels={Math.max(moduleLevelCount ?? 0, editing.isNew ? (moduleLevelCount ?? 0) + 1 : 0)}
         onDirtyChange={onDirtyChange}
         onClose={() => setEditing(null)}
         onSaved={() => {
@@ -81,6 +104,13 @@ export function MissionManager({ lesson, module, missions, templateMission, onCh
               </div>
               <div className="cell-actions">
                 <IconButton icon="edit" label={`Edit ${mission.scenarioData.title}`} size="sm" onClick={() => setEditing({ isNew: false, source: mission })} />
+                <IconButton
+                  icon="copy"
+                  label={`Duplicate ${mission.scenarioData.title}`}
+                  size="sm"
+                  disabled={duplicating === mission._id}
+                  onClick={() => duplicate(mission)}
+                />
                 <IconButton icon="trash" label={`Delete ${mission.scenarioData.title}`} size="sm" variant="danger" onClick={() => setToDelete(mission)} />
               </div>
             </li>

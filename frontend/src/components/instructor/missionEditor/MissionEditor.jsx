@@ -14,6 +14,7 @@ import { FieldIssues } from './fields.jsx';
 import { GAME_EDITORS, TIMER_RULES } from './games/index.js';
 import { XP_TIERS, parseScenarioJson } from './editorUtils.js';
 import JsonPanel from './JsonPanel.jsx';
+import PreviewModal from './PreviewModal.jsx';
 import TimerControl from './TimerControl.jsx';
 import XpControl from './XpControl.jsx';
 import './missionEditor.css';
@@ -47,7 +48,7 @@ function difficultyFor(moduleNumber, maxXP) {
  * editor changes through setIn, which preserves key order and unknown fields,
  * so opening and saving without changes writes back exactly what was read.
  */
-export default function MissionEditor({ source, isNew, lesson, module, onClose, onSaved, onDirtyChange, extraActions }) {
+export default function MissionEditor({ source, isNew, lesson, module, levelNumber, totalLevels, onClose, onSaved, onDirtyChange, extraActions }) {
   const toast = useToast();
   const id = useId();
   const gameType = module.gameType;
@@ -69,6 +70,7 @@ export default function MissionEditor({ source, isNew, lesson, module, onClose, 
   const [isSaving, setIsSaving] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [showProblems, setShowProblems] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const isDirty = isNew || JSON.stringify({ maxXP, scenarioData: draft }) !== original;
   const issues = useMemo(() => validateScenario(gameType, draft), [gameType, draft]);
@@ -307,6 +309,16 @@ export default function MissionEditor({ source, isNew, lesson, module, onClose, 
           )}
           <div className="me-bar__actions">
             {extraActions?.({ draft, maxXP, isValid: problemCount === 0, isDirty })}
+            <Button
+              variant="soft"
+              size="sm"
+              icon="play"
+              onClick={() => setPreviewOpen(true)}
+              disabled={problemCount > 0}
+              title={problemCount > 0 ? 'Fix the problems listed first: the game cannot run on an incomplete mission.' : 'Play this mission as a student would, without saving'}
+            >
+              Preview as student
+            </Button>
             <Button variant="secondary" size="sm" onClick={cancel}>Cancel</Button>
             <Button size="sm" icon="save" onClick={save} isLoading={isSaving} disabled={!canSave}>
               {isNew ? 'Add level' : 'Save level'}
@@ -315,6 +327,16 @@ export default function MissionEditor({ source, isNew, lesson, module, onClose, 
         </div>
       </div>
 
+      {previewOpen && (
+        <PreviewModal
+          onClose={() => setPreviewOpen(false)}
+          draft={draft}
+          maxXP={maxXP}
+          module={module}
+          levelNumber={levelNumber}
+          totalLevels={totalLevels}
+        />
+      )}
       <ConfirmDialog
         isOpen={confirmDiscard}
         onClose={() => setConfirmDiscard(false)}
