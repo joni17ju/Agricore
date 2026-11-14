@@ -121,7 +121,12 @@ export function requireSelfOrStaff(getTargetId) {
     if (!req.user) return next(httpError(401, 'Authentication required.'));
     if (req.user.role !== 'student') return next();
     const target = getTargetId(req);
-    if (target && String(target) !== String(req.user._id)) {
+    /*
+     * A student must name themselves. With no target at all, the list handlers
+     * apply no student filter and return every student's attempts or progress,
+     * so a missing id is refused just like someone else's.
+     */
+    if (!target || String(target) !== String(req.user._id)) {
       return next(httpError(403, 'You can only access your own records.'));
     }
     return next();
