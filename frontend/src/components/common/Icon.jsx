@@ -33,6 +33,10 @@ const PATHS = {
   timer: <><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2M9 2h6M12 2v3" /></>,
   search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
   plus: <path d="M12 5v14M5 12h14" />,
+  // Mission editor: duplicate, XP gem, raw JSON view.
+  copy: <><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></>,
+  gem: <><path d="M6 3h12l4 6-10 12L2 9Z" /><path d="M2 9h20M12 21 8 9l4-6 4 6Z" /></>,
+  code: <path d="m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16" />,
   // Editor colour buttons. No baseline: the toolbar draws a colour bar there.
   highlighter: <><path d="m15 4 5 5-8.5 8.5H6.5v-5Z" /><path d="m12.5 6.5 5 5" /><path d="M6.5 17.5 4 20h4" /></>,
   'text-color': <path d="m6 19 6-15 6 15M8.4 13h7.2" />,

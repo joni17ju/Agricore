@@ -230,6 +230,16 @@ export async function updateMission(missionId, { maxXP, scenarioData }) {
   return mission;
 }
 
+/**
+ * How many attempts students have made on a mission. Instructors only: the
+ * attempts route lets staff list across students and scopes students to
+ * their own records.
+ */
+export async function countMissionAttempts(missionId) {
+  const attempts = await api.get('/missionAttempts', { missionId });
+  return Array.isArray(attempts) ? attempts.length : 0;
+}
+
 /** Delete a mission level. The server renumbers the remaining levels. */
 export async function deleteMission(missionId) {
   const result = await api.del(`/missions/${missionId}`);

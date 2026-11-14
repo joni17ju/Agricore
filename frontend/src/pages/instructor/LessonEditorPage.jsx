@@ -76,6 +76,13 @@ function LessonWorkspace({ moduleEntry, lessonEntry, onChanged, onDeleted, toast
   const [html, setHtml] = useState(lesson.contentBody);
   const [isSaving, setIsSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // An open mission editor with unsaved edits; switching tabs would unmount it.
+  const [missionDirty, setMissionDirty] = useState(false);
+  const [pendingTab, setPendingTab] = useState(null);
+  const changeTab = (next) => {
+    if (tab === 'missions' && next !== 'missions' && missionDirty) setPendingTab(next);
+    else setTab(next);
+  };
   const [uploadOpen, setUploadOpen] = useState(false);
   // Mirrors the editor's own mode so the Media button can behave differently in it.
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -137,7 +144,7 @@ function LessonWorkspace({ moduleEntry, lessonEntry, onChanged, onDeleted, toast
       <div className="workspace-tabs">
         <Tabs
           value={tab}
-          onChange={setTab}
+          onChange={changeTab}
           tabs={[
             { value: 'content', label: 'Lesson Content Editor', icon: 'file' },
             { value: 'media', label: 'Media', icon: 'image', count: lesson.mediaAssets.length },
@@ -190,7 +197,14 @@ function LessonWorkspace({ moduleEntry, lessonEntry, onChanged, onDeleted, toast
         )}
         {tab === 'media' && <MediaManager lesson={lesson} onChanged={onChanged} uploadOpen={uploadOpen} onUploadOpenChange={setUploadOpen} />}
         {tab === 'missions' && (
-          <MissionManager lesson={lesson} module={module} missions={missions} templateMission={templateMission} onChanged={onChanged} />
+          <MissionManager
+            lesson={lesson}
+            module={module}
+            missions={missions}
+            templateMission={templateMission}
+            onChanged={onChanged}
+            onDirtyChange={setMissionDirty}
+          />
         )}
       </div>
 
@@ -204,6 +218,18 @@ function LessonWorkspace({ moduleEntry, lessonEntry, onChanged, onDeleted, toast
         </footer>
       )}
 
+      <ConfirmDialog
+        isOpen={Boolean(pendingTab)}
+        onClose={() => setPendingTab(null)}
+        onConfirm={() => {
+          setMissionDirty(false);
+          setTab(pendingTab);
+          setPendingTab(null);
+        }}
+        title="Leave this mission without saving?"
+        message="The mission you are editing has unsaved changes. Switching tabs throws them away."
+        confirmLabel="Discard changes"
+      />
       <ConfirmDialog
         isOpen={confirmDelete}
         onClose={() => setConfirmDelete(false)}
