@@ -2,7 +2,11 @@
  * The visual editor for each game type. A type with no entry here opens in the
  * Advanced (JSON) view instead.
  */
-export const GAME_EDITORS = {};
+import DecisionEditor from './DecisionEditor.jsx';
+
+export const GAME_EDITORS = {
+  'decision-making': DecisionEditor,
+};
 
 /** One line under the countdown explaining what the clock decides. */
 export const TIMER_RULES = {

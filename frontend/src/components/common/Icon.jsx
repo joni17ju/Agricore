@@ -143,3 +143,6 @@ export default function Icon({ name, size = 20, strokeWidth = 1.9, className = '
     </svg>
   );
 }
+
+/** The icon names this draws, for pickers (e.g. the mission editor). */
+Icon.keys = Object.freeze(Object.keys(PATHS));

@@ -157,3 +157,6 @@ export default function WeedSpecimen({ imageKey, className = '' }) {
     </svg>
   );
 }
+
+/** The weed specimens this draws, for pickers (e.g. the mission editor). */
+WeedSpecimen.keys = Object.freeze(Object.keys(DRAWINGS));

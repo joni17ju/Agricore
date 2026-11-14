@@ -218,3 +218,6 @@ export default function PestIllustration({ imageKey, size = 96, className = '', 
 }
 
 export const hasPestIllustration = (imageKey) => imageKey in PEST_TYPES;
+
+/** The pest drawings this draws, for pickers (e.g. the mission editor). */
+PestIllustration.keys = Object.freeze(Object.keys(PEST_TYPES));

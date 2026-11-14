@@ -158,3 +158,6 @@ export default function LeafSpecimen({ specimenKey, spots, className = '' }) {
     </svg>
   );
 }
+
+/** The leaf specimens this draws, for pickers (e.g. the mission editor). */
+LeafSpecimen.keys = Object.freeze(Object.keys(SPECIMENS));

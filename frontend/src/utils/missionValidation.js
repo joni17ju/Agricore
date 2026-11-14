@@ -37,6 +37,7 @@ export const MIN_MATCHING_DECOYS = 3;
 export const MIN_DECISION_CHOICES = 3;
 export const IDENTIFICATION_ZOOM_LEVELS = Object.freeze([5, 10, 20]);
 export const TACTIC_CATEGORY_KEYS = Object.freeze(['cultural', 'biological', 'mechanical', 'chemical']);
+export const DATA_TRENDS = Object.freeze(['up', 'down', 'flat']);
 
 const LIMITS = {
   scenarios: 12,
@@ -126,7 +127,13 @@ function decisionMaking(c, data) {
     checkText(c, scenario.prompt, `${at}.prompt`, `Scenario ${s + 1}'s situation`, { max: TEXT_LONG });
     checkText(c, scenario.explanation, `${at}.explanation`, `Scenario ${s + 1}'s explanation`, { required: false, max: TEXT_LONG });
     checkText(c, scenario.sceneKey, `${at}.sceneKey`, `Scenario ${s + 1}'s scene`, { required: false });
-    if (scenario.dataVisual !== undefined && !isObject(scenario.dataVisual)) c.error(`${at}.dataVisual`, `Scenario ${s + 1}'s data card is not readable.`);
+    // The game always draws this card (and reads its trend), so it is required.
+    if (!isObject(scenario.dataVisual)) c.error(`${at}.dataVisual`, `Scenario ${s + 1} needs its data card.`);
+    else {
+      checkText(c, scenario.dataVisual.value, `${at}.dataVisual.value`, `Scenario ${s + 1}'s data figure`, { max: 24 });
+      checkText(c, scenario.dataVisual.label, `${at}.dataVisual.label`, `Scenario ${s + 1}'s data label`, { max: 40 });
+      if (!DATA_TRENDS.includes(scenario.dataVisual.trend)) c.error(`${at}.dataVisual.trend`, `Pick whether scenario ${s + 1}'s figure is rising, falling or steady.`);
+    }
     if (!checkList(c, scenario.choices, `${at}.choices`, `Scenario ${s + 1}'s option list`, { min: MIN_DECISION_CHOICES, max: LIMITS.choices, noun: 'options', tooFew: `Scenario ${s + 1} needs at least ${MIN_DECISION_CHOICES} options to choose from.` })) return;
     checkIds(c, scenario.choices, `${at}.choices`, `Option`);
     scenario.choices.forEach((choice, i) => {

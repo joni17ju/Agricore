@@ -150,3 +150,6 @@ export default function FarmScene({ sceneKey, stressed = false, className = '' }
     </svg>
   );
 }
+
+/** The farm scenes this draws, for pickers (e.g. the mission editor). */
+FarmScene.keys = Object.freeze(Object.keys(SCENE_VARIANTS));
