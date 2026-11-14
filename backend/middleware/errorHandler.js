@@ -15,5 +15,7 @@ export function errorHandler(error, req, res, next) {
     message: status >= 500 ? 'Something went wrong on the server.' : error.message,
     // Lets the client tell an expired session from a rejected credential.
     ...(error.code ? { code: error.code } : {}),
+    // Every validation problem, not just the first (client errors only).
+    ...(status < 500 && Array.isArray(error.problems) ? { problems: error.problems } : {}),
   });
 }
