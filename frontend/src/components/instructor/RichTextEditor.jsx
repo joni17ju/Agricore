@@ -13,12 +13,21 @@ import Button from '../common/Button.jsx';
 import { SelectInput, TextInput } from '../common/Form.jsx';
 import Icon from '../common/Icon.jsx';
 import Modal from '../common/Modal.jsx';
-import { HIGHLIGHT_COLORS, IMAGE_LAYOUTS, isSafeLinkUrl, parseVideoUrl } from '../../utils/richText.js';
-import { AgriHighlight, AgriImage, AgriTextAlign, CalloutNode, VideoEmbedNode } from './editorExtensions.jsx';
+import { DEFAULT_COLOR, readRecentColors } from '../../utils/colorPalette.js';
+import { IMAGE_LAYOUTS, isSafeLinkUrl, parseVideoUrl } from '../../utils/richText.js';
+import ColorMenu from './ColorMenu.jsx';
+import {
+  AgriHighlight,
+  AgriImage,
+  AgriTextAlign,
+  AgriTextColor,
+  AgriTextStyle,
+  CalloutNode,
+  VideoEmbedNode,
+} from './editorExtensions.jsx';
 
 const MAX_IMAGE_BYTES = 1.5 * 1024 * 1024;
 
-const HIGHLIGHT_LABELS = { green: 'Green', amber: 'Amber', blue: 'Blue', pink: 'Pink' };
 const LAYOUT_LABELS = { inline: 'Inline (text wraps)', center: 'Centered block', full: 'Full width' };
 
 function ToolButton({ icon, label, onClick, isActive = false, disabled = false, wide = false, buttonRef, children }) {
@@ -75,11 +84,21 @@ export default function RichTextEditor({
         }),
         AgriTextAlign,
         AgriHighlight,
+        AgriTextStyle,
+        AgriTextColor,
         AgriImage,
         VideoEmbedNode,
         CalloutNode,
       ],
       content: initialHtml || '<p></p>',
+      /*
+       * Re-render on every transaction, selection-only ones included. Tiptap 3
+       * no longer does by default, and content edits only reached the toolbar
+       * because onChange re-renders the page; moving the caret did not, so
+       * the active states (bold, alignment, the colour bars) kept showing
+       * wherever the caret had last been typed into.
+       */
+      shouldRerenderOnTransaction: true,
       editorProps: {
         attributes: { class: 'rte__content rich-text', 'aria-label': 'Lesson content' },
         // Pasting a video link drops in a player instead of a bare link.
@@ -179,6 +198,8 @@ export default function RichTextEditor({
       if (event.defaultPrevented) return;
       // A dialog on top owns the keyboard: Escape closes it, Tab stays in it.
       if (document.querySelector('.modal-backdrop.is-open')) return;
+      // So does an open colour menu: it lives in a portal outside this layer.
+      if (document.querySelector('[data-rte-popover]')) return;
 
       if (event.key === 'Escape') {
         if (contextMenuRef.current) {
@@ -365,20 +386,23 @@ export default function RichTextEditor({
           <ToolButton icon="align-right" label="Align right" isActive={editor.isActive({ textAlign: 'right' })} onClick={() => editor.chain().focus().setTextAlign('right').run()} />
           <span className="rte__divider" />
 
-          <span className="rte__swatches" role="group" aria-label="Highlight">
-            {HIGHLIGHT_COLORS.map((color) => (
-              <button
-                key={color}
-                type="button"
-                className={`rte__swatch rte__swatch--${color} ${editor.isActive('highlight', { color }) ? 'is-active' : ''}`}
-                title={`Highlight ${HIGHLIGHT_LABELS[color]}`}
-                aria-label={`Highlight ${HIGHLIGHT_LABELS[color]}`}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => editor.chain().focus().toggleHighlight({ color }).run()}
-              />
-            ))}
-            <ToolButton icon="x" label="Remove highlight" onClick={() => editor.chain().focus().unsetHighlight().run()} />
-          </span>
+          {/*
+            Word-style split buttons. Each applies through a focus() chain, which
+            puts the caret and selection back — and with nothing selected,
+            setMark stores the colour for the next text typed.
+          */}
+          <ColorMenu
+            kind="highlight"
+            activeColor={editor.getAttributes('highlight').color}
+            onApply={(color) => editor.chain().focus().setHighlight({ color }).run()}
+            onClear={() => editor.chain().focus().unsetHighlight().run()}
+          />
+          <ColorMenu
+            kind="text"
+            activeColor={editor.getAttributes('textStyle').color}
+            onApply={(color) => editor.chain().focus().setColor(color).run()}
+            onClear={() => editor.chain().focus().unsetColor().run()}
+          />
           <span className="rte__divider" />
 
           <ToolButton icon="link" label="Insert link" isActive={editor.isActive('link')} onClick={openLinkDialog} />
@@ -448,7 +472,7 @@ export default function RichTextEditor({
           <ToolButton icon="bold" label="Bold" isActive={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()} />
           <ToolButton icon="italic" label="Italic" isActive={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()} />
           <ToolButton icon="underline" label="Underline" isActive={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()} />
-          <ToolButton icon="highlight" label="Highlight" isActive={editor.isActive('highlight')} onClick={() => editor.chain().focus().toggleHighlight({ color: 'green' }).run()} />
+          <ToolButton icon="highlight" label="Highlight" isActive={editor.isActive('highlight')} onClick={() => editor.chain().focus().toggleHighlight({ color: readRecentColors('highlight')[0] ?? DEFAULT_COLOR.highlight }).run()} />
           <ToolButton icon="link" label="Add link" isActive={editor.isActive('link')} onClick={openLinkDialog} />
         </BubbleMenu>
       )}

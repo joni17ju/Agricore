@@ -33,6 +33,9 @@ const PATHS = {
   timer: <><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2M9 2h6M12 2v3" /></>,
   search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
   plus: <path d="M12 5v14M5 12h14" />,
+  // Editor colour buttons. No baseline: the toolbar draws a colour bar there.
+  highlighter: <><path d="m15 4 5 5-8.5 8.5H6.5v-5Z" /><path d="m12.5 6.5 5 5" /><path d="M6.5 17.5 4 20h4" /></>,
+  'text-color': <path d="m6 19 6-15 6 15M8.4 13h7.2" />,
   // Enter and leave the editor's full-screen mode: arrows out, arrows in.
   expand: <><path d="M15 3h6v6M9 21H3v-6" /><path d="m21 3-7 7M3 21l7-7" /></>,
   collapse: <><path d="M4 14h6v6M20 10h-6V4" /><path d="m14 10 7-7M3 21l7-7" /></>,
