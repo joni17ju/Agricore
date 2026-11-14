@@ -4,11 +4,13 @@
  */
 import DecisionEditor from './DecisionEditor.jsx';
 import MatchingEditor from './MatchingEditor.jsx';
+import StrategyEditor from './StrategyEditor.jsx';
 import { matchingClockBonus } from './scoringInsights.js';
 
 export const GAME_EDITORS = {
   'decision-making': DecisionEditor,
   matching: MatchingEditor,
+  'strategy-management': StrategyEditor,
 };
 
 /** One line under the countdown explaining what the clock decides. */

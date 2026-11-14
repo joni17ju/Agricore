@@ -229,3 +229,6 @@ export default function StrategyGame({ mission, module, totalLevels, onComplete 
     </div>
   );
 }
+
+/** Tactic category labels and icons — read by the mission editor so its cards match. */
+StrategyGame.categoryMeta = CATEGORY_META;
