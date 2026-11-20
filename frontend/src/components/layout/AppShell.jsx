@@ -85,9 +85,18 @@ function AppShellInner({ navGroups, topbarRight, homePath, outletContext }) {
   // A page can extend the breadcrumb (e.g. into a lesson); otherwise show the nav item.
   const crumbs = pageTrail.length > 0 ? pageTrail : current ? [{ label: current.label }] : [];
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login', { replace: true });
+  /*
+   * A deliberate sign-out lands on the public home page. The token is cleared
+   * first; the user state and the route then change in one render (see
+   * AuthContext.logout), so the guarded page never sees a signed-out user and
+   * bounces to /login — that redirect is still what a signed-out visit or an
+   * expired session gets.
+   * Replace, so Back does not return to the page that was just left.
+   */
+  const handleLogout = () => {
+    setIsDrawerOpen(false);
+    logout();
+    navigate('/', { replace: true });
   };
 
   return (

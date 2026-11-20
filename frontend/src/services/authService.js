@@ -129,7 +129,12 @@ export async function getCurrentUser() {
   }
 }
 
-export async function logout() {
+/**
+ * Forget the session on this device. Synchronous on purpose: the token is gone
+ * before the caller's next line runs, so a sign-out can clear state and
+ * navigate away in one step.
+ */
+export function logout() {
   setToken(null);
   clearLegacySession();
   return true;

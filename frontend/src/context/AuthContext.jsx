@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, startTransition, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import * as authService from '../services/authService.js';
+import { invalidateCourse } from '../services/serviceContext.js';
 
 const AuthContext = createContext(null);
 
@@ -26,9 +27,19 @@ export function AuthProvider({ children }) {
     return result;
   }, []);
 
-  const logout = useCallback(async () => {
-    await authService.logout();
-    setUser(null);
+  /*
+   * The token is gone the moment this is called. Clearing `user` is a
+   * transition so it lands in the same render as a navigation made in the
+   * same handler — React Router applies location changes as transitions, and
+   * a plain update here would render first, letting a guarded page see "signed
+   * out" while still mounted and redirect to /login. Clearing `user` also stops
+   * the notification poll and resets its count (NotificationProvider watches it).
+   */
+  const logout = useCallback(() => {
+    authService.logout();
+    // Nothing fetched under the old session is reused by the next one.
+    invalidateCourse();
+    startTransition(() => setUser(null));
   }, []);
 
   const refreshUser = useCallback(async () => {
