@@ -36,7 +36,8 @@
   transform: none;
   box-shadow: none;
 }
-.btn--primary:hover { --btn-bg: var(--green-600); }
+/* Darker on hover, not lighter: white text stays above WCAG AA (green-600 is 4.0:1). */
+.btn--primary:hover { --btn-bg: var(--green-800); }
 .btn--secondary { --btn-bg: var(--surface); --btn-color: var(--text); --btn-border: var(--border-strong); }
 .btn--secondary:hover { --btn-bg: var(--surface-muted); }
 .btn--soft { --btn-bg: var(--green-50); --btn-color: var(--green-700); --btn-border: var(--green-200); }
@@ -44,7 +45,7 @@
 .btn--ghost { --btn-bg: transparent; --btn-color: var(--text-muted); }
 .btn--ghost:hover { --btn-bg: var(--green-50); --btn-color: var(--green-700); box-shadow: none; }
 .btn--danger { --btn-bg: var(--red-600); }
-.btn--danger:hover { --btn-bg: var(--red-500); }
+.btn--danger:hover { --btn-bg: var(--red-800); }
 .btn--gold { --btn-bg: linear-gradient(135deg, var(--green-600), var(--green-700)); }
 .btn--sm { min-height: 34px; padding: 0 var(--space-3); border-radius: var(--radius-sm); font-size: var(--text-xs); }
 .btn--lg { min-height: 52px; padding: 0 var(--space-6); font-size: var(--text-md); border-radius: var(--radius-lg); }
@@ -75,6 +76,7 @@
 .icon-btn--sm { width: 32px; height: 32px; }
 .icon-btn--danger:hover { background: var(--red-100); color: var(--red-600); }
 .icon-btn--outline { border-color: var(--border); background: var(--surface); }
+.icon-btn--outline:hover { border-color: var(--green-200); }
 
 /* ───────── Cards ───────── */
 .card {
@@ -106,6 +108,7 @@
   transition: transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base) ease, border-color var(--duration-base) ease;
 }
 .card-link:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--green-200); }
+.card-link:active { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
 
 /* ───────── Pills ───────── */
 .pill {
@@ -210,9 +213,10 @@
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-4);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--surface);
   border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
   min-width: 0;
 }
 .stat-tile__icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: var(--radius-md); background: var(--green-50); color: var(--green-700); flex-shrink: 0; }
@@ -226,7 +230,7 @@
 .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--space-4); }
 
 /* ───────── States ───────── */
-.empty-state { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--space-10) var(--space-4); text-align: center; }
+.empty-state { animation: fade-in var(--duration-slow) ease both; display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--space-10) var(--space-4); text-align: center; }
 .empty-state__icon { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 50%; background: var(--green-50); color: var(--green-700); margin-bottom: var(--space-2); }
 .empty-state__icon--error { background: var(--red-100); color: var(--red-600); }
 .empty-state h3 { font-size: var(--text-lg); }
