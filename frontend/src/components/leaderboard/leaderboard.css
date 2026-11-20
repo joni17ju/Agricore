@@ -11,7 +11,7 @@
   border-radius: var(--radius-xl) var(--radius-xl) var(--radius-md) var(--radius-md);
   overflow: hidden;
   background:
-    radial-gradient(120% 70% at 50% 0%, rgba(242, 179, 0, 0.22) 0%, rgba(242, 179, 0, 0.08) 38%, transparent 68%),
+    radial-gradient(120% 70% at 50% 0%, rgba(var(--gold-500-rgb), 0.22) 0%, rgba(var(--gold-500-rgb), 0.08) 38%, transparent 68%),
     linear-gradient(180deg, #f4fbf2 0%, #e8f5e6 52%, #dcefdb 100%);
   border: 1px solid var(--green-100);
 }
@@ -24,7 +24,7 @@
   height: 78%;
   transform: translateX(-50%);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 233, 163, 0.75) 0%, rgba(242, 179, 0, 0.26) 42%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 233, 163, 0.75) 0%, rgba(var(--gold-500-rgb), 0.26) 42%, transparent 70%);
   animation: podium-spotlight 5s ease-in-out infinite;
 }
 /* Faint light rays fanning out from the crown. */
@@ -38,10 +38,10 @@
   opacity: 0.26;
   background: repeating-conic-gradient(
     from 195deg at 50% 32%,
-    rgba(255, 255, 255, 0.7) 0deg 3.5deg,
+    rgba(var(--white-rgb), 0.7) 0deg 3.5deg,
     transparent 3.5deg 15deg
   );
-  mask-image: radial-gradient(circle at 50% 32%, #000 8%, transparent 52%);
+  mask-image: radial-gradient(circle at 50% 32%, var(--black) 8%, transparent 52%);
   animation: podium-rays 22s linear infinite;
 }
 /* Soft leaf silhouettes drifting in the background. */
@@ -80,7 +80,7 @@
   width: 132px;
   height: 132px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 236, 170, 0.95) 0%, rgba(242, 179, 0, 0.42) 38%, transparent 68%);
+  background: radial-gradient(circle, rgba(255, 236, 170, 0.95) 0%, rgba(var(--gold-500-rgb), 0.42) 38%, transparent 68%);
   animation: trophy-halo 3.4s ease-in-out infinite;
 }
 /* One-shot celebratory confetti when the podium first appears. */
@@ -116,7 +116,7 @@
 .podium__confetti span:nth-child(13) { --angle: -140deg; }
 .podium__confetti span:nth-child(14) { --angle: -165deg; }
 
-.podium__avatar { border: 3px solid #fff; box-shadow: var(--shadow-md); }
+.podium__avatar { border: 3px solid var(--white); box-shadow: var(--shadow-md); }
 .podium__slot--1 .podium__avatar { box-shadow: 0 0 0 3px var(--tier-1-ring), 0 0 18px rgba(var(--tier-1-glow), 0.55), var(--shadow-md); }
 .podium__slot--2 .podium__avatar { box-shadow: 0 0 0 3px var(--tier-2-ring), var(--shadow-md); }
 .podium__slot--3 .podium__avatar { box-shadow: 0 0 0 3px var(--tier-3-ring), var(--shadow-md); }
@@ -129,7 +129,7 @@
   place-items: center;
   margin-top: var(--space-2);
   border-radius: var(--radius-md) var(--radius-md) 0 0;
-  color: #fff;
+  color: var(--white);
   font-size: var(--text-2xl);
   font-weight: 800;
   text-shadow: 0 2px 3px rgba(90, 60, 0, 0.35);
@@ -144,7 +144,7 @@
   position: absolute;
   inset: 0 0 auto 0;
   height: 42%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), transparent);
+  background: linear-gradient(180deg, rgba(var(--white-rgb), 0.4), transparent);
 }
 .podium__slot--1 .podium__block {
   height: 110px;
@@ -207,8 +207,8 @@
   animation: fade-up var(--duration-slow) var(--ease-out) both, row-flash 2s ease 400ms, me-row-pulse 3s ease-in-out 1s infinite;
 }
 @keyframes me-row-pulse {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(34, 179, 94, 0.12); }
-  50% { box-shadow: 0 0 0 5px rgba(34, 179, 94, 0.22); }
+  0%, 100% { box-shadow: 0 0 0 3px rgba(var(--green-500-rgb), 0.12); }
+  50% { box-shadow: 0 0 0 5px rgba(var(--green-500-rgb), 0.22); }
 }
 .leaderboard-table__rank { display: flex; align-items: center; gap: var(--space-2); }
 .leaderboard-table__you { color: var(--green-700); font-weight: 600; }

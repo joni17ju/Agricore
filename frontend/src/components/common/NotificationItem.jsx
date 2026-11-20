@@ -12,15 +12,15 @@ import { formatRelativeTime } from '../../utils/format.js';
 
 /** Icon and colour per notification type. Unknown types fall back to neutral. */
 export const NOTIFICATION_STYLES = {
-  'badge-earned': { icon: 'medal', tone: 'violet' },
-  'mission-passed': { icon: 'target', tone: 'blue' },
+  'badge-earned': { icon: 'medal', tone: 'gold' },
+  'mission-passed': { icon: 'target', tone: 'green' },
   'module-cleared': { icon: 'layers', tone: 'indigo' },
   'student-at-risk': { icon: 'alert', tone: 'amber' },
   'account-request': { icon: 'user-plus', tone: 'amber' },
   'account-approved': { icon: 'check-circle', tone: 'indigo' },
 };
 
-const FALLBACK = { icon: 'bell', tone: 'slate' };
+const FALLBACK = { icon: 'bell', tone: 'neutral' };
 
 export default function NotificationItem({ notification, onActivate, compact = false }) {
   const style = NOTIFICATION_STYLES[notification.type] ?? FALLBACK;

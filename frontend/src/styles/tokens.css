@@ -1,57 +1,134 @@
 /*
- * AgriCore design tokens.
- * Proposal NFR (Usability & Aesthetics): white content cards, soft neutral canvases,
- * clear emerald-green action triggers.
+ * AgriCore design tokens — the single source of truth for colour, type,
+ * spacing, shape, elevation and motion. Imported first (see main.jsx).
+ *
+ * Proposal NFR (Usability & Aesthetics): white content cards, soft neutral
+ * canvases, clear emerald-green action triggers.
+ *
+ * The palette, from the app as it already is:
+ *   - Brand: one green family (the brand green is --green-700).
+ *   - Neutrals: a sage-tinted gray scale for canvas, borders and text.
+ *   - Accent: indigo, used only for notifications and highlights.
+ *   - Semantic: success / warning / danger / info, each with a soft
+ *     background, a border and a strong foreground that passes WCAG AA on it.
+ *   - Data and game colours (heatmap bands, medal tiers, avatar hues, tactic
+ *     categories, game types) are categorical: kept distinct on purpose.
+ *
+ * Colours used inside translucent effects come as an "r, g, b" triplet
+ * (--*-rgb) so they can be written rgba(var(--green-500-rgb), 0.2).
  */
 :root {
-  /* Greens */
-  --green-950: #06281a;
-  --green-900: #0b3a22;
-  --green-800: #0e4d2c;
-  --green-700: #0f7a3a;
-  --green-600: #15924a;
-  --green-500: #22b35e;
-  --green-400: #4cc97f;
-  --green-200: #b9ebcb;
-  --green-100: #dcf5e4;
+  /* ── Brand green ── */
   --green-50: #effaf2;
+  --green-100: #dcf5e4;
+  --green-200: #b9ebcb;
+  --green-300: #86d9a5;
+  --green-400: #4cc97f;
+  --green-500: #22b35e;
+  --green-600: #15924a;
+  --green-700: #0f7a3a; /* brand */
+  --green-800: #0e4d2c;
+  --green-900: #0b3a22;
+  --green-950: #06281a;
+  --green-400-rgb: 76, 201, 127;
+  --green-500-rgb: 34, 179, 94;
+  --green-700-rgb: 15, 122, 58;
 
-  /* Neutrals */
-  --canvas: #f4f6f1;
-  --surface: #ffffff;
-  --surface-muted: #f8faf6;
-  --border: #e2e8df;
-  --border-strong: #cfd8cb;
-  --text: #16261c;
-  --text-muted: #5a6b60;
-  --text-subtle: #8a978e;
+  /* ── Neutrals (sage gray) ── */
+  --white: #ffffff;
+  --black: #000000;
+  --white-rgb: 255, 255, 255;
+  --black-rgb: 0, 0, 0;
+  --gray-50: #f8faf6;
+  --gray-100: #f4f6f1;
+  --gray-150: #eef1eb;
+  --gray-200: #e2e8df;
+  --gray-300: #cfd8cb;
+  --gray-400: #a7b2a9;
+  --gray-500: #637268;
+  --gray-600: #5a6b60;
+  --gray-700: #3b4b41;
+  --gray-800: #24382c;
+  --gray-900: #16261c;
+  /* Dark-green ink for shadows, scrims and veils. */
+  --ink-rgb: 11, 38, 23;
 
-  /* Feedback */
-  --amber-600: #c46f05;
-  --amber-500: #e89a0c;
-  --amber-100: #fdf0d2;
-  --red-600: #c9302c;
-  --red-500: #e5484d;
-  --red-100: #fde4e3;
-  --blue-600: #2463d1;
-  --blue-100: #e0ebfd;
-  /*
-   * Notification palette. Everything else in the app is green, so the bell and
-   * its rows use indigo as a single non-green accent, with violet and slate
-   * for per-type icon chips. Kept out of the green scale on purpose.
-   */
-  --indigo-700: #3f37c9;
-  --indigo-600: #4f46e5;
-  --indigo-200: #c7d2fe;
-  --indigo-100: #e0e7ff;
+  --canvas: var(--gray-100);
+  --surface: var(--white);
+  --surface-muted: var(--gray-50);
+  --surface-sunken: var(--gray-150);
+  --border: var(--gray-200);
+  --border-strong: var(--gray-300);
+  --text: var(--gray-900);
+  --text-body: var(--gray-800);
+  --text-muted: var(--gray-600);
+  --text-subtle: var(--gray-500);
+  --text-disabled: var(--gray-400);
+  --on-solid: var(--white);
+
+  /* Dark surfaces (sidebar, docks, bubbles): text tints that pass AA on --green-900. */
+  --on-dark: #e4f1e8;
+  --on-dark-muted: #cfe3d6;
+  --on-dark-subtle: #8fb39b;
+
+  /* ── Accent: indigo (notifications and highlights only) ── */
   --indigo-50: #eef2ff;
-  --violet-600: #7c3aed;
-  --violet-100: #ede9fe;
-  --slate-900: #1e293b;
-  --slate-700: #475569;
-  --slate-100: #f1f5f9;
-  --gold-500: #f2b300;
+  --indigo-100: #e0e7ff;
+  --indigo-200: #c7d2fe;
+  --indigo-600: #4f46e5;
+  --indigo-700: #3f37c9;
+  --accent: var(--indigo-600);
+  --accent-strong: var(--indigo-700);
+  --accent-soft: var(--indigo-50);
+  --accent-border: var(--indigo-200);
+
+  /* ── Semantic ── */
+  --amber-100: #fdf0d2;
+  --amber-200: #f6dca3;
+  --amber-500: #e89a0c;
+  --amber-600: #c46f05;
+  --amber-700: #945209;
+  --amber-900: #5a3d00;
+  --red-100: #fde4e3;
+  --red-200: #f6b6b3;
+  --red-500: #e5484d;
+  --red-600: #b42a26;
+  --red-800: #7a1f1c;
+  --red-500-rgb: 229, 72, 77;
+  --amber-500-rgb: 232, 154, 12;
+  --blue-100: #e0ebfd;
+  --blue-200: #c4d7f8;
+  --blue-600: #2463d1;
+  --blue-800: #1d3f73;
+  --blue-600-rgb: 36, 99, 209;
+
+  --success-bg: var(--green-100);
+  --success-border: var(--green-200);
+  --success-fg: var(--green-700);
+  --success-solid: var(--green-600);
+  --warning-bg: var(--amber-100);
+  --warning-border: var(--amber-200);
+  --warning-fg: var(--amber-700);
+  --warning-solid: var(--amber-500);
+  --warning-strong: var(--amber-900);
+  --danger-bg: var(--red-100);
+  --danger-border: var(--red-200);
+  --danger-fg: var(--red-600);
+  --danger-solid: var(--red-500);
+  --danger-strong: var(--red-800);
+  --info-bg: var(--blue-100);
+  --info-border: var(--blue-200);
+  --info-fg: var(--blue-600);
+  --info-strong: var(--blue-800);
+
+  /* ── Gold: XP, medals and rewards ── */
   --gold-100: #fff4cc;
+  --gold-200: #f5dc85;
+  --gold-400: #f5c842;
+  --gold-500: #f2b300;
+  --gold-600: #e0a100;
+  --gold-700: #8a6100;
+  --gold-500-rgb: 242, 179, 0;
   --silver-400: #a9b4bf;
   --bronze-400: #d08b52;
 
@@ -67,17 +144,44 @@
   --tier-3-glow: 208, 139, 82;
   --tier-rest-bg: linear-gradient(160deg, #ffffff 0%, #eef2ec 60%, #dfe6dd 100%);
 
-  /* Type */
+  /* ── Mastery heatmap bands (meaning unchanged; text passes AA on each) ── */
+  --heat-mastered-bg: var(--green-700);
+  --heat-mastered-fg: var(--white);
+  --heat-proficient-bg: var(--green-300);
+  --heat-proficient-fg: #0c3a1e;
+  --heat-developing-bg: #f4d27a;
+  --heat-developing-fg: var(--amber-900);
+  --heat-struggling-bg: #f2a097;
+  --heat-struggling-fg: #6b1510;
+  --heat-none-bg: var(--gray-150);
+  --heat-none-fg: var(--text-subtle);
+
+  /* ── Categorical hues (avatars) — white initials pass AA on each ── */
+  --avatar-green: var(--green-700);
+  --avatar-teal: #11807a;
+  --avatar-amber: #b45309;
+  --avatar-blue: #3566c4;
+  --avatar-rose: #c2476b;
+  --avatar-olive: #5f711d;
+
+  /* ── Strategy tactic categories (the game's colours; the editor matches) ── */
+  --tactic-cultural: var(--green-600);
+  --tactic-biological: #b33a2c;
+  --tactic-mechanical: #b58500;
+  --tactic-chemical: #2d7c8a;
+
+  /* ── Type ── */
   --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', Arial, sans-serif;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-md: 1rem;
+  --text-base: var(--text-md);
   --text-lg: 1.125rem;
   --text-xl: 1.375rem;
   --text-2xl: 1.75rem;
   --text-3xl: 2.25rem;
 
-  /* Spacing */
+  /* ── Spacing ── */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -91,26 +195,31 @@
      scroll-to-top button never sits on top of it (button + its inset). */
   --fab-safe-area: 62px;
 
-  /* Shape */
+  /* ── Shape ── */
+  --radius-xs: 4px;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 22px;
   --radius-full: 999px;
 
-  --shadow-sm: 0 1px 2px rgba(16, 40, 24, 0.06);
-  --shadow-md: 0 4px 14px rgba(16, 40, 24, 0.08);
-  --shadow-lg: 0 14px 40px rgba(16, 40, 24, 0.16);
-  --focus-ring: 0 0 0 3px rgba(34, 179, 94, 0.35);
+  /* ── Elevation ── */
+  --shadow-sm: 0 1px 2px rgba(var(--ink-rgb), 0.06);
+  --shadow-md: 0 4px 14px rgba(var(--ink-rgb), 0.08);
+  --shadow-lg: 0 14px 40px rgba(var(--ink-rgb), 0.16);
+  --shadow-xl: 0 24px 60px rgba(var(--ink-rgb), 0.22);
+  --shadow-brand: 0 10px 24px rgba(var(--green-700-rgb), 0.28);
+  --focus-ring: 0 0 0 3px rgba(var(--green-500-rgb), 0.35);
+  --scrim: rgba(var(--ink-rgb), 0.45);
 
-  /* Motion */
+  /* ── Motion ── */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --duration-fast: 140ms;
   --duration-base: 240ms;
   --duration-slow: 520ms;
 
-  /* Layout */
+  /* ── Layout ── */
   --sidebar-width: 248px;
   --sidebar-rail: 76px;
   --topbar-height: 64px;
