@@ -215,7 +215,7 @@
 .leaderboard-table__badges { display: inline-flex; align-items: center; gap: 4px; color: var(--text-muted); }
 .leaderboard-table__xp { text-align: right; color: var(--green-800); }
 .rank-change { display: inline-flex; align-items: center; gap: 1px; font-size: var(--text-xs); font-weight: 700; }
-.rank-change--up { color: var(--green-600); animation: float-in-up 700ms var(--ease-out) both; }
+.rank-change--up { color: var(--green-700); animation: float-in-up 700ms var(--ease-out) both; }
 .rank-change--down { color: var(--red-500); }
 .rank-change--same { color: var(--text-subtle); }
 @keyframes float-in-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }

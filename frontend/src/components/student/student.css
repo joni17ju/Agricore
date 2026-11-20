@@ -410,7 +410,7 @@ a.module-card:hover .module-card__chevron { transform: translateX(4px); }
 .topic-card--completed { border-color: var(--green-200); }
 .topic-card__levels { display: flex; gap: 6px; flex-wrap: wrap; }
 .level-dot { display: grid; place-items: center; min-width: 26px; height: 26px; padding: 0 6px; border-radius: var(--radius-full); border: 1.5px solid var(--border-strong); font-size: var(--text-xs); font-weight: 700; color: var(--text-muted); background: var(--surface); }
-.level-dot.is-passed { background: var(--green-600); border-color: var(--green-600); color: var(--white); }
+.level-dot.is-passed { background: var(--green-700); border-color: var(--green-700); color: var(--white); }
 .level-dot.is-attempted { border-color: var(--amber-500); color: var(--warning-fg); }
 .topic-card__footer { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
 .topic-card__status { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-sm); font-weight: 600; }

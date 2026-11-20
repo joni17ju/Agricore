@@ -497,7 +497,7 @@
 .rich-text h4 { font-size: var(--text-md); margin-top: var(--space-5); }
 .rich-text hr { height: 2px; margin: var(--space-6) 0; border: 0; border-radius: 2px; background: linear-gradient(90deg, transparent, var(--green-200) 20%, var(--green-200) 80%, transparent); }
 .rich-text a { color: var(--green-700); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
-.rich-text a:hover { color: var(--green-600); }
+.rich-text a:hover { color: var(--green-800); }
 .rich-text s { color: var(--text-muted); }
 
 /* Highlights use a fixed palette (data-color), never free-form inline styles. */
