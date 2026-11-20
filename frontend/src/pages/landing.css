@@ -331,7 +331,8 @@ html:has(.landing) {
   color: var(--white);
 }
 
-.landing-stat span {
+/* Direct child only: the count-up digits are spans inside the <strong>. */
+.landing-stat > span {
   font-size: var(--text-sm);
   color: var(--green-200);
 }
@@ -854,7 +855,7 @@ html:has(.landing) {
 
 /*
  * A richer entrance than the app's default anim-fade-up: the element rises
- * further, settles from slightly small and sharpens from a short blur, on a
+ * further and settles from slightly small (transform and opacity only), on a
  * decelerating curve. Scoped to landing sections so the rest of the app keeps
  * the quicker, plainer animation it already uses.
  */
@@ -862,16 +863,13 @@ html:has(.landing) {
   from {
     opacity: 0;
     transform: translate3d(0, 34px, 0) scale(0.975);
-    filter: blur(7px);
   }
   55% {
     opacity: 1;
-    filter: blur(0);
   }
   to {
     opacity: 1;
     transform: none;
-    filter: blur(0);
   }
 }
 
@@ -906,6 +904,195 @@ html:has(.landing) {
     animation: none;
     opacity: 1;
     transform: none;
-    filter: none;
+  }
+}
+
+/* ───────── Ambient motion ───────── */
+
+/*
+ * Hero backdrop: three soft blobs and a few leaf outlines drifting very
+ * slowly behind the text. Radial gradients rather than blur filters, so each
+ * layer is a cheap composited transform. Low contrast on purpose.
+ */
+.landing-hero {
+  position: relative;
+  /* Lets the backdrop sit behind the hero's content but above the page. */
+  isolation: isolate;
+}
+
+.landing-hero__backdrop {
+  position: absolute;
+  inset: 0 calc(50% - 50vw);
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.landing-blob {
+  position: absolute;
+  border-radius: 50%;
+  animation: landing-drift 22s ease-in-out infinite alternate;
+}
+
+.landing-blob--1 {
+  top: 2%;
+  left: -8%;
+  width: min(560px, 70vw);
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(var(--green-400-rgb), 0.16), transparent 68%);
+}
+
+.landing-blob--2 {
+  right: -6%;
+  top: 18%;
+  width: min(620px, 80vw);
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(var(--gold-500-rgb), 0.1), transparent 66%);
+  animation-duration: 28s;
+  animation-direction: alternate-reverse;
+}
+
+.landing-blob--3 {
+  left: 30%;
+  bottom: -18%;
+  width: min(480px, 60vw);
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(var(--green-700-rgb), 0.08), transparent 70%);
+  animation-duration: 25s;
+  animation-delay: -8s;
+}
+
+.landing-leaf {
+  position: absolute;
+  color: var(--green-600);
+  opacity: 0.14;
+  animation: landing-leaf-sway 14s ease-in-out infinite alternate;
+}
+
+.landing-leaf--1 { top: 22%; left: 4%; }
+.landing-leaf--2 { top: 70%; left: 44%; animation-duration: 18s; animation-delay: -5s; }
+.landing-leaf--3 { top: 12%; right: 6%; animation-duration: 16s; animation-delay: -9s; }
+
+@keyframes landing-drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(6%, 8%, 0) scale(1.12); }
+}
+
+@keyframes landing-leaf-sway {
+  from { transform: translate3d(0, 0, 0) rotate(-8deg); }
+  to { transform: translate3d(14px, -22px, 0) rotate(12deg); }
+}
+
+/* The device mockup floats gently once it has arrived. The float sits on the
+   inner stack so it never fights the entrance animation on its wrapper. */
+.landing-section.is-visible .device-stack {
+  animation: landing-float 7s ease-in-out 1.2s infinite;
+}
+
+@keyframes landing-float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -10px, 0); }
+}
+
+/* Hidden tab: hold every loop where it is. */
+.landing.is-paused .landing-blob,
+.landing.is-paused .landing-leaf,
+.landing.is-paused .device-stack {
+  animation-play-state: paused;
+}
+
+/* ───────── Nav: the current section ───────── */
+
+.landing-nav__link {
+  position: relative;
+}
+
+.landing-nav__link::after {
+  content: '';
+  position: absolute;
+  left: 0.9rem;
+  right: 0.9rem;
+  bottom: 0.3rem;
+  height: 2px;
+  border-radius: var(--radius-full);
+  background: var(--green-600);
+  transform: scaleX(0);
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.landing-nav__link.is-active {
+  color: var(--green-800);
+}
+
+.landing-nav__link.is-active::after {
+  transform: scaleX(1);
+}
+
+/* ───────── Feature cards: icon micro-motion ───────── */
+
+.landing-feature__icon {
+  transition: transform var(--duration-base) var(--ease-spring), background-color var(--duration-base) ease,
+    color var(--duration-base) ease;
+}
+
+.landing-feature:hover .landing-feature__icon {
+  transform: translateY(-2px) rotate(-8deg) scale(1.08);
+  background: var(--green-700);
+  color: var(--white);
+}
+
+/* ───────── Main call to action ───────── */
+
+/* A light sweep across the button and a nudge of its arrow on hover. */
+.btn--shine {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.btn--shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 30%, rgba(var(--white-rgb), 0.32) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 700ms var(--ease-out);
+}
+
+.btn--shine:hover::after,
+.btn--shine:focus-visible::after {
+  transform: translateX(120%);
+}
+
+.btn--shine .icon {
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.btn--shine:hover .icon,
+.btn--shine:focus-visible .icon {
+  transform: translateX(4px);
+}
+
+/* Count-up digits keep a steady width so nothing nudges sideways. */
+.landing-stat strong {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-blob,
+  .landing-leaf,
+  .landing-section.is-visible .device-stack {
+    animation: none;
+  }
+
+  .landing-feature:hover .landing-feature__icon,
+  .btn--shine:hover .icon,
+  .btn--shine:focus-visible .icon {
+    transform: none;
+  }
+
+  .btn--shine::after {
+    display: none;
   }
 }
