@@ -15,6 +15,9 @@ import Icon from '../common/Icon.jsx';
 import Modal from '../common/Modal.jsx';
 import { DEFAULT_COLOR, readRecentColors } from '../../utils/colorPalette.js';
 import { IMAGE_LAYOUTS, isSafeLinkUrl, parseVideoUrl } from '../../utils/richText.js';
+import { useToast } from '../../context/ToastContext.jsx';
+import { cleanWordHtml, isWordHtml } from '../../utils/wordPaste.js';
+import { CALLOUT_LABELS } from '../common/Callout.jsx';
 import ColorMenu from './ColorMenu.jsx';
 import {
   AgriHighlight,
@@ -23,8 +26,12 @@ import {
   AgriTextColor,
   AgriTextStyle,
   CalloutNode,
+  FigureNode,
+  LegacySectionHints,
+  LessonListStyle,
   VideoEmbedNode,
 } from './editorExtensions.jsx';
+import { FormattingHelp, InsertDialogs, InsertMenu } from './LessonInsertTools.jsx';
 
 const MAX_IMAGE_BYTES = 1.5 * 1024 * 1024;
 
@@ -66,6 +73,7 @@ export default function RichTextEditor({
   initialHtml,
   onChange,
   onInsertMedia,
+  mediaImages = [],
   fullscreenContext = null,
   onFullscreenChange,
 }) {
@@ -73,7 +81,13 @@ export default function RichTextEditor({
   const [imageDialog, setImageDialog] = useState(null); // { url, alt, layout, file }
   const [videoDialog, setVideoDialog] = useState(null); // { url, error }
   const [contextMenu, setContextMenu] = useState(null); // { x, y }
+  const [insertDialog, setInsertDialog] = useState(null); // 'objectives' | 'terms' | 'figure'
   const fileInputRef = useRef(null);
+  const toast = useToast();
+  // Word refers to its pictures by a path on the author's computer, which no browser can read.
+  const pasteNoticeRef = useRef(null);
+  pasteNoticeRef.current = (count) =>
+    toast.info(`${count} picture${count === 1 ? '' : 's'} from Word could not be pasted. Add ${count === 1 ? 'it' : 'them'} with Insert → Figure with caption.`);
 
   const editor = useEditor(
     {
@@ -89,6 +103,9 @@ export default function RichTextEditor({
         AgriImage,
         VideoEmbedNode,
         CalloutNode,
+        FigureNode,
+        LessonListStyle,
+        LegacySectionHints,
       ],
       content: initialHtml || '<p></p>',
       /*
@@ -100,7 +117,19 @@ export default function RichTextEditor({
        */
       shouldRerenderOnTransaction: true,
       editorProps: {
-        attributes: { class: 'rte__content rich-text', 'aria-label': 'Lesson content' },
+        // lesson-prose: the editor surface uses the shared lesson reading style.
+        attributes: { class: 'rte__content rich-text lesson-prose', 'aria-label': 'Lesson content' },
+        /*
+         * Word's clipboard HTML: keep headings, lists, bold, italic, links and
+         * loadable images; drop Word's styles, colours and list bullets typed
+         * as text. Other sources paste as before.
+         */
+        transformPastedHTML: (html) => {
+          if (!isWordHtml(html)) return html;
+          const { html: clean, droppedImages } = cleanWordHtml(html);
+          if (droppedImages > 0) pasteNoticeRef.current?.(droppedImages);
+          return clean;
+        },
         // Pasting a video link drops in a player instead of a bare link.
         handlePaste: (view, event) => {
           const text = event.clipboardData?.getData('text/plain')?.trim();
@@ -369,12 +398,12 @@ export default function RichTextEditor({
           <ToolButton icon="minus" label="Strikethrough" isActive={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()} />
           <span className="rte__divider" />
 
-          <ToolButton icon="heading" label="Heading" isActive={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} />
-          <ToolButton icon="heading" label="Subheading" isActive={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
+          <ToolButton icon="heading" label="Heading (numbered section)" isActive={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} />
+          <ToolButton icon="heading" label="Subheading (numbered subsection)" isActive={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
             <small>3</small>
           </ToolButton>
           <ToolButton icon="file" label="Paragraph" isActive={editor.isActive('paragraph')} onClick={() => editor.chain().focus().setParagraph().run()} />
-          <ToolButton icon="quote" label="Quote" isActive={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()} />
+          <ToolButton icon="quote" label={`Quote (shown as ${CALLOUT_LABELS.tip})`} isActive={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()} />
           <span className="rte__divider" />
 
           <ToolButton icon="list" label="Bulleted list" isActive={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()} />
@@ -410,9 +439,10 @@ export default function RichTextEditor({
           <ToolButton icon="video" label="Embed video" onClick={() => setVideoDialog({ url: '' })} />
           <span className="rte__divider" />
 
-          <ToolButton icon="info" label="Note callout" isActive={editor.isActive('callout', { variant: 'info' })} onClick={() => editor.chain().focus().toggleCallout('info').run()} />
-          <ToolButton icon="alert" label="Warning callout" isActive={editor.isActive('callout', { variant: 'warning' })} onClick={() => editor.chain().focus().toggleCallout('warning').run()} />
-          <ToolButton icon="sprout" label="Tip callout" isActive={editor.isActive('callout', { variant: 'tip' })} onClick={() => editor.chain().focus().toggleCallout('tip').run()} />
+          <InsertMenu editor={editor} onOpenDialog={setInsertDialog} />
+          <ToolButton icon="sprout" label={`${CALLOUT_LABELS.tip} box`} isActive={editor.isActive('callout', { variant: 'tip' })} onClick={() => editor.chain().focus().toggleCallout('tip').run()} />
+          <ToolButton icon="info" label={`${CALLOUT_LABELS.info} box`} isActive={editor.isActive('callout', { variant: 'info' })} onClick={() => editor.chain().focus().toggleCallout('info').run()} />
+          <ToolButton icon="alert" label={`${CALLOUT_LABELS.warning} box`} isActive={editor.isActive('callout', { variant: 'warning' })} onClick={() => editor.chain().focus().toggleCallout('warning').run()} />
           <ToolButton icon="divider" label="Divider" onClick={() => editor.chain().focus().setHorizontalRule().run()} />
           <ToolButton icon="eraser" label="Clear formatting" onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()} />
 
@@ -457,6 +487,8 @@ export default function RichTextEditor({
         )}
       </div>
 
+      <FormattingHelp />
+
       <div
         className="rte__surface"
         onContextMenu={(event) => {
@@ -490,7 +522,7 @@ export default function RichTextEditor({
           </button>
           <span className="rte__menu-divider" />
           <button type="button" role="menuitem" onClick={() => { editor.chain().focus().toggleCallout('info').run(); closeContextMenu(); }}>
-            <Icon name="info" size={15} /> Note callout
+            <Icon name="info" size={15} /> {CALLOUT_LABELS.info} box
           </button>
           <button type="button" role="menuitem" onClick={() => { editor.chain().focus().setHorizontalRule().run(); closeContextMenu(); }}>
             <Icon name="divider" size={15} /> Divider
@@ -600,6 +632,8 @@ export default function RichTextEditor({
           </div>
         )}
       </Modal>
+
+      <InsertDialogs editor={editor} kind={insertDialog} onClose={() => setInsertDialog(null)} mediaImages={mediaImages} />
     </div>
   );
 }

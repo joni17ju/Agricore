@@ -7,7 +7,9 @@
  * colour — text colour and highlight — which is a single inline declaration
  * in a fixed shape the sanitiser validates strictly (see utils/cssColor.js).
  */
-import { Node, mergeAttributes } from '@tiptap/core';
+import { Extension, Node, mergeAttributes } from '@tiptap/core';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { ReactNodeViewRenderer, NodeViewContent, NodeViewWrapper } from '@tiptap/react';
 import { Color } from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
@@ -17,7 +19,7 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import Callout from '../common/Callout.jsx';
 import VideoEmbed from '../common/VideoEmbed.jsx';
 import { LEGACY_HIGHLIGHTS, normalizeCssColor } from '../../utils/cssColor.js';
-import { ALIGNMENTS, CALLOUT_VARIANTS, IMAGE_LAYOUTS, isValidVideoId } from '../../utils/richText.js';
+import { ALIGNMENTS, CALLOUT_VARIANTS, IMAGE_LAYOUTS, LESSON_LIST_STYLES, isValidVideoId } from '../../utils/richText.js';
 
 /**
  * Insert a block node (video, image) at the caret.
@@ -284,3 +286,141 @@ function CalloutNodeView({ node, selected }) {
     </NodeViewWrapper>
   );
 }
+
+const LIST_STYLE_VALUES = Object.values(LESSON_LIST_STYLES);
+
+/**
+ * A bullet list can be marked as the lesson's learning objectives or its key
+ * terms. The mark is a class on the <ul> (the one class lesson content may
+ * carry), so the reader shows the right box and the role survives saving,
+ * reopening and editing. Unmarked lists stay plain bullet lists.
+ */
+export const LessonListStyle = Extension.create({
+  name: 'lessonListStyle',
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['bulletList'],
+        attributes: {
+          listStyle: {
+            default: null,
+            parseHTML: (element) => LIST_STYLE_VALUES.find((value) => element.classList.contains(value)) ?? null,
+            renderHTML: (attributes) => (LIST_STYLE_VALUES.includes(attributes.listStyle) ? { class: attributes.listStyle } : {}),
+          },
+        },
+      },
+    ];
+  },
+});
+
+/**
+ * A figure: an image with a caption the author types under it. Stored as
+ * <figure data-layout><img src alt><figcaption>…</figcaption></figure>; the
+ * "Figure N." number is never stored — the editor and the reader both count
+ * captioned figures, so numbers stay right when figures move.
+ */
+export const FigureNode = Node.create({
+  name: 'figure',
+  group: 'block',
+  content: 'inline*',
+  marks: 'bold italic link',
+  draggable: true,
+  isolating: true,
+
+  addAttributes() {
+    return {
+      src: { default: null },
+      alt: { default: '' },
+      layout: { default: 'center' },
+    };
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: 'figure',
+        contentElement: 'figcaption',
+        getAttrs: (element) => {
+          const img = element.querySelector('img');
+          if (!img?.getAttribute('src')) return false;
+          const layout = element.getAttribute('data-layout') ?? img.getAttribute('data-layout');
+          return {
+            src: img.getAttribute('src'),
+            alt: img.getAttribute('alt') ?? '',
+            layout: IMAGE_LAYOUTS.includes(layout) ? layout : 'center',
+          };
+        },
+      },
+    ];
+  },
+
+  renderHTML({ node }) {
+    return [
+      'figure',
+      { 'data-layout': IMAGE_LAYOUTS.includes(node.attrs.layout) ? node.attrs.layout : 'center' },
+      ['img', { src: node.attrs.src, alt: node.attrs.alt ?? '' }],
+      ['figcaption', 0],
+    ];
+  },
+
+  addCommands() {
+    return {
+      insertFigure:
+        ({ src, alt = '', layout = 'center', caption = '' }) =>
+        (props) =>
+          insertBlock({
+            type: this.name,
+            attrs: { src, alt, layout },
+            content: caption ? [{ type: 'text', text: caption }] : [],
+          })(props),
+    };
+  },
+});
+
+/** Bullet-list JSON for the objectives and key-terms inserts. */
+export function lessonListContent(listStyle, items) {
+  return {
+    type: 'bulletList',
+    attrs: { listStyle },
+    content: items.map((item) => ({ type: 'listItem', content: [{ type: 'paragraph', content: item }] })),
+  };
+}
+
+/** Insert a lesson list (objectives or key terms) as its own block. */
+export const insertLessonList = (editor, listStyle, items) =>
+  editor.chain().focus().command(insertBlock(lessonListContent(listStyle, items))).run();
+
+/*
+ * Lessons imported before the Insert buttons existed mark their objectives,
+ * key terms and references with plain headings. The reader turns those into
+ * boxes or back matter (see components/common/lesson/lessonContent.jsx); here
+ * they are left unnumbered and labelled, so the editor's section numbers match
+ * what students see. Display only — the stored content is untouched.
+ */
+const LEGACY_SECTION_HINTS = [
+  [/^learning (outcomes|objectives)$/i, 'Students see this section as the Learning objectives box'],
+  [/^key terms$/i, 'Students see this section as the Key terms list'],
+  [/^(references|references and reading list|sources|reading list)$/i, 'Back matter: not numbered'],
+];
+
+export const LegacySectionHints = Extension.create({
+  name: 'legacySectionHints',
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('legacySectionHints'),
+        props: {
+          decorations(state) {
+            const decorations = [];
+            state.doc.forEach((node, offset) => {
+              if (node.type.name !== 'heading' || node.attrs.level !== 2) return;
+              const match = LEGACY_SECTION_HINTS.find(([pattern]) => pattern.test(node.textContent.trim()));
+              if (match) decorations.push(Decoration.node(offset, offset + node.nodeSize, { class: 'is-unnumbered', 'data-hint': match[1] }));
+            });
+            return DecorationSet.create(state.doc, decorations);
+          },
+        },
+      }),
+    ];
+  },
+});

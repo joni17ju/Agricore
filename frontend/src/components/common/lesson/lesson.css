@@ -83,8 +83,21 @@
   font-variant-numeric: lining-nums tabular-nums;
 }
 /* A reference list is back matter, not a numbered section. */
-.lesson-prose h2[data-unnumbered] { counter-increment: none; }
-.lesson-prose h2[data-unnumbered]::before { content: none; }
+.lesson-prose h2[data-unnumbered],
+.lesson-prose h2.is-unnumbered { counter-increment: none; }
+.lesson-prose h2[data-unnumbered]::before,
+.lesson-prose h2.is-unnumbered::before { content: none; }
+/* Editor only: how an imported box heading will appear to students. */
+.lesson-prose h2.is-unnumbered[data-hint]::after {
+  content: attr(data-hint);
+  display: block;
+  margin-top: 0.3rem;
+  font-family: var(--font-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ochre-ink);
+}
 .lesson-prose h4 {
   margin-top: 1.5em;
   font-family: var(--font-text);
@@ -224,7 +237,14 @@
 
 /* ───────── Learning objectives and key terms ───────── */
 
-.lesson-box {
+/*
+ * The reader shows these as boxes (<aside class="lesson-box">); the editor
+ * shows the marked lists themselves with the same frame and a CSS label, so
+ * an author sees the box while typing in it.
+ */
+.lesson-box,
+.rte__content ul.lesson-objectives,
+.rte__content ul.lesson-key-terms {
   margin: 0 0 2em;
   padding: 0.95em 1.2em 1.1em;
   border-top: 2px solid var(--forest);
@@ -234,8 +254,12 @@
 .lesson-box li + li { margin-top: 0.55em; }
 .lesson-prose .lesson-box + * { margin-top: 0; }
 .lesson-prose > * + .lesson-box { margin-top: 2em; }
-.lesson-box__label {
+.lesson-box__label,
+.rte__content ul.lesson-objectives::before,
+.rte__content ul.lesson-key-terms::before {
+  display: block;
   margin-bottom: 0.55em;
+  font-family: var(--font-text);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -273,3 +297,26 @@
 
 /* Videos inside lessons sit on the same grid as figures. */
 .lesson-prose .video-embed { margin: 1.8em 0; }
+
+/* ───────── Editor surface: the same look while typing ───────── */
+
+.rte__content ul.lesson-objectives { padding-left: 2.6em; list-style: decimal; }
+.rte__content ul.lesson-objectives::before { content: 'Learning objectives'; margin-left: -1.4em; }
+.rte__content ul.lesson-objectives > li::marker { font-family: var(--font-serif); font-weight: 600; color: var(--ochre-ink); }
+.rte__content ul.lesson-key-terms { list-style: none; }
+.rte__content ul.lesson-key-terms::before { content: 'Key terms'; }
+.rte__content ul.lesson-key-terms > li { padding: 0.45em 0; border-top: 1px solid var(--paper-rule); }
+.rte__content ul.lesson-key-terms > li:first-child { border-top: 0; padding-top: 0.1em; }
+.rte__content ul.lesson-key-terms > li + li { margin-top: 0; }
+
+/* Figure captions number themselves in order, as the reader does; an empty
+   caption shows a hint and is not counted. */
+.rte__content figcaption { counter-increment: lesson-figure; }
+.rte__content figcaption:is(:empty, :has(> br:only-child)) { counter-increment: none; }
+.rte__content figcaption:not(:has(> br:only-child)):not(:empty)::before {
+  content: 'Figure ' counter(lesson-figure) '. ';
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.rte__content figcaption:is(:empty, :has(> br:only-child))::after { content: 'Type a caption (optional)…'; color: var(--text-subtle); pointer-events: none; }
+.rte__content figure.ProseMirror-selectednode { outline: 2px solid var(--forest); outline-offset: 3px; }

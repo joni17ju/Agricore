@@ -165,6 +165,7 @@ function LessonWorkspace({ moduleEntry, lessonEntry, onChanged, onDeleted, toast
                 documentKey={`${lesson._id}-${revision}`}
                 initialHtml={html}
                 onChange={setHtml}
+                mediaImages={lesson.mediaAssets.filter((asset) => asset.type === 'image' && asset.url).map((asset) => ({ title: asset.title, url: asset.url }))}
                 onInsertMedia={() => {
                   /*
                    * In full screen the picker opens over the editor instead:
