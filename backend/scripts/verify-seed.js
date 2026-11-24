@@ -6,6 +6,7 @@
  */
 import 'dotenv/config';
 import mongoose from 'mongoose';
+import { missionGameType } from '../constants/gameTypes.js';
 
 /** Fields each game component destructures out of mission.scenarioData. */
 const GAME_FIELDS = {
@@ -54,14 +55,21 @@ for (const [name, fields] of Object.entries(DOC_FIELDS)) {
 }
 
 console.log('\nscenarioData per game type (every mission checked):');
+const allModules = await col('modules').find().toArray();
+const moduleOfLesson = new Map(
+  (await col('lessons').find().toArray()).map((l) => [String(l._id), allModules.find((m) => String(m._id) === String(l.moduleId))]),
+);
+const allMissions = await col('missions').find().toArray();
 for (const [gameType, fields] of Object.entries(GAME_FIELDS)) {
-  const module = await col('modules').findOne({ gameType });
-  if (!module) {
-    check(gameType, false, 'no module with this gameType');
+  // A mission plays its own gameType when it has one, otherwise its module's.
+  const missions = allMissions.filter((m) => {
+    const module = moduleOfLesson.get(String(m.lessonId));
+    return module && missionGameType(module, m) === gameType;
+  });
+  if (missions.length === 0) {
+    check(gameType, false, 'no mission plays this game type');
     continue;
   }
-  const lessonIds = (await col('lessons').find({ moduleId: module._id }).toArray()).map((l) => l._id);
-  const missions = await col('missions').find({ lessonId: { $in: lessonIds } }).toArray();
   const bad = missions.filter((m) => fields.some((f) => !(f in (m.scenarioData ?? {}))));
   check(
     `${gameType} (${missions.length} missions)`,
