@@ -31,3 +31,6 @@ desktop.ini
 .idea/
 *.suo
 *.sw?
+
+# Local backups made before data or file changes (database exports, file copies)
+backups/
