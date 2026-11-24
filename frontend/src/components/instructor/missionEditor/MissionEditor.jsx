@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { GAME_TYPE_INFO } from '../../../constants/gameTypes.js';
+import { GAME_TYPE_INFO, missionGameType } from '../../../constants/gameTypes.js';
 import { useToast } from '../../../context/ToastContext.jsx';
 import { useUnsavedChangesGuard } from '../../../hooks/useUnsavedChangesGuard.js';
 import { countMissionAttempts, createMission, updateMission } from '../../../services/missionService.js';
@@ -51,7 +51,7 @@ function difficultyFor(moduleNumber, maxXP) {
 export default function MissionEditor({ source, isNew, lesson, module, levelNumber, totalLevels, onClose, onSaved, onDirtyChange, extraActions }) {
   const toast = useToast();
   const id = useId();
-  const gameType = module.gameType;
+  const gameType = missionGameType(module, source);
   const original = useMemo(() => JSON.stringify({ maxXP: source.maxXP, scenarioData: source.scenarioData }), [source]);
 
   const [draft, setDraft] = useState(() => cloneData(source.scenarioData));
@@ -162,7 +162,7 @@ export default function MissionEditor({ source, isNew, lesson, module, levelNumb
     setIsSaving(true);
     try {
       const saved = isNew
-        ? await createMission({ lessonId: lesson._id, maxXP, scenarioData: draft })
+        ? await createMission({ lessonId: lesson._id, maxXP, scenarioData: draft, gameType: source.gameType })
         : await updateMission(source._id, { maxXP, scenarioData: draft });
       toast.success(isNew ? 'Mission level added.' : 'Mission level saved.');
       onSaved(saved);
@@ -332,7 +332,7 @@ export default function MissionEditor({ source, isNew, lesson, module, levelNumb
           onClose={() => setPreviewOpen(false)}
           draft={draft}
           maxXP={maxXP}
-          module={module}
+          module={{ ...module, gameType }}
           levelNumber={levelNumber}
           totalLevels={totalLevels}
         />

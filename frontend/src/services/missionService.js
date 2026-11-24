@@ -210,11 +210,11 @@ function validateMissionInput({ maxXP, scenarioData }) {
 }
 
 /** Add a mission level to a lesson. The server assigns its level number. */
-export async function createMission({ lessonId, maxXP, scenarioData }) {
+export async function createMission({ lessonId, maxXP, scenarioData, gameType = null }) {
   validateMissionInput({ maxXP, scenarioData });
   const { lessonsById } = await getCourse();
   if (!lessonsById.get(String(lessonId))) throw new ServiceError('Lesson not found.', 404);
-  const mission = await api.post('/missions', { lessonId, maxXP: Number(maxXP), scenarioData });
+  const mission = await api.post('/missions', { lessonId, maxXP: Number(maxXP), scenarioData, ...(gameType && { gameType }) });
   invalidateCourse();
   return mission;
 }

@@ -30,7 +30,7 @@ export function MissionManager({ lesson, module, missions, templateMission, modu
     try {
       const scenarioData = cloneData(mission.scenarioData);
       scenarioData.title = `${mission.scenarioData.title} (copy)`.slice(0, 160);
-      const copy = await createMission({ lessonId: lesson._id, maxXP: mission.maxXP, scenarioData });
+      const copy = await createMission({ lessonId: lesson._id, maxXP: mission.maxXP, scenarioData, gameType: mission.gameType });
       toast.success(`Duplicated as level ${copy.levelNumber}.`);
       onChanged();
     } catch (err) {
@@ -83,7 +83,7 @@ export function MissionManager({ lesson, module, missions, templateMission, modu
     <div className="stack">
       <div className="row" style={{ justifyContent: 'space-between' }}>
         <p className="text-muted text-sm">
-          Game type: <strong>{GAME_TYPE_INFO[module.gameType].label}</strong> (fixed for Module {module.moduleNumber}). Levels are numbered across the module.
+          Game type: <strong>{GAME_TYPE_INFO[module.gameType].label}</strong> for Module {module.moduleNumber}; a level marked with another game keeps it. Levels are numbered across the module.
         </p>
         <Button size="sm" icon="plus" onClick={startNew} disabled={!templateMission}>Add Level</Button>
       </div>
@@ -99,6 +99,7 @@ export function MissionManager({ lesson, module, missions, templateMission, modu
                 <strong>{mission.scenarioData.title}</strong>
                 <small>
                   {missionCode(module, mission)} · {mission.maxXP} XP
+                  {mission.gameType && mission.gameType !== module.gameType ? ` · ${GAME_TYPE_INFO[mission.gameType].label} game` : ''}
                   {mission.scenarioData.timeLimitSeconds ? ` · ${mission.scenarioData.timeLimitSeconds}s timer` : ''}
                 </small>
               </div>
