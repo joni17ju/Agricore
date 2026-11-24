@@ -6,6 +6,15 @@
 
 .lesson-page { gap: 0; }
 
+/*
+ * Reading measure: about 80 characters per line at 18px Source Sans 3. The
+ * lesson column is the flexible part of the grid; text fills the sheet up to
+ * this measure (centred when the sheet is wider), so it widens as space
+ * allows — e.g. when the mission panel is collapsed — and never beyond a
+ * comfortable line.
+ */
+:root { --lesson-measure: 36.5rem; }
+
 .lesson-doc { container: lesson / inline-size; }
 .lesson-doc__grid {
   display: grid;
@@ -41,21 +50,18 @@
 
 /* The article: a white sheet with the text column at reading width. */
 .lesson-sheet {
-  background: var(--white);
+  background: var(--surface);
   border: 1px solid var(--paper-rule);
-  padding: 2.75rem 3rem 3rem;
+  padding: 2.25rem clamp(1.25rem, 3.5cqi, 2.5rem) 2.5rem;
 }
 @container lesson (max-width: 759px) {
-  .lesson-sheet { padding: 1.75rem 1.5rem 2rem; }
+  .lesson-sheet { padding: 1.5rem 1.25rem 1.75rem; }
 }
 @media (max-width: 560px) {
   .lesson-sheet { margin: 0 calc(var(--space-3) * -1); padding: 1.5rem 1.1rem 1.75rem; border-left: 0; border-right: 0; }
 }
-/* Header and outline align with the text column; the sheet keeps an outer margin figures may use. */
-.lesson-sheet__inner { max-width: 44rem; margin: 0 auto; }
-.lesson-head,
-.lesson-toc--drop,
-.lesson-plates { max-width: 34rem; }
+/* Header, outline, text, figures and footer notes share one centred column. */
+.lesson-sheet__inner { max-width: var(--lesson-measure); margin: 0 auto; min-width: 0; }
 
 /* Header: kicker, title beside a thin green rule, divider. */
 .lesson-head { margin-bottom: 2rem; padding-bottom: 1.1rem; border-bottom: 1px solid var(--paper-rule); }
@@ -186,7 +192,7 @@
   color: var(--ink-muted);
 }
 /* The lesson's missions, listed under the content (same rows as the student panel). */
-.lesson-missions { max-width: 34rem; margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--paper-rule); font-family: var(--font-text); }
+.lesson-missions { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--paper-rule); font-family: var(--font-text); }
 .lesson-missions__title { margin: 0 0 0.75rem; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-muted); }
 .lesson-missions__empty { font-size: 0.95rem; color: var(--ink-soft); }
 .lesson-missions__link { padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: var(--forest); text-decoration: underline; text-underline-offset: 0.2em; cursor: pointer; }
@@ -196,7 +202,7 @@
 
 .mission-dock { font-family: var(--font-text); }
 .mission-panel {
-  background: var(--white);
+  background: var(--surface);
   border: 1px solid var(--paper-rule);
   border-top: 3px solid var(--forest);
   padding: 1rem 1.1rem 1.15rem;
@@ -207,7 +213,7 @@
 .mission-panel__toggle,
 .mission-dock__tab {
   border: 1px solid var(--paper-rule);
-  background: var(--white);
+  background: var(--surface);
   color: var(--ink-soft);
   cursor: pointer;
 }
@@ -296,7 +302,7 @@
   cursor: zoom-out;
 }
 .figure-dialog__plate { margin: 0; max-width: min(1200px, 100%); padding: 0.75rem; background: var(--white); }
-.figure-dialog__plate img { display: block; max-width: 100%; max-height: calc(100vh - 9rem); margin: 0 auto; object-fit: contain; }
+.figure-dialog__plate img { display: block; max-width: 100%; max-height: calc(100vh - 9rem); max-height: calc(100dvh - 9rem); margin: 0 auto; object-fit: contain; }
 .figure-dialog__plate figcaption { margin-top: 0.6rem; font-family: var(--font-text); font-size: 0.9rem; line-height: 1.45; color: var(--ink-muted); }
 .figure-dialog__close {
   position: fixed;
