@@ -10,12 +10,17 @@
  *     matching             → target pest, columns[] (classification, damage, tactic), timer
  *     drag-and-drop        → specimen, targets[] (x/y zones), labels[], timer
  *     strategy-management  → observations, pestOptions[], tactics[] with meters, goals
+ * - A mission may set its own `gameType`; otherwise it plays its module's game
+ *   (see missionGameType). Module 4's concept and invasive-species levels use
+ *   decision-making scenarios this way (./missionContent/module4.js).
  * - `imageKey` / `specimenKey` / `sceneKey` select local placeholder illustrations.
  * - Coordinates (x, y, radius) are percentages of the specimen image.
  *
  * NOTE: Content is starter content for the prototype and should be reviewed by the
  * Crop Protection I instructor.
  */
+
+import { module4ConceptMissions, module4InvasiveMissions } from './missionContent/module4.js';
 
 // ───────────────────────── Module 1 · Decision-Making ─────────────────────────
 const module1Missions = [
@@ -1034,7 +1039,7 @@ const module4Missions = [
   {
     _id: 'mis_4_4',
     lessonId: 'les_4_3',
-    levelNumber: 4,
+    levelNumber: 8,
     maxXP: 200,
     scenarioData: {
       title: 'The Invading Hagonoy',
@@ -1067,7 +1072,7 @@ const module4Missions = [
   {
     _id: 'mis_4_5',
     lessonId: 'les_4_3',
-    levelNumber: 5,
+    levelNumber: 9,
     maxXP: 200,
     scenarioData: {
       title: 'Clogged Irrigation Canal',
@@ -1382,6 +1387,8 @@ const missions = [
   ...module2Missions,
   ...module3Missions,
   ...module4Missions,
+  ...module4ConceptMissions,
+  ...module4InvasiveMissions,
   ...module5Missions,
 ];
 

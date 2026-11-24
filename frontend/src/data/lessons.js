@@ -6,9 +6,29 @@
  * mediaAssets: [{ assetId, type: 'image' | 'video' | 'animation', title, caption, url, placeholderKey }]
  *   `url` is null for built-in placeholders; `placeholderKey` selects a local illustration.
  *
- * NOTE: Lesson text is starter content written for the prototype and should be
+ * Module 4 and 5 content comes from the CP1 Week 13–17 lesson documents (see
+ * ./lessonContent/module4.js and module5.js); it may also contain h4, img (served from
+ * /images/lessons/) and callout divs.
+ *
+ * NOTE: Other lesson text is starter content written for the prototype and should be
  * reviewed by the Crop Protection I instructor before real use.
  */
+import {
+  changeInWeedPopulation,
+  classificationOfWeeds,
+  cropWeedCompetition,
+  effectsOfWeeds,
+  invasiveSpecies,
+  reproductionOfWeeds,
+  weedScience,
+} from './lessonContent/module4.js';
+import {
+  pestManagementConcepts,
+  pestManagementStrategies,
+  pestProblemDiagnosis,
+  planningPestManagementPrograms,
+} from './lessonContent/module5.js';
+
 const lessons = [
   // ───────────────────────── Module 1: Introduction to Crop Protection ─────────────────────────
   {
@@ -421,20 +441,7 @@ const lessons = [
     moduleId: 'mod_4',
     lessonNumber: 1,
     title: 'Weed Science',
-    contentBody: `
-<p>A <strong>weed</strong> is a plant growing where it is not wanted. <strong>Weed science</strong> studies weed biology, the losses weeds cause and the methods used to manage them.</p>
-<h2>How weeds reduce yield</h2>
-<ul>
-  <li><strong>Competition</strong> for light, water and nutrients.</li>
-  <li><strong>Allelopathy</strong> — release of chemicals that suppress crop growth.</li>
-  <li><strong>Hosting pests and diseases</strong> that later move to the crop.</li>
-  <li><strong>Interfering with harvest</strong> and contaminating the produce.</li>
-</ul>
-<h2>Critical period of weed competition</h2>
-<p>The <strong>critical period</strong> is the stage of crop growth when weeds must be controlled to prevent yield loss — usually the first third to half of the crop's life. Weeding outside this window gives smaller returns.</p>
-<h2>Weed identification structures</h2>
-<p>Weeds are identified by structures such as root system, stem shape, leaf shape and venation, and — in grasses — the <strong>ligule</strong>, <strong>collar</strong> and <strong>leaf sheath</strong>.</p>
-`.trim(),
+    contentBody: weedScience,
     mediaAssets: [
       {
         assetId: 'asset_4_1_a',
@@ -451,23 +458,7 @@ const lessons = [
     moduleId: 'mod_4',
     lessonNumber: 2,
     title: 'Classification of Weeds',
-    contentBody: `
-<p>Weeds are classified to help predict their behavior and choose control methods.</p>
-<h2>By life cycle</h2>
-<ul>
-  <li><strong>Annuals</strong> — complete their life cycle in one season; spread by seed.</li>
-  <li><strong>Biennials</strong> — need two seasons to complete their life cycle.</li>
-  <li><strong>Perennials</strong> — live for many years; spread by seeds and by rhizomes, tubers or stolons.</li>
-</ul>
-<h2>By morphology</h2>
-<ul>
-  <li><strong>Grasses</strong> — round, hollow stems with nodes; leaves in two ranks with parallel veins; a ligule is usually present; fibrous roots. Example: goosegrass (<em>Eleusine indica</em>).</li>
-  <li><strong>Sedges</strong> — solid, <strong>triangular</strong> stems ("sedges have edges"); leaves in three ranks; no ligule. Example: purple nutsedge (<em>Cyperus rotundus</em>).</li>
-  <li><strong>Broadleaves</strong> — wide leaves with net venation; often a taproot. Example: spiny amaranth (<em>Amaranthus spinosus</em>).</li>
-</ul>
-<h2>By habitat</h2>
-<p>Terrestrial, aquatic and parasitic weeds require different management approaches.</p>
-`.trim(),
+    contentBody: classificationOfWeeds,
     mediaAssets: [
       {
         assetId: 'asset_4_2_a',
@@ -480,29 +471,43 @@ const lessons = [
     ],
   },
   {
-    _id: 'les_4_3',
+    _id: 'les_4_4',
     moduleId: 'mod_4',
     lessonNumber: 3,
+    title: 'Effects of Weeds on Human Affairs',
+    contentBody: effectsOfWeeds,
+    mediaAssets: [],
+  },
+  {
+    _id: 'les_4_5',
+    moduleId: 'mod_4',
+    lessonNumber: 4,
+    title: 'Reproduction and Establishment of Weeds',
+    contentBody: reproductionOfWeeds,
+    mediaAssets: [],
+  },
+  {
+    _id: 'les_4_6',
+    moduleId: 'mod_4',
+    lessonNumber: 5,
+    title: 'Crop-Weed Competition',
+    contentBody: cropWeedCompetition,
+    mediaAssets: [],
+  },
+  {
+    _id: 'les_4_7',
+    moduleId: 'mod_4',
+    lessonNumber: 6,
+    title: 'Change in Weed Population',
+    contentBody: changeInWeedPopulation,
+    mediaAssets: [],
+  },
+  {
+    _id: 'les_4_3',
+    moduleId: 'mod_4',
+    lessonNumber: 7,
     title: 'Invasive Species',
-    contentBody: `
-<p><strong>Invasive species</strong> are non-native organisms that spread aggressively in a new area and cause economic or environmental harm.</p>
-<h2>Why invasive weeds succeed</h2>
-<ul>
-  <li>Fast growth and early maturity</li>
-  <li>Large numbers of easily dispersed seeds or vegetative fragments</li>
-  <li>Absence of natural enemies from their native range</li>
-  <li>Tolerance of disturbed and poor soils</li>
-</ul>
-<h2>Examples in the Philippines</h2>
-<ul>
-  <li><strong>Hagonoy</strong> (<em>Chromolaena odorata</em>) — invades pastures and plantations.</li>
-  <li><strong>Water hyacinth</strong> (<em>Pontederia crassipes</em>, formerly <em>Eichhornia crassipes</em>) — clogs rivers and irrigation canals.</li>
-  <li><strong>Mile-a-minute vine</strong> (<em>Mikania micrantha</em>) — smothers crops and trees.</li>
-  <li><strong>Lantana</strong> (<em>Lantana camara</em>) — forms dense thickets.</li>
-</ul>
-<h2>Managing invasives</h2>
-<p>Prevention and early detection are the most effective strategies, followed by rapid removal, biological control and restoring competitive vegetation.</p>
-`.trim(),
+    contentBody: invasiveSpecies,
     mediaAssets: [],
   },
 
@@ -512,24 +517,7 @@ const lessons = [
     moduleId: 'mod_5',
     lessonNumber: 1,
     title: 'Pest Problem Diagnosis',
-    contentBody: `
-<p>Correct diagnosis is the first step of any management decision. Treating the wrong problem wastes money and can make the situation worse.</p>
-<h2>Steps in diagnosis</h2>
-<ol>
-  <li><strong>Know the crop</strong> — what a healthy plant looks like at that growth stage.</li>
-  <li><strong>Gather the history</strong> — variety, planting date, fertilizer and pesticide use, weather.</li>
-  <li><strong>Observe the pattern</strong> — scattered patches and spreading damage suggest a biotic cause; uniform damage along rows or field edges suggests an abiotic cause.</li>
-  <li><strong>Examine symptoms and signs</strong> on leaves, stems, roots and fruit; look for insects, eggs, frass, mines and spores.</li>
-  <li><strong>Sample and confirm</strong> — collect specimens and use references or laboratory tests.</li>
-</ol>
-<h2>Common diagnostic clues</h2>
-<ul>
-  <li>Serpentine tunnels in leaves → leaf miner larvae</li>
-  <li>Browning and drying at the base of rice hills → planthoppers (hopperburn)</li>
-  <li>Wilted shoot tips and bored fruit → stem and fruit borers</li>
-  <li>Ragged holes in the corn whorl with frass → fall armyworm</li>
-</ul>
-`.trim(),
+    contentBody: pestProblemDiagnosis,
     mediaAssets: [
       {
         assetId: 'asset_5_1_a',
@@ -546,21 +534,7 @@ const lessons = [
     moduleId: 'mod_5',
     lessonNumber: 2,
     title: 'Pest Management Concepts',
-    contentBody: `
-<p><strong>Integrated Pest Management (IPM)</strong> is the careful consideration of all available pest control techniques and the integration of suitable measures that discourage pest populations while keeping pesticides and other interventions at economically justified levels and reducing risks to human health and the environment.</p>
-<h2>Principles of IPM</h2>
-<ul>
-  <li><strong>Grow a healthy crop</strong> — good varieties, planting and nutrition.</li>
-  <li><strong>Prevention first</strong> — make the field less favorable to pests.</li>
-  <li><strong>Regular monitoring</strong> — observe fields weekly.</li>
-  <li><strong>Action thresholds</strong> — intervene only when pest levels justify it.</li>
-  <li><strong>Conserve natural enemies</strong>.</li>
-  <li><strong>Combine tactics</strong> instead of relying on a single method.</li>
-  <li><strong>Pesticides as a last resort</strong>, choosing selective products.</li>
-</ul>
-<h2>Why not spray on a calendar?</h2>
-<p>Routine spraying kills natural enemies, can cause pest resurgence and secondary pest outbreaks, selects for pesticide resistance, and raises costs and health risks.</p>
-`.trim(),
+    contentBody: pestManagementConcepts,
     mediaAssets: [
       {
         assetId: 'asset_5_2_a',
@@ -577,20 +551,7 @@ const lessons = [
     moduleId: 'mod_5',
     lessonNumber: 3,
     title: 'Pest Management Strategies',
-    contentBody: `
-<p>IPM combines tactics from several categories. Each has strengths, costs and environmental effects.</p>
-<h2>Control tactic categories</h2>
-<ul>
-  <li><strong>Cultural</strong> — crop rotation, sanitation, proper planting time, synchronous planting, balanced fertilization, intercropping.</li>
-  <li><strong>Biological</strong> — conserving, augmenting or introducing predators, parasitoids and microbial agents.</li>
-  <li><strong>Mechanical and physical</strong> — hand-picking, pruning infested parts, sticky traps, light and pheromone traps, barriers and netting.</li>
-  <li><strong>Host plant resistance</strong> — planting resistant or tolerant varieties.</li>
-  <li><strong>Chemical</strong> — pesticides, preferably selective and applied only when thresholds are exceeded.</li>
-  <li><strong>Regulatory</strong> — quarantine and certification to prevent entry and spread of pests.</li>
-</ul>
-<h2>Choosing a combination</h2>
-<p>Good combinations work together: for example, yellow sticky traps and pruning reduce leaf miners while parasitic wasps continue to work — a broad-spectrum spray would kill those wasps.</p>
-`.trim(),
+    contentBody: pestManagementStrategies,
     mediaAssets: [
       {
         assetId: 'asset_5_3_a',
@@ -607,22 +568,7 @@ const lessons = [
     moduleId: 'mod_5',
     lessonNumber: 4,
     title: 'Planning Pest Management Programs',
-    contentBody: `
-<p>A pest management program turns IPM principles into a season-long plan for a specific crop and farm.</p>
-<h2>Steps in planning</h2>
-<ol>
-  <li><strong>Identify key pests</strong> of the crop and location.</li>
-  <li><strong>Set goals</strong> — yield, quality, cost and environmental targets.</li>
-  <li><strong>Plan preventive measures</strong> before planting — variety, planting date, land preparation.</li>
-  <li><strong>Establish a monitoring schedule</strong> and sampling method.</li>
-  <li><strong>Define action thresholds</strong> for each key pest.</li>
-  <li><strong>Select intervention tactics</strong>, favoring those with the lowest risk.</li>
-  <li><strong>Keep records</strong> of observations, actions and costs.</li>
-  <li><strong>Evaluate</strong> results at the end of the season and improve the plan.</li>
-</ol>
-<h2>Community-level planning</h2>
-<p>Many pests move between farms. Synchronous planting, area-wide trapping and shared monitoring make programs more effective than individual efforts.</p>
-`.trim(),
+    contentBody: planningPestManagementPrograms,
     mediaAssets: [],
   },
 ];
