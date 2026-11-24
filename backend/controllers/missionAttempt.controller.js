@@ -1,3 +1,4 @@
+import { missionGameType } from '../constants/gameTypes.js';
 import { PROGRESS_STATUS } from '../constants/rules.js';
 import { Lesson, Mission, MissionAttempt, Module, Progress, User } from '../models/index.js';
 import { calculateXpAward } from '../utils/gamification.js';
@@ -46,7 +47,7 @@ export async function createMissionAttempt(req, res) {
 
   // Authoritative scoring, from the stored scenario rather than the request.
   const { score, isPassed, breakdown } = scoreMission({
-    gameType: module.gameType,
+    gameType: missionGameType(module, mission),
     scenarioData: mission.scenarioData,
     answers,
   });

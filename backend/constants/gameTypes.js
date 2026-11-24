@@ -41,3 +41,10 @@ export const TACTIC_CATEGORIES = Object.freeze({
   MECHANICAL: 'mechanical',
   CHEMICAL: 'chemical',
 });
+
+/**
+ * The game a mission is played as. A mission may name its own game type (for
+ * example a decision scenario inside a drag-and-drop module); otherwise it
+ * plays its module's game.
+ */
+export const missionGameType = (module, mission) => mission?.gameType ?? module.gameType;

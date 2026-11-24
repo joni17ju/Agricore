@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { GAME_TYPES } from '../constants/gameTypes.js';
 
 const { Schema } = mongoose;
 
@@ -17,6 +18,9 @@ const missionSchema = new Schema(
     levelNumber: { type: Number, required: true, min: 1 },
     maxXP: { type: Number, required: true, min: 0 },
     scenarioData: { type: Schema.Types.Mixed, required: true },
+    // Null plays the module's game; a value lets one level use another game,
+    // e.g. a decision scenario for a concept topic in a drag-and-drop module.
+    gameType: { type: String, enum: [...Object.values(GAME_TYPES), null], default: null },
     isSeedData: { type: Boolean, default: false },
   },
   { collection: 'missions', timestamps: true },
