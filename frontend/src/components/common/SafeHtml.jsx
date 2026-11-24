@@ -1,97 +1,32 @@
-import { createElement, useMemo } from 'react';
-import { colorStyleToObject } from '../../utils/cssColor.js';
-import { ALLOWED_TAGS, ownRule, sanitizeRichHtml } from '../../utils/richText.js';
-import Callout from './Callout.jsx';
-import VideoEmbed from './VideoEmbed.jsx';
+import { useMemo } from 'react';
+import { sanitizeRichHtml } from '../../utils/richText.js';
+import { prepareLessonContent, renderLessonContent } from './lesson/lessonContent.jsx';
 
 /** Sanitise lesson HTML against the allow-list in utils/richText.js. */
 export function sanitizeHtml(html) {
   return sanitizeRichHtml(html);
 }
 
-/** Plain-text summary: the first paragraph of the lesson content. */
+/**
+ * Plain-text summary for topic cards: the first real paragraph of the lesson.
+ * Lead-in lines that end with a colon ("By the end of this lesson, you should
+ * be able to:") introduce a list rather than summarise the lesson, so they
+ * are skipped.
+ */
 export function summarizeHtml(html, maxLength = 150) {
-  const match = /<p[^>]*>(.*?)<\/p>/s.exec(html ?? '');
-  const text = (match ? match[1] : html ?? '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  const paragraphs = [...String(html ?? '').matchAll(/<p[^>]*>(.*?)<\/p>/gs)]
+    .map((match) => match[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+  const text = paragraphs.find((p) => !p.endsWith(':')) ?? paragraphs[0] ?? String(html ?? '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
   return text.length > maxLength ? `${text.slice(0, maxLength).trimEnd()}…` : text;
 }
 
-const VOID_TAGS = new Set(['BR', 'HR', 'IMG']);
-
 /**
- * Convert a sanitised DOM node into React elements.
- *
- * Rendering through React (rather than dangerouslySetInnerHTML) is what lets
- * video placeholders and callouts become real components while keeping the
- * stored markup free of iframes and scripts.
+ * Renders lesson content in the shared lesson reading style (see
+ * components/common/lesson/). Lesson pages that also need the outline or
+ * enlargeable figures use LessonDocument, which runs the same pipeline.
  */
-function toReact(node, key) {
-  if (node.nodeType === Node.TEXT_NODE) return node.nodeValue;
-  if (node.nodeType !== Node.ELEMENT_NODE) return null;
-
-  const tag = node.tagName;
-  const rules = ownRule(ALLOWED_TAGS, tag);
-  if (!rules) return null;
-
-  const children = VOID_TAGS.has(tag)
-    ? null
-    : [...node.childNodes].map((child, index) => toReact(child, index)).filter((child) => child !== null);
-
-  // Video placeholder → real player.
-  if (tag === 'DIV' && node.hasAttribute('data-video')) {
-    return (
-      <VideoEmbed
-        key={key}
-        provider={node.getAttribute('data-video')}
-        videoId={node.getAttribute('data-id')}
-      />
-    );
-  }
-
-  // Callout box → component, keeping its inner content.
-  if (tag === 'DIV' && node.hasAttribute('data-callout')) {
-    return (
-      <Callout key={key} variant={node.getAttribute('data-callout')}>
-        {children}
-      </Callout>
-    );
-  }
-
-  const props = { key };
-  for (const attribute of [...node.attributes]) {
-    if (attribute.name === 'href') {
-      props.href = attribute.value;
-      props.target = '_blank';
-      props.rel = 'noopener noreferrer nofollow';
-    } else if (attribute.name === 'src') props.src = attribute.value;
-    else if (attribute.name === 'alt') props.alt = attribute.value;
-    else if (attribute.name === 'style') {
-      /*
-       * Text and highlight colour. Re-parsed into an object here rather than
-       * passed on: the value was already sanitised, but the only CSS that
-       * ever reaches the page is the one property built from a validated hex.
-       */
-      const style = colorStyleToObject(tag, attribute.value);
-      if (style) props.style = style;
-    } else props[attribute.name] = attribute.value;
-  }
-  if (tag === 'IMG') {
-    props.loading = 'lazy';
-    props.alt = props.alt ?? '';
-    props.className = 'rich-text__image';
-  }
-
-  return createElement(tag.toLowerCase(), props, children);
-}
-
-/** Renders sanitised lesson content, swapping in components where needed. */
-export default function SafeHtml({ html, className = '' }) {
-  const content = useMemo(() => {
-    if (typeof window === 'undefined') return null;
-    const template = document.createElement('template');
-    template.innerHTML = sanitizeRichHtml(html);
-    return [...template.content.childNodes].map((node, index) => toReact(node, index)).filter(Boolean);
-  }, [html]);
-
-  return <div className={`rich-text ${className}`}>{content}</div>;
+export default function SafeHtml({ html, className = '', onZoom }) {
+  const content = useMemo(() => renderLessonContent(prepareLessonContent(html).root, { onZoom }), [html, onZoom]);
+  return <div className={`rich-text lesson-prose ${className}`}>{content}</div>;
 }

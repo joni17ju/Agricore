@@ -29,6 +29,12 @@
   counter-reset: lesson-section lesson-subsection lesson-figure;
 }
 .lesson-prose > * + * { margin-top: 1em; }
+/*
+ * Reading measure: text blocks stop at about 74 characters per line (34rem at
+ * 18px Source Sans 3). They sit left in the sheet like a textbook column;
+ * figures and videos may use the full sheet width beside the outer margin.
+ */
+.lesson-prose > :where(p, ul, ol, h2, h3, h4, blockquote, hr, .callout, .lesson-box) { max-width: 34rem; }
 .lesson-prose > :first-child { margin-top: 0; }
 .lesson-prose::after { content: ''; display: block; clear: both; }
 
@@ -124,10 +130,9 @@
 
 .lesson-prose hr {
   height: 0;
-  margin: 2em auto;
+  margin: 2em 0;
   border: 0;
   border-top: 1px solid var(--paper-rule);
-  width: 40%;
 }
 
 /* Highlights keep the author's chosen colour (inline style) or the legacy
@@ -223,9 +228,10 @@
   margin: 0 0 2em;
   padding: 0.95em 1.2em 1.1em;
   border-top: 2px solid var(--forest);
-  border-bottom: 1px solid var(--paper-rule);
   background: var(--paper);
+  line-height: 1.55;
 }
+.lesson-box li + li { margin-top: 0.55em; }
 .lesson-prose .lesson-box + * { margin-top: 0; }
 .lesson-prose > * + .lesson-box { margin-top: 2em; }
 .lesson-box__label {

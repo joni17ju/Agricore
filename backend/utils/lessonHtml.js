@@ -27,6 +27,8 @@ const VIMEO_ID = /^\d{6,12}$/;
 const ALIGNMENTS = ['left', 'center', 'right'];
 const IMAGE_LAYOUTS = ['inline', 'center', 'full'];
 const CALLOUT_VARIANTS = ['info', 'warning', 'tip'];
+// Lists the editor marks as the learning-objectives box or the key-terms list.
+const LESSON_LIST_CLASSES = ['lesson-objectives', 'lesson-key-terms'];
 const HIGHLIGHT_COLORS = Object.keys(LEGACY_HIGHLIGHTS);
 
 // Relative links are resolved against a placeholder origin, as the browser
@@ -65,7 +67,7 @@ const ALLOWED_TAGS = Object.freeze({
   H2: { 'data-align': oneOf(ALIGNMENTS) },
   H3: { 'data-align': oneOf(ALIGNMENTS) },
   H4: { 'data-align': oneOf(ALIGNMENTS) },
-  UL: {},
+  UL: { class: oneOf(LESSON_LIST_CLASSES) },
   OL: {},
   LI: {},
   STRONG: {},

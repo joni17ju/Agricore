@@ -93,6 +93,14 @@ export function isSafeImageSrc(value) {
 export const ALIGNMENTS = ['left', 'center', 'right'];
 export const IMAGE_LAYOUTS = ['inline', 'center', 'full'];
 export const CALLOUT_VARIANTS = ['info', 'warning', 'tip'];
+
+/**
+ * Bullet lists the editor marks as a lesson element: the learning-objectives
+ * box and the key-terms list. The class is the only one lesson content may
+ * carry, so a list keeps its role through saving, reopening and editing.
+ */
+export const LESSON_LIST_STYLES = Object.freeze({ OBJECTIVES: 'lesson-objectives', KEY_TERMS: 'lesson-key-terms' });
+const LESSON_LIST_CLASSES = Object.values(LESSON_LIST_STYLES);
 /** The legacy named highlight palette; new highlights store a hex colour instead. */
 export const HIGHLIGHT_COLORS = Object.keys(LEGACY_HIGHLIGHTS);
 
@@ -107,7 +115,7 @@ export const ALLOWED_TAGS = Object.freeze({
   H2: { 'data-align': oneOf(ALIGNMENTS) },
   H3: { 'data-align': oneOf(ALIGNMENTS) },
   H4: { 'data-align': oneOf(ALIGNMENTS) },
-  UL: {},
+  UL: { class: oneOf(LESSON_LIST_CLASSES) },
   OL: {},
   LI: {},
   STRONG: {},

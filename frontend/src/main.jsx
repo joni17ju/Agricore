@@ -7,6 +7,7 @@ import './styles/base.css';
 import './styles/animations.css';
 import './components/common/common.css';
 import './components/common/lesson/lesson.css';
+import './components/common/lesson/lesson-layout.css';
 import './components/layout/layout.css';
 import './components/illustrations/illustrations.css';
 import './components/student/student.css';
