@@ -4,8 +4,16 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      First paint, before any stylesheet loads: the paper colour (--paper in
+      src/styles/tokens.css), so a slow connection never flashes white. Keep
+      these two values in step with that token.
+    -->
+    <style>
+      html, body { background: #f6f2e8; margin: 0; }
+    </style>
     <meta name="description" content="AgriCore — gamified learning platform for Principles of Crop Protection I, DOrSU" />
-    <meta name="theme-color" content="#0f7a3a" />
+    <meta name="theme-color" content="#f6f2e8" />
     <title>AgriCore · Principles of Crop Protection I</title>
   </head>
   <body>

@@ -538,7 +538,7 @@ a.module-card:hover .module-card__edit { transform: scale(1.12); background: var
  * monitor; narrow screens get the full width back.
  */
 .rte--fullscreen .rte__surface {
-  background: var(--gray-150);
+  background: var(--canvas);
   padding: var(--space-6) var(--space-4);
   /* Reserve the gutter on both sides, or the paper sits half a scrollbar
      left of centre. */

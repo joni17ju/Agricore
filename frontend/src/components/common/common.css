@@ -294,7 +294,7 @@
   transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease, background-color var(--duration-fast) ease;
 }
 .input:hover { border-color: var(--green-400); }
-.input:focus { outline: none; border-color: var(--green-600); background: var(--white); box-shadow: var(--focus-ring); }
+.input:focus { outline: none; border-color: var(--green-600); background: var(--surface); box-shadow: var(--focus-ring); }
 .field.has-error .input { border-color: var(--red-500); }
 .input--textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
 .select { position: relative; }
@@ -426,6 +426,7 @@
   flex-direction: column;
   width: 100%;
   max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   background: var(--surface);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);

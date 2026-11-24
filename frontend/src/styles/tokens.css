@@ -53,12 +53,19 @@
   /* Dark-green ink for shadows, scrims and veils. */
   --ink-rgb: 11, 38, 23;
 
-  --canvas: var(--gray-100);
-  --surface: var(--white);
-  --surface-muted: var(--gray-50);
-  --surface-sunken: var(--gray-150);
-  --border: var(--gray-200);
-  --border-strong: var(--gray-300);
+  /*
+   * Page and card surfaces: the warm "paper" of the lesson pages everywhere.
+   * --canvas is every page background (and html/body, so overscroll and the
+   * first paint match; index.html repeats the value inline because it paints
+   * before this file loads). Cards and panels sit on a lighter warm white,
+   * never stark #fff or cool grey. Text tokens below stay AA on all of them.
+   */
+  --canvas: var(--paper);
+  --surface: var(--paper-card);
+  --surface-muted: var(--paper-soft);
+  --surface-sunken: var(--paper-deep);
+  --border: #e3dccb;
+  --border-strong: #d2c8b1;
   --text: var(--gray-900);
   --text-body: var(--gray-800);
   --text-muted: var(--gray-600);
@@ -179,6 +186,8 @@
    * Text pairs are WCAG AA on both --paper and white.
    */
   --paper: #f6f2e8;
+  --paper-card: #fffcf6;
+  --paper-soft: #faf7f0;
   --paper-deep: #ede6d5;
   --paper-rule: #d9d0bb;
   --ink: #16261c;

@@ -296,7 +296,7 @@ a.module-card:active { transform: translateY(-1px); }
 .module-card--add__plus { display: grid; place-items: center; transition: transform var(--duration-base) var(--ease-spring); }
 .module-card--add:hover .module-card--add__plus { transform: scale(1.12); }
 
-.module-card--locked { background: var(--gray-150); color: var(--text-muted); box-shadow: none; }
+.module-card--locked { background: var(--surface-sunken); color: var(--text-muted); box-shadow: none; }
 .module-card--locked h3 { color: var(--text-muted); }
 .module-card--in-progress { border-color: var(--green-400); box-shadow: 0 0 0 3px rgba(var(--green-500-rgb), 0.12); }
 
@@ -404,7 +404,7 @@ a.module-card:hover .module-card__chevron { transform: translateX(4px); }
 .topic-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
 .topic-card h3 { font-size: var(--text-lg); }
 .topic-card__summary { color: var(--text-muted); font-size: var(--text-sm); flex: 1; }
-.topic-card--locked { background: var(--gray-150); border-style: dashed; }
+.topic-card--locked { background: var(--surface-sunken); border-style: dashed; }
 .topic-card--locked:hover { transform: none; box-shadow: none; }
 .topic-card--locked h3, .topic-card--locked .topic-card__summary { color: var(--text-subtle); }
 .topic-card--completed { border-color: var(--green-200); }
@@ -428,11 +428,11 @@ a.module-card:hover .module-card__chevron { transform: translateX(4px); }
 .mission-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .mission-list__item { display: flex; align-items: center; gap: var(--space-3); padding: 10px 12px; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); transition: border-color var(--duration-fast) ease, transform var(--duration-fast) ease; }
 .mission-list__item:hover { border-color: var(--green-400); }
-.mission-list__item.is-locked { background: var(--gray-150); color: var(--text-subtle); }
+.mission-list__item.is-locked { background: var(--surface-sunken); color: var(--text-subtle); }
 .mission-list__item.is-locked:hover { border-color: var(--border); }
 .mission-list__icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: var(--radius-sm); background: var(--green-50); color: var(--green-700); flex-shrink: 0; }
 .mission-list__item.is-passed .mission-list__icon { background: var(--green-600); color: var(--white); }
-.mission-list__item.is-locked .mission-list__icon { background: var(--gray-150); color: var(--text-subtle); }
+.mission-list__item.is-locked .mission-list__icon { background: var(--surface-sunken); color: var(--text-subtle); }
 .mission-list__text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .mission-list__text strong { font-size: var(--text-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mission-list__text small { color: var(--text-muted); font-size: var(--text-xs); }

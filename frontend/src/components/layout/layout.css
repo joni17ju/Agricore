@@ -1,5 +1,5 @@
 /* ───────── App shell ───────── */
-.app-shell { display: flex; min-height: 100vh; }
+.app-shell { display: flex; min-height: 100vh; min-height: 100dvh; }
 
 .sidebar {
   position: fixed;
@@ -259,7 +259,7 @@
 }
 .login-field .input:hover { border-color: var(--green-400); }
 .login-field .input:focus {
-  background: var(--white);
+  background: var(--surface);
   border-color: var(--green-600);
   box-shadow: 0 0 0 4px rgba(var(--green-500-rgb), 0.18), 0 6px 18px rgba(var(--green-700-rgb), 0.1);
 }
