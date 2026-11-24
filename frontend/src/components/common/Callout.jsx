@@ -1,23 +1,25 @@
-import Icon from './Icon.jsx';
+/**
+ * The three note types lesson content can carry, named the way a field guide
+ * would. The stored variant names (tip / info / warning) are unchanged, so
+ * every saved lesson keeps working; only the labels changed.
+ */
+export const CALLOUT_LABELS = Object.freeze({
+  tip: 'Key idea',
+  info: 'Field note',
+  warning: 'Caution',
+});
 
-const VARIANTS = {
-  info: { icon: 'info', label: 'Note' },
-  warning: { icon: 'alert', label: 'Warning' },
-  tip: { icon: 'sprout', label: 'Tip' },
-};
-
-/** Highlighted box inside lesson content (info / warning / tip). */
+/**
+ * Marginal-note box inside lesson content: a left rule and a small-caps label.
+ * Used by the lesson reader and by the editor's callout node view, so authors
+ * see exactly what students see.
+ */
 export default function Callout({ variant = 'info', children }) {
-  const meta = VARIANTS[variant] ?? VARIANTS.info;
+  const label = CALLOUT_LABELS[variant] ?? CALLOUT_LABELS.info;
   return (
-    <div className={`callout callout--${variant}`}>
-      <span className="callout__icon" aria-hidden="true">
-        <Icon name={meta.icon} size={17} />
-      </span>
-      <div className="callout__body">
-        <span className="callout__label">{meta.label}</span>
-        {children}
-      </div>
+    <div className={`callout callout--${variant}`} role="note">
+      <span className="callout__label">{label}</span>
+      <div className="callout__body">{children}</div>
     </div>
   );
 }

@@ -170,6 +170,29 @@
   --tactic-mechanical: #b58500;
   --tactic-chemical: #2d7c8a;
 
+  /*
+   * ── Lesson pages ──
+   * A printed-textbook palette, used only under .lesson-surface and inside
+   * lesson content (see components/common/lesson/lesson.css): warm paper
+   * instead of grey, green-black ink instead of grey text, deep forest green
+   * as the main colour and one muted ochre for key terms and field notes.
+   * Text pairs are WCAG AA on both --paper and white.
+   */
+  --paper: #f6f2e8;
+  --paper-deep: #ede6d5;
+  --paper-rule: #d9d0bb;
+  --ink: #16261c;
+  --ink-soft: #33453a;
+  --ink-muted: #56655a;
+  --forest: #1f5136;
+  --forest-deep: #143823;
+  --ochre: #b07d22;
+  --ochre-ink: #7a5311;
+  --ochre-wash: rgba(176, 125, 34, 0.24);
+  --clay: #9a3d25;
+  --font-serif: 'Source Serif 4', 'Source Serif Pro', Georgia, Cambria, 'Times New Roman', serif;
+  --font-text: 'Source Sans 3', 'Source Sans Pro', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+
   /* ── Type ── */
   --font-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', Arial, sans-serif;
   --text-xs: 0.75rem;

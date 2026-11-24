@@ -1,0 +1,269 @@
+/*
+ * Lesson reading style — one stylesheet for every place lesson content is
+ * shown: the student lesson page, the instructor "Student view", and the
+ * instructor editor surface (which carries the same .lesson-prose class, so
+ * authors see numbered headings, figure plates and callouts while typing).
+ *
+ * The look is a printed textbook / field guide: serif headings, green-black
+ * ink on warm paper, thin rules instead of heavy boxes, letter-spaced small
+ * labels, numbered sections and figures. Tokens live in styles/tokens.css.
+ */
+
+/* ───────── Surface ───────── */
+
+/* Paints the warm paper behind a whole lesson page; the rest of the app keeps
+   its canvas. */
+.app-main:has(.lesson-page) { background: var(--paper); }
+.lesson-surface { background: var(--paper); color: var(--ink); font-family: var(--font-text); }
+
+/* ───────── Prose ───────── */
+
+.rich-text,
+.lesson-prose {
+  font-family: var(--font-text);
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: var(--ink);
+  font-kerning: normal;
+  overflow-wrap: break-word;
+  counter-reset: lesson-section lesson-subsection lesson-figure;
+}
+.lesson-prose > * + * { margin-top: 1em; }
+.lesson-prose > :first-child { margin-top: 0; }
+.lesson-prose::after { content: ''; display: block; clear: both; }
+
+.lesson-prose p { margin: 0; }
+.lesson-prose > p + p { margin-top: 0.85em; }
+
+/* Headings: serif, numbered like a textbook (1, 1.1). */
+.lesson-prose h2,
+.lesson-prose h3,
+.lesson-prose h4 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--forest-deep);
+  scroll-margin-top: calc(var(--topbar-height) + var(--space-5));
+}
+.lesson-prose h2 {
+  margin-top: 2.1em;
+  padding-top: 0.75em;
+  border-top: 1px solid var(--paper-rule);
+  font-size: 1.5em;
+  letter-spacing: -0.005em;
+  counter-increment: lesson-section;
+  counter-reset: lesson-subsection;
+}
+.lesson-prose h2:first-child { padding-top: 0; border-top: 0; }
+.lesson-prose h3 {
+  margin-top: 1.7em;
+  font-size: 1.2em;
+  counter-increment: lesson-subsection;
+}
+.lesson-prose h2::before {
+  content: counter(lesson-section);
+  display: inline-block;
+  min-width: 1.6em;
+  font-weight: 400;
+  color: var(--ink-muted);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.lesson-prose h3::before {
+  content: counter(lesson-section) '.' counter(lesson-subsection);
+  display: inline-block;
+  min-width: 2.4em;
+  font-weight: 400;
+  color: var(--ink-muted);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+/* A reference list is back matter, not a numbered section. */
+.lesson-prose h2[data-unnumbered] { counter-increment: none; }
+.lesson-prose h2[data-unnumbered]::before { content: none; }
+.lesson-prose h4 {
+  margin-top: 1.5em;
+  font-family: var(--font-text);
+  font-size: 0.8em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--forest);
+}
+.lesson-prose h2 + *,
+.lesson-prose h3 + *,
+.lesson-prose h4 + * { margin-top: 0.6em; }
+
+/* Lists: even spacing, quiet markers. */
+.lesson-prose ul,
+.lesson-prose ol { margin-bottom: 0; padding-left: 1.4em; }
+.lesson-prose li { padding-left: 0.15em; }
+.lesson-prose li + li { margin-top: 0.45em; }
+.lesson-prose li > ul,
+.lesson-prose li > ol,
+.lesson-prose li > p + p { margin-top: 0.4em; }
+.lesson-prose ul > li::marker { color: var(--forest); }
+.lesson-prose ol > li::marker { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.lesson-prose li strong { color: var(--forest-deep); }
+
+/* Key terms in running text: bold with a faint ochre underline. Lists keep
+   plain bold, so converted tables do not turn into a field of highlights. */
+.lesson-prose strong { font-weight: 600; color: var(--ink); }
+.lesson-prose > p strong,
+.lesson-prose .callout__body p strong {
+  background: linear-gradient(transparent 64%, var(--ochre-wash) 64%);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.lesson-prose em { font-style: italic; }
+
+.lesson-prose a { color: var(--forest); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+.lesson-prose a:hover { color: var(--forest-deep); text-decoration-thickness: 2px; }
+.lesson-prose s { color: var(--ink-muted); }
+.lesson-prose [data-align='center'] { text-align: center; }
+.lesson-prose [data-align='right'] { text-align: right; }
+.lesson-prose [data-align='left'] { text-align: left; }
+
+.lesson-prose hr {
+  height: 0;
+  margin: 2em auto;
+  border: 0;
+  border-top: 1px solid var(--paper-rule);
+  width: 40%;
+}
+
+/* Highlights keep the author's chosen colour (inline style) or the legacy
+   fixed palette (data-color). */
+.lesson-prose mark { padding: 0 0.15em; border-radius: 2px; background: #efe1b8; color: inherit; }
+.lesson-prose mark[data-color='green'] { background: #d6ecd9; }
+.lesson-prose mark[data-color='amber'] { background: #efe1b8; }
+.lesson-prose mark[data-color='blue'] { background: #d7e3f1; }
+.lesson-prose mark[data-color='pink'] { background: #f1d9df; }
+
+/* ───────── Marginal notes: callouts and blockquotes ───────── */
+
+.callout,
+.lesson-prose blockquote {
+  margin: 1.6em 0;
+  padding: 0.85em 1.1em 0.95em 1.15em;
+  border-left: 3px solid var(--forest);
+  background: var(--paper);
+}
+.callout__label,
+.lesson-prose blockquote::before {
+  display: block;
+  margin-bottom: 0.35em;
+  font-family: var(--font-text);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--forest);
+}
+.callout__body { min-width: 0; font-size: 0.97em; }
+.callout__body > * + * { margin-top: 0.55em; }
+/* The first bold line of a callout reads as its title. */
+.callout__body > p:first-child > strong:only-child { display: block; font-family: var(--font-serif); font-size: 1.05em; background: none; color: var(--forest-deep); }
+.callout--info { border-left-color: var(--ochre); }
+.callout--info .callout__label { color: var(--ochre-ink); }
+.callout--warning { border-left-color: var(--clay); background: #f8ece6; }
+.callout--warning .callout__label { color: var(--clay); }
+
+.lesson-prose blockquote { font-family: var(--font-serif); font-size: 1.02em; color: var(--ink-soft); }
+.lesson-prose blockquote::before { content: 'Key idea'; }
+.lesson-prose blockquote > * + * { margin-top: 0.5em; }
+.lesson-prose blockquote p { font-style: italic; }
+
+/* ───────── Figure plates ───────── */
+
+.lesson-prose figure,
+.lesson-figure {
+  margin: 1.8em 0;
+  padding: 0.7em 0.7em 0.6em;
+  border: 1px solid var(--paper-rule);
+  background: var(--white);
+  box-shadow: 0 1px 2px rgba(22, 38, 28, 0.06);
+}
+.lesson-prose figure img,
+.lesson-figure img { display: block; width: 100%; height: auto; margin: 0 auto; }
+.lesson-prose figure[data-layout='inline'] { float: left; width: min(46%, 300px); margin: 0.35em 1.3em 0.8em 0; }
+.lesson-prose figure[data-layout='full'] { margin-left: 0; margin-right: 0; }
+.lesson-prose figcaption {
+  margin-top: 0.65em;
+  font-size: 0.82em;
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
+.lesson-figure__num { font-weight: 700; color: var(--ink-soft); }
+.lesson-figure__zoom {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+.lesson-figure__zoom:focus-visible { outline: 2px solid var(--forest); outline-offset: 3px; }
+
+/* Bare images (the editor's plain "Insert image"); the student view wraps
+   every image in a figure plate. */
+.lesson-prose img { max-width: 100%; height: auto; }
+.lesson-prose > img[data-layout='center'],
+.lesson-prose > p > img[data-layout='center'] { display: block; margin: 1.6em auto; max-width: min(100%, 560px); }
+.lesson-prose > img[data-layout='full'] { display: block; width: 100%; margin: 1.6em 0; }
+.lesson-prose img[data-layout='inline'] { float: left; width: min(46%, 300px); margin: 0.35em 1.3em 0.8em 0; }
+@media (max-width: 560px) {
+  .lesson-prose figure[data-layout='inline'],
+  .lesson-prose img[data-layout='inline'] { float: none; width: 100%; margin: 1.4em 0; }
+}
+
+/* ───────── Learning objectives and key terms ───────── */
+
+.lesson-box {
+  margin: 0 0 2em;
+  padding: 0.95em 1.2em 1.1em;
+  border-top: 2px solid var(--forest);
+  border-bottom: 1px solid var(--paper-rule);
+  background: var(--paper);
+}
+.lesson-prose .lesson-box + * { margin-top: 0; }
+.lesson-prose > * + .lesson-box { margin-top: 2em; }
+.lesson-box__label {
+  margin-bottom: 0.55em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--forest);
+}
+.lesson-box > p:not(.lesson-box__label) { color: var(--ink-soft); font-size: 0.95em; }
+.lesson-box--objectives ul,
+.lesson-box--objectives ol { margin-top: 0.4em; padding-left: 0; list-style: none; counter-reset: objective; }
+.lesson-box--objectives li { position: relative; padding-left: 1.8em; counter-increment: objective; }
+.lesson-box--objectives li::before {
+  content: counter(objective);
+  position: absolute;
+  left: 0;
+  top: 0.05em;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  color: var(--ochre-ink);
+  font-variant-numeric: lining-nums;
+}
+
+/* Key terms: a definition list — term on the left, meaning beside it. */
+.lesson-terms { margin: 0; }
+.lesson-terms__row { display: grid; grid-template-columns: minmax(7.5em, 30%) 1fr; gap: 0.15em 1.1em; padding: 0.55em 0; border-top: 1px solid var(--paper-rule); }
+.lesson-terms__row:first-child { border-top: 0; padding-top: 0.2em; }
+.lesson-terms dt { font-weight: 600; color: var(--forest-deep); }
+.lesson-terms dd { margin: 0; font-size: 0.95em; color: var(--ink-soft); }
+@media (max-width: 560px) {
+  .lesson-terms__row { grid-template-columns: 1fr; }
+}
+
+/* Reference lists after a "References" heading: smaller back matter. */
+.lesson-prose .lesson-refs { font-size: 0.82em; line-height: 1.55; color: var(--ink-soft); overflow-wrap: anywhere; }
+.lesson-prose .lesson-refs li + li { margin-top: 0.5em; }
+
+/* Videos inside lessons sit on the same grid as figures. */
+.lesson-prose .video-embed { margin: 1.8em 0; }

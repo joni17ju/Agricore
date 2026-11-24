@@ -1,10 +1,12 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import './styles/fonts.css';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/animations.css';
 import './components/common/common.css';
+import './components/common/lesson/lesson.css';
 import './components/layout/layout.css';
 import './components/illustrations/illustrations.css';
 import './components/student/student.css';
