@@ -18,6 +18,9 @@ import MediaManager from '../../components/instructor/MediaManager.jsx';
 import { UploadModal } from '../../components/instructor/MediaManager.jsx';
 import { MissionManager } from '../../components/instructor/MissionManager.jsx';
 import { gameIcon } from '../../components/student/CourseMap.jsx';
+import LessonDocument, { LessonFooter } from '../../components/common/lesson/LessonDocument.jsx';
+import { GAME_TYPE_INFO } from '../../constants/gameTypes.js';
+import { missionCode } from '../../utils/format.js';
 
 /**
  * The editor bundles Tiptap, so it is loaded only when an instructor actually
@@ -147,6 +150,7 @@ function LessonWorkspace({ moduleEntry, lessonEntry, onChanged, onDeleted, toast
           onChange={changeTab}
           tabs={[
             { value: 'content', label: 'Lesson Content Editor', icon: 'file' },
+            { value: 'preview', label: 'Student view', icon: 'eye' },
             { value: 'media', label: 'Media', icon: 'image', count: lesson.mediaAssets.length },
             { value: 'missions', label: 'Missions', icon: 'target', count: missions.length },
           ]}
@@ -195,6 +199,18 @@ function LessonWorkspace({ moduleEntry, lessonEntry, onChanged, onDeleted, toast
             )}
           </div>
         )}
+        {tab === 'preview' && (
+          <StudentViewPreview
+            moduleEntry={moduleEntry}
+            lesson={lesson}
+            missions={missions}
+            title={title}
+            html={html}
+            isDirty={isDirty}
+            onEditLesson={() => setTab('content')}
+            onEditMissions={() => setTab('missions')}
+          />
+        )}
         {tab === 'media' && <MediaManager lesson={lesson} onChanged={onChanged} uploadOpen={uploadOpen} onUploadOpenChange={setUploadOpen} />}
         {tab === 'missions' && (
           <MissionManager
@@ -240,5 +256,69 @@ function LessonWorkspace({ moduleEntry, lessonEntry, onChanged, onDeleted, toast
         confirmLabel="Delete lesson"
       />
     </Card>
+  );
+}
+
+/**
+ * The lesson in the student reading layout, from the content being edited
+ * (unsaved changes included). The student-only parts — Learn/Practice/Apply
+ * and the mission side panel — are left out; the lesson's missions are
+ * listed under the content instead, with instructor actions in the footer.
+ */
+function StudentViewPreview({ moduleEntry, lesson, missions, title, html, isDirty, onEditLesson, onEditMissions }) {
+  const { module, lessons } = moduleEntry;
+  const index = lessons.findIndex((item) => item.lesson._id === lesson._id);
+  const neighbour = (item) => (item ? { to: `/instructor/modules/${module._id}/lessons/${item.lesson._id}`, title: item.lesson.title } : null);
+
+  return (
+    <div className="lesson-surface lesson-preview">
+      <p className="lesson-preview__note">
+        <Icon name="eye" size={15} />
+        {isDirty ? 'Your unsaved changes, exactly as students will see them once saved.' : 'This lesson exactly as students see it.'}
+        {' '}Students also see the mission panel and their progress beside it.
+      </p>
+      <LessonDocument
+        kicker={`Module ${module.moduleNumber} · Topic ${lesson.lessonNumber}`}
+        context={module.title}
+        title={title}
+        html={html}
+        mediaAssets={lesson.mediaAssets}
+        afterContent={(
+          <section className="lesson-missions" aria-labelledby="lesson-missions-title">
+            <h2 id="lesson-missions-title" className="lesson-missions__title">Missions for this lesson</h2>
+            {missions.length === 0 ? (
+              <p className="lesson-missions__empty">
+                No mission yet. Students cannot complete a lesson without one.{' '}
+                <button type="button" className="lesson-missions__link" onClick={onEditMissions}>Add a mission</button>
+              </p>
+            ) : (
+              <ol className="mission-levels">
+                {missions.map((mission) => (
+                  <li key={mission._id}>
+                    <span className="mission-levels__code">{missionCode(module, mission)}</span>
+                    <span className="mission-levels__title">{mission.scenarioData.title}</span>
+                    <span className="mission-levels__meta">
+                      {GAME_TYPE_INFO[mission.gameType ?? module.gameType]?.label} game · {mission.maxXP} XP
+                    </span>
+                    <button type="button" className="mission-levels__play" onClick={onEditMissions} aria-label={`Edit ${mission.scenarioData.title}`}>
+                      Edit
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+        )}
+        footer={(
+          <LessonFooter
+            previous={neighbour(lessons[index - 1])}
+            next={neighbour(lessons[index + 1])}
+            previousLabel="Previous lesson"
+            nextLabel="Next lesson"
+            action={<Button variant="secondary" icon="edit" onClick={onEditLesson}>Edit lesson</Button>}
+          />
+        )}
+      />
+    </div>
   );
 }
