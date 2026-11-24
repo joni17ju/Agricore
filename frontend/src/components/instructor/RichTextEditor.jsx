@@ -29,6 +29,7 @@ import {
   FigureNode,
   LegacySectionHints,
   LessonListStyle,
+  ListRoles,
   VideoEmbedNode,
 } from './editorExtensions.jsx';
 import { FormattingHelp, InsertDialogs, InsertMenu } from './LessonInsertTools.jsx';
@@ -106,6 +107,7 @@ export default function RichTextEditor({
         FigureNode,
         LessonListStyle,
         LegacySectionHints,
+        ListRoles,
       ],
       content: initialHtml || '<p></p>',
       /*

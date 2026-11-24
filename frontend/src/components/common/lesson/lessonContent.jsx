@@ -322,6 +322,8 @@ function toReact(node, key, context) {
     props.alt = props.alt ?? '';
   }
   if ((tag === 'H2' || tag === 'H3') && props.id) props.tabIndex = -1;
+  // Lesson lists drop the browser bullets; role="list" keeps them announced as lists (Safari/VoiceOver).
+  if (tag === 'UL' || tag === 'OL') props.role = 'list';
 
   return createElement(tag.toLowerCase(), props, children);
 }

@@ -424,3 +424,31 @@ export const LegacySectionHints = Extension.create({
     ];
   },
 });
+
+/*
+ * Lesson lists are drawn without browser bullets (see lesson.css), which makes
+ * some screen readers stop announcing them as lists. role="list" restores that
+ * in the editor as a display-only decoration, so it never reaches the saved
+ * HTML (the reader adds the same role when rendering).
+ */
+export const ListRoles = Extension.create({
+  name: 'listRoles',
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('listRoles'),
+        props: {
+          decorations(state) {
+            const decorations = [];
+            state.doc.descendants((node, pos) => {
+              if (node.type.name === 'bulletList' || node.type.name === 'orderedList') {
+                decorations.push(Decoration.node(pos, pos + node.nodeSize, { role: 'list' }));
+              }
+            });
+            return DecorationSet.create(state.doc, decorations);
+          },
+        },
+      }),
+    ];
+  },
+});

@@ -40,6 +40,8 @@
 
 .lesson-prose p { margin: 0; }
 .lesson-prose > p + p { margin-top: 0.85em; }
+/* A paragraph after a list, note, figure or rule keeps the block spacing (p's reset above would remove it). */
+.lesson-prose > :is(ul, ol, blockquote, figure, hr, div, aside) + p { margin-top: 1em; }
 
 /* Headings: serif, numbered like a textbook (1, 1.1). */
 .lesson-prose h2,
@@ -111,17 +113,111 @@
 .lesson-prose h3 + *,
 .lesson-prose h4 + * { margin-top: 0.6em; }
 
-/* Lists: even spacing, quiet markers. */
+/*
+ * Lists — an indented textbook layout instead of browser bullets.
+ *
+ * A thin green rule runs down the left of each list; items hang from it with
+ * even spacing, and wrapped lines align under the text, not the marker.
+ * Bulleted items carry a short en dash, numbered items serif numerals, both in
+ * muted green and set in the gutter. Items that open with a bold term
+ * ("Growing demand — more people…") read as definition rows: the term in
+ * serif semibold, faint rules between rows.
+ *
+ * Only plain lists take this style. Marked lists (objectives, key terms),
+ * reference lists and anything inside a lesson box keep their own layout.
+ * Lists keep role="list" (added when rendering and in the editor), so
+ * screen readers still announce them with list-style: none.
+ */
 .lesson-prose ul,
 .lesson-prose ol { margin-bottom: 0; padding-left: 1.4em; }
-.lesson-prose li { padding-left: 0.15em; }
-.lesson-prose li + li { margin-top: 0.45em; }
-.lesson-prose li > ul,
-.lesson-prose li > ol,
 .lesson-prose li > p + p { margin-top: 0.4em; }
-.lesson-prose ul > li::marker { color: var(--forest); }
-.lesson-prose ol > li::marker { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
 .lesson-prose li strong { color: var(--forest-deep); }
+
+.lesson-prose :where(ul, ol):not([class], .lesson-box *) {
+  margin-left: 0.3em;
+  padding-left: 1.55em;
+  border-left: 1px solid var(--forest-rule);
+  list-style: none;
+}
+.lesson-prose :where(ul, ol):not([class], .lesson-box *) > li {
+  position: relative;
+  padding-left: 0;
+}
+.lesson-prose :where(ul, ol):not([class], .lesson-box *) > li + li { margin-top: 0.6em; }
+.lesson-prose :where(ul, ol):not([class], .lesson-box *) > li > p { margin: 0; }
+
+/* Markers, set in the gutter between the rule and the text. */
+.lesson-prose :where(ul):not([class], .lesson-box *) > li::before {
+  content: '–';
+  position: absolute;
+  left: -1.05em;
+  top: 0;
+  color: var(--forest-muted);
+  font-weight: 400;
+}
+.lesson-prose :where(ol):not([class], .lesson-box *) { counter-reset: lesson-list; padding-left: 2.1em; }
+.lesson-prose :where(ol):not([class], .lesson-box *) > li { counter-increment: lesson-list; }
+.lesson-prose :where(ol):not([class], .lesson-box *) > li::before {
+  content: counter(lesson-list) '.';
+  position: absolute;
+  left: -2.05em;
+  top: 0;
+  width: 1.55em;
+  text-align: right;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--forest-muted);
+}
+
+/* Term-and-explanation items: the bold lead becomes the term of a definition row. */
+.lesson-prose :where(ul, ol):not([class], .lesson-box *) > li > strong:first-child,
+.lesson-prose :where(ul, ol):not([class], .lesson-box *) > li > p:first-child > strong:first-child {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.02em;
+  letter-spacing: 0.005em;
+  color: var(--forest-deep);
+}
+.lesson-prose :where(ul, ol):not([class], .lesson-box *) > li:has(> strong:first-child, > p:first-child > strong:first-child) + li:has(> strong:first-child, > p:first-child > strong:first-child) {
+  margin-top: 0.55em;
+  padding-top: 0.55em;
+  border-top: 1px solid var(--paper-rule);
+}
+/* The marker follows the row's top padding so it stays level with the first line. */
+.lesson-prose :where(ul, ol):not([class], .lesson-box *) > li:has(> strong:first-child, > p:first-child > strong:first-child) + li:has(> strong:first-child, > p:first-child > strong:first-child)::before { top: 0.55em; }
+/* A definition row needs no dash: its term leads the row. */
+.lesson-prose :where(ul):not([class], .lesson-box *) > li:has(> strong:first-child, > p:first-child > strong:first-child)::before { content: none; }
+
+/* Second level: indented further, a lighter rule, a smaller dash. */
+.lesson-prose :where(ul, ol):not([class], .lesson-box *) :where(ul, ol) {
+  margin-top: 0.5em;
+  margin-left: 0;
+  border-left-color: var(--paper-rule);
+}
+.lesson-prose :where(ul, ol):not([class], .lesson-box *) :where(ul) > li::before { color: var(--ink-muted); }
+.lesson-prose :where(ul, ol):not([class], .lesson-box *) :where(ul, ol) > li + li { margin-top: 0.4em; }
+/* Second-level terms are quieter (sans semibold) and their rows go without
+   dividers, so the outer term stays the clear lead. */
+.lesson-prose :where(ul, ol):not([class], .lesson-box *) :where(ul, ol) > li > strong:first-child,
+.lesson-prose :where(ul, ol):not([class], .lesson-box *) :where(ul, ol) > li > p:first-child > strong:first-child {
+  font-family: var(--font-text);
+  font-size: 1em;
+  letter-spacing: 0;
+}
+/* Same selector shape as the divider rule above, so this later rule wins. */
+.lesson-prose :where(ul, ol):not([class], .lesson-box *) :where(ul, ol) > li:has(> strong:first-child, > p:first-child > strong:first-child) + li:has(> strong:first-child, > p:first-child > strong:first-child) {
+  margin-top: 0.4em;
+  padding-top: 0;
+  border-top: 0;
+}
+.lesson-prose :where(ul, ol):not([class], .lesson-box *) :where(ul, ol) > li:has(> strong:first-child, > p:first-child > strong:first-child) + li:has(> strong:first-child, > p:first-child > strong:first-child)::before { top: 0; }
+
+@media (max-width: 560px) {
+  .lesson-prose :where(ul, ol):not([class], .lesson-box *) { margin-left: 0.1em; padding-left: 1.25em; }
+  .lesson-prose :where(ol):not([class], .lesson-box *) { padding-left: 1.9em; }
+  .lesson-prose :where(ul, ol):not([class], .lesson-box *) :where(ul, ol) { padding-left: 1.1em; }
+}
 
 /* Key terms in running text: bold with a faint ochre underline. Lists keep
    plain bold, so converted tables do not turn into a field of highlights. */
@@ -179,7 +275,8 @@
   color: var(--forest);
 }
 .callout__body { min-width: 0; font-size: 0.97em; }
-.callout__body > * + * { margin-top: 0.55em; }
+.callout__body > * + *,
+.lesson-prose .callout__body > * + * { margin-top: 0.55em; }
 /* The first bold line of a callout reads as its title. */
 .callout__body > p:first-child > strong:only-child { display: block; font-family: var(--font-serif); font-size: 1.05em; background: none; color: var(--forest-deep); }
 .callout--info { border-left-color: var(--ochre); }
@@ -292,7 +389,9 @@
 }
 
 /* Reference lists after a "References" heading: smaller back matter. */
-.lesson-prose .lesson-refs { font-size: 0.82em; line-height: 1.55; color: var(--ink-soft); overflow-wrap: anywhere; }
+.lesson-prose .lesson-refs { padding-left: 1.6em; list-style: none; font-size: 0.82em; line-height: 1.55; color: var(--ink-soft); overflow-wrap: anywhere; }
+/* Hanging indent, as in a printed bibliography. */
+.lesson-prose .lesson-refs li { text-indent: -1.6em; }
 .lesson-prose .lesson-refs li + li { margin-top: 0.5em; }
 
 /* Videos inside lessons sit on the same grid as figures. */

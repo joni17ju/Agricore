@@ -186,6 +186,8 @@
   --ink-muted: #56655a;
   --forest: #1f5136;
   --forest-deep: #143823;
+  --forest-muted: #477258;
+  --forest-rule: rgba(31, 81, 54, 0.32);
   --ochre: #b07d22;
   --ochre-ink: #7a5311;
   --ochre-wash: rgba(176, 125, 34, 0.24);
