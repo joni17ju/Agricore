@@ -4,6 +4,7 @@ import { CountUp, StatusPill } from '../common/Display.jsx';
 import Icon from '../common/Icon.jsx';
 import { ProgressBar, ProgressRing } from '../common/Progress.jsx';
 import BadgeTile from '../student/BadgeTile.jsx';
+import { missionGameType } from '../../constants/gameTypes.js';
 import { describeFeedback } from './missionFeedback.js';
 
 const LEAVES = Array.from({ length: 14 }, (_, i) => i);
@@ -19,7 +20,7 @@ function nextStepLink(nextStep) {
 /** Result screen after a mission attempt: score, XP, badges, unlocks and feedback. */
 export default function MissionResult({ result, answers, mission, module, onRetry }) {
   const { isPassed, score, xpEarned, totalXP, level, leveledUp, newBadges, unlockedLessons, unlockedModule, moduleCleared, rankBefore, rankAfter } = result;
-  const feedback = describeFeedback({ gameType: module.gameType, scenarioData: mission.scenarioData, breakdown: result.breakdown, answers });
+  const feedback = describeFeedback({ gameType: missionGameType(module, mission), scenarioData: mission.scenarioData, breakdown: result.breakdown, answers });
   const next = nextStepLink(result.nextStep);
   const rankImproved = rankBefore && rankAfter && rankAfter < rankBefore;
 

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
-import { GAME_TYPES, GAME_TYPE_INFO } from '../../constants/gameTypes.js';
+import { GAME_TYPES, GAME_TYPE_INFO, missionGameType } from '../../constants/gameTypes.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
 import { getMissionForStudent, submitAttempt } from '../../services/missionService.js';
@@ -56,8 +56,9 @@ export default function MissionPlayPage() {
   }
 
   const { mission, module, lesson, totalLevels, totalXP, bestScore } = data;
-  const Game = GAMES[module.gameType];
-  const howTo = HOW_TO_PLAY[module.gameType];
+  const gameType = missionGameType(module, mission);
+  const Game = GAMES[gameType];
+  const howTo = HOW_TO_PLAY[gameType];
 
   const start = () => {
     startedAt.current = Date.now();
@@ -87,7 +88,7 @@ export default function MissionPlayPage() {
   };
 
   return (
-    <div className={`mission-page mission-page--${module.gameType}`}>
+    <div className={`mission-page mission-page--${gameType}`}>
       <header className="mission-topbar">
         <Link to={`/student/modules/${module._id}`} className="mission-topbar__back" aria-label="Leave mission">
           <Icon name="arrow-left" size={20} />
@@ -110,10 +111,10 @@ export default function MissionPlayPage() {
         {phase === 'intro' && (
           <section className="mission-intro anim-scale-in">
             <div className="mission-intro__badge">
-              <Icon name={gameIcon(module.gameType)} size={36} />
+              <Icon name={gameIcon(gameType)} size={36} />
             </div>
             <span className="page-header__eyebrow">
-              {missionCode(module, mission)} · {GAME_TYPE_INFO[module.gameType].label} Game
+              {missionCode(module, mission)} · {GAME_TYPE_INFO[gameType].label} Game
             </span>
             <h1>{mission.scenarioData.title}</h1>
             <p className="text-muted">{mission.scenarioData.instructions}</p>
