@@ -45,30 +45,6 @@ function StatusDot({ status }) {
 }
 
 /**
- * Learn / Practice / Apply as one quiet line under the lesson title.
- * Learn is done by reading; Practice is under way once a level is attempted;
- * Apply is reached when every level is cleared.
- */
-export function LessonSteps({ status }) {
-  const steps = [
-    { key: 'learn', label: 'Learn', done: true },
-    { key: 'practice', label: 'Practice', done: status === 'cleared', current: status === 'in-progress' },
-    { key: 'apply', label: 'Apply', done: status === 'cleared', current: false },
-  ];
-  return (
-    <ol className="lesson-steps" aria-label="Topic progress">
-      {steps.map((step) => (
-        <li key={step.key} className={`${step.done ? 'is-done' : ''} ${step.current ? 'is-current' : ''}`}>
-          {step.done && <Icon name="check" size={12} />}
-          {step.label}
-          <span className="sr-only">{step.done ? ' (done)' : step.current ? ' (in progress)' : ' (not yet)'}</span>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-/**
  * "Practice: Mission" side panel. The chevron closes it to a slim tab that
  * keeps the status dot visible; the tab reopens it. On narrow layouts the
  * panel always shows in full below the lesson and the toggle is hidden (CSS).

@@ -8,7 +8,7 @@ import { getLessonForStudent, markLessonViewed } from '../../services/progressSe
 import Button from '../../components/common/Button.jsx';
 import { ErrorState, LoadingState } from '../../components/common/Display.jsx';
 import LessonDocument, { LessonFooter } from '../../components/common/lesson/LessonDocument.jsx';
-import LessonMissionPanel, { LessonSteps, missionStatus, useMissionPanelState } from '../../components/student/LessonMissionPanel.jsx';
+import LessonMissionPanel, { useMissionPanelState } from '../../components/student/LessonMissionPanel.jsx';
 
 /**
  * A lesson as the student reads it: the shared lesson layout (see
@@ -34,7 +34,6 @@ export default function LessonViewerPage() {
   if (error) return <ErrorState error={error} onRetry={reload} backTo="/student/modules" />;
 
   const { lesson, module, levels, previousLesson, nextLesson } = data;
-  const status = missionStatus(levels);
   const missionTarget = levels.find((level) => !level.isPassed) ?? levels[0];
 
   return (
@@ -43,7 +42,6 @@ export default function LessonViewerPage() {
         kicker={`Module ${module.moduleNumber} · Topic ${lesson.lessonNumber}`}
         context={module.title}
         title={lesson.title}
-        steps={levels.length > 0 ? <LessonSteps status={status} /> : null}
         html={lesson.contentBody}
         mediaAssets={lesson.mediaAssets}
         aside={<LessonMissionPanel module={module} levels={levels} closed={panelClosed} onToggle={togglePanel} />}

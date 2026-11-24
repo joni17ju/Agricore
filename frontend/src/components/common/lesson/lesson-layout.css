@@ -57,7 +57,7 @@
 .lesson-toc--drop,
 .lesson-plates { max-width: 34rem; }
 
-/* Header: kicker, title beside a thin green rule, steps, divider. */
+/* Header: kicker, title beside a thin green rule, divider. */
 .lesson-head { margin-bottom: 2rem; padding-bottom: 1.1rem; border-bottom: 1px solid var(--paper-rule); }
 .lesson-head__kicker {
   display: flex;
@@ -85,22 +85,6 @@
   color: var(--forest-deep);
   text-wrap: balance;
 }
-
-.lesson-steps {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 1.1rem;
-  margin: 1rem 0 0;
-  padding: 0;
-  list-style: none;
-  font-family: var(--font-text);
-  font-size: 0.8rem;
-  color: var(--ink-muted);
-}
-.lesson-steps li { display: inline-flex; align-items: center; gap: 0.3rem; }
-.lesson-steps li + li::before { content: '—'; margin-right: 0.8rem; color: var(--paper-rule); }
-.lesson-steps li.is-done { color: var(--forest); font-weight: 600; }
-.lesson-steps li.is-current { color: var(--ochre-ink); font-weight: 600; }
 
 /* "On this page" */
 .lesson-toc { font-family: var(--font-text); }

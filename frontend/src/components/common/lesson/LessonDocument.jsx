@@ -18,7 +18,6 @@ import { prepareLessonContent, renderLessonContent } from './lessonContent.jsx';
  *
  * @param {string} kicker            small letter-spaced label, e.g. "Module 4 · Topic 3"
  * @param {string} [context]         muted text after the kicker, e.g. the module title
- * @param {React.ReactNode} [steps]  a one-line progress row under the title
  * @param {React.ReactNode} [aside]  the side panel (student mission panel)
  * @param {boolean} [asideClosed]    the side panel is collapsed to its tab
  * @param {React.ReactNode} [afterContent] shown at the end of the article
@@ -29,7 +28,6 @@ export default function LessonDocument({
   context,
   title,
   titleAs: Title = 'h1',
-  steps = null,
   html,
   mediaAssets = [],
   aside = null,
@@ -62,7 +60,6 @@ export default function LessonDocument({
                   {context && <span className="lesson-head__context">{context}</span>}
                 </p>
                 <Title id="lesson-title" className="lesson-head__title">{title}</Title>
-                {steps}
               </header>
 
               {hasToc && <LessonTocDropdown outline={outline} active={active} />}

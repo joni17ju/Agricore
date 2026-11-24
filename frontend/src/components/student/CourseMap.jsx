@@ -178,24 +178,3 @@ export function TopicCard({ entry, module, index, playUnlock }) {
   );
 }
 
-/** Learn → Practice → Apply indicator (Proposal §1.1). */
-export function LearnPracticeApply({ active = 'learn', completed = [] }) {
-  const steps = [
-    { key: 'learn', label: 'Learn', hint: 'Study the topic', icon: 'book' },
-    { key: 'practice', label: 'Practice', hint: 'Play the mission', icon: 'target' },
-    { key: 'apply', label: 'Apply', hint: 'Clear every level', icon: 'shield' },
-  ];
-  return (
-    <ol className="lpa">
-      {steps.map((step) => (
-        <li key={step.key} className={`lpa__step ${active === step.key ? 'is-active' : ''} ${completed.includes(step.key) ? 'is-done' : ''}`}>
-          <span className="lpa__icon"><Icon name={completed.includes(step.key) ? 'check' : step.icon} size={16} /></span>
-          <span>
-            <strong>{step.label}</strong>
-            <small>{step.hint}</small>
-          </span>
-        </li>
-      ))}
-    </ol>
-  );
-}
