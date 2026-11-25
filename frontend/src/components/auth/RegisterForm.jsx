@@ -6,6 +6,7 @@ import { ROLES } from '../../constants/roles.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useAsync } from '../../hooks/useAsync.js';
 import { listSectionOptions } from '../../services/sectionService.js';
+import { TERMS_VERSION } from '../../pages/legal/legalText.js';
 
 /**
  * The create-account form on its own, with no page chrome around it.
@@ -38,15 +39,22 @@ export default function RegisterForm({ onSuccess, onPendingApproval }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Required, and never pre-ticked: agreeing has to be the student's own act.
+  const [agreed, setAgreed] = useState(false);
 
   const update = (field) => (event) => setForm({ ...form, [field]: event.target.value });
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (isSubmitting) return;
+    if (!agreed) {
+      setError('Please agree to the Terms and Conditions and the Privacy Notice to create an account.');
+      return;
+    }
     setError('');
     setIsSubmitting(true);
     try {
-      const result = await register({ ...form, role: ROLES.STUDENT });
+      const result = await register({ ...form, role: ROLES.STUDENT, acceptedTerms: true, termsVersion: TERMS_VERSION });
       if (result.requiresApproval) onPendingApproval();
       else onSuccess();
     } catch (err) {
@@ -139,8 +147,27 @@ export default function RegisterForm({ onSuccess, onPendingApproval }) {
         Use at least 8 characters. Your instructor approves new accounts before you can sign in.
       </p>
 
+      <label className="terms-check">
+        <input
+          type="checkbox"
+          checked={agreed}
+          onChange={(event) => setAgreed(event.target.checked)}
+          required
+          aria-describedby="terms-check-note"
+        />
+        <span>
+          I have read and agree to the{' '}
+          <a href="/terms" target="_blank" rel="noopener noreferrer">Terms and Conditions</a> and the{' '}
+          <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Notice</a>.
+        </span>
+      </label>
+      <p id="terms-check-note" className="register-hint">
+        <Icon name="info" size={14} />
+        This covers using the app. Taking part in the research study is asked separately, on the Informed Consent Form.
+      </p>
+
       <div className="login-actions login-actions--single">
-        <Button type="submit" size="lg" isLoading={isSubmitting}>Create account</Button>
+        <Button type="submit" size="lg" isLoading={isSubmitting} disabled={!agreed || isSubmitting}>Create account</Button>
       </div>
     </form>
   );

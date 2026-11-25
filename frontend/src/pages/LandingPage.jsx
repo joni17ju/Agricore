@@ -107,7 +107,7 @@ function HeroBackdrop() {
   );
 }
 
-function LandingNav({ onSignIn }) {
+function LandingNav({ onSignIn, onRegister }) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -152,7 +152,10 @@ function LandingNav({ onSignIn }) {
           {user ? (
             <Button to={ROLE_HOME[user.role]} size="sm" iconRight="arrow-right">Go to dashboard</Button>
           ) : (
-            <Button size="sm" onClick={onSignIn}>Login</Button>
+            <>
+              <Button variant="secondary" size="sm" className="landing-nav__login" onClick={onSignIn}>Login</Button>
+              <Button size="sm" className="landing-nav__register" onClick={onRegister}>Register</Button>
+            </>
           )}
           <button
             type="button"
@@ -204,6 +207,7 @@ function DeviceMockup() {
 }
 
 export default function LandingPage() {
+  const { user } = useAuth();
   useDocumentTitle('AgriCore — gamified learning for Principles of Crop Protection I');
   /*
    * Which auth view is showing, or null for none. Plain state rather than the
@@ -218,7 +222,7 @@ export default function LandingPage() {
 
   return (
     <div className={`landing ${isPageVisible ? '' : 'is-paused'}`}>
-      <LandingNav onSignIn={() => openAuth(AUTH_VIEWS.LOGIN)} />
+      <LandingNav onSignIn={() => openAuth(AUTH_VIEWS.LOGIN)} onRegister={() => openAuth(AUTH_VIEWS.REGISTER)} />
 
       <main>
         {/* ── Hero ── */}
@@ -235,6 +239,12 @@ export default function LandingPage() {
               AgriCore turns Principles of Crop Protection I into hands-on practice. Work through interactive
               missions, make real calls on pests, diseases and weeds, and watch your progress build lesson by lesson.
             </p>
+            {!user && (
+              <div className="landing-hero__actions anim-fade-up" style={{ '--i': 3 }}>
+                <Button size="lg" iconRight="arrow-right" onClick={() => openAuth(AUTH_VIEWS.REGISTER)}>Register</Button>
+                <Button variant="secondary" size="lg" onClick={() => openAuth(AUTH_VIEWS.LOGIN)}>Login</Button>
+              </div>
+            )}
           </div>
 
           <div className="landing-hero__visual anim-fade-up" style={{ '--i': 4 }}>
@@ -304,9 +314,9 @@ export default function LandingPage() {
             </p>
             <div className="landing-cta__actions anim-fade-up" style={{ '--i': 2 }}>
               <Button size="lg" iconRight="arrow-right" className="btn--shine" onClick={() => openAuth(AUTH_VIEWS.REGISTER)}>
-                Create account
+                Register
               </Button>
-              <Button variant="secondary" size="lg" onClick={() => openAuth(AUTH_VIEWS.LOGIN)}>Sign in</Button>
+              <Button variant="secondary" size="lg" onClick={() => openAuth(AUTH_VIEWS.LOGIN)}>Login</Button>
             </div>
           </div>
         </Section>

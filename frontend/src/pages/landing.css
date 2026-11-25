@@ -1145,3 +1145,41 @@ html:has(.landing) {
     display: none;
   }
 }
+
+/* ───────── Terms and Privacy pages (/terms, /privacy) ───────── */
+.legal-page { min-height: 100vh; min-height: 100dvh; background: var(--paper); color: var(--ink); padding-bottom: calc(var(--space-10) + env(safe-area-inset-bottom, 0px)); }
+.legal-page__bar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: calc(env(safe-area-inset-top, 0px) + 12px) max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px)); background: rgba(246, 242, 232, 0.94); border-bottom: 1px solid var(--paper-rule); backdrop-filter: blur(6px); }
+.legal-page__brand { display: inline-flex; min-height: 44px; align-items: center; text-decoration: none; }
+.legal-page__switch { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--forest); text-decoration: none; }
+.legal-page__switch:hover { color: var(--forest-deep); }
+.legal-doc { max-width: 720px; margin: 0 auto; padding: var(--space-8) 16px 0; }
+.legal-doc__kicker { margin: 0 0 var(--space-2); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--forest-muted); }
+.legal-doc__title { margin: 0; font-family: var(--font-serif); font-weight: 600; font-size: clamp(1.8rem, 5vw, 2.4rem); line-height: 1.15; color: var(--forest-deep); }
+.legal-doc__updated { margin: var(--space-2) 0 var(--space-5); font-size: var(--text-sm); color: var(--ink-muted); }
+.legal-doc__intro { font-size: 1.06rem; line-height: 1.65; color: var(--ink-soft); padding-bottom: var(--space-5); border-bottom: 1px solid var(--paper-rule); }
+.legal-doc__section { padding: var(--space-5) 0 var(--space-2); border-bottom: 1px solid var(--paper-rule); }
+.legal-doc__section h2 { margin: 0 0 var(--space-3); font-family: var(--font-serif); font-weight: 600; font-size: 1.25rem; color: var(--forest-deep); }
+.legal-doc__section p { margin: 0 0 var(--space-3); line-height: 1.7; color: var(--ink-soft); }
+.legal-doc__foot { padding-top: var(--space-5); font-size: var(--text-sm); color: var(--ink-muted); line-height: 1.6; }
+.legal-doc__links { display: flex; flex-wrap: wrap; gap: var(--space-5); margin-top: var(--space-3); }
+.legal-doc__links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--forest); font-weight: 600; }
+
+/* ───────── Register next to Login (pilot feedback) ───────── */
+.landing-nav__actions { gap: var(--space-2); }
+.landing-nav__actions .btn { min-height: 40px; }
+.landing-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+@media (max-width: 420px) {
+  /* Logo, Login, Register and the menu button share one row on small phones. */
+  .landing-nav__actions { gap: 6px; }
+  .landing-nav__actions .btn--sm { padding-inline: 12px; }
+  .landing-nav__brand .logo__text { font-size: 1.05rem; }
+}
+@media (max-width: 340px) {
+  /* Narrowest phones: the hero right below still offers Login. */
+  .landing-nav__login { display: none; }
+}

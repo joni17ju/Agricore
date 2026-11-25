@@ -83,7 +83,10 @@ export async function login({ identifier, email, password, role }) {
  * Register a student or instructor (Proposal Figs 12–13).
  * Students are active immediately and signed in; instructors wait for approval.
  */
-export async function register({ role, firstName, lastName, email, password, confirmPassword, sectionId, schoolId }) {
+export async function register({ role, firstName, lastName, email, password, confirmPassword, sectionId, schoolId, acceptedTerms, termsVersion }) {
+  if (acceptedTerms !== true) {
+    throw new ServiceError('Please agree to the Terms and Conditions and the Privacy Notice to create an account.');
+  }
   if (![ROLES.STUDENT, ROLES.INSTRUCTOR].includes(role)) throw new ServiceError('Choose Student or Instructor.');
   if (isBlank(firstName) || isBlank(lastName)) throw new ServiceError('Enter your first and last name.');
   if (!isValidEmail(email)) throw new ServiceError('Enter a valid email address.');
@@ -107,6 +110,8 @@ export async function register({ role, firstName, lastName, email, password, con
     password,
     schoolId: isBlank(schoolId) ? null : String(schoolId).trim(),
     sectionId: role === ROLES.STUDENT ? sectionId : null,
+    acceptedTerms: true,
+    termsVersion,
   });
 
   if (result.token) {
