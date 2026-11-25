@@ -6,13 +6,18 @@
  * mediaAssets: [{ assetId, type: 'image' | 'video' | 'animation', title, caption, url, placeholderKey }]
  *   `url` is null for built-in placeholders; `placeholderKey` selects a local illustration.
  *
- * Module 4 and 5 content comes from the CP1 Week 13–17 lesson documents (see
- * ./lessonContent/module4.js and module5.js); it may also contain h4, img (served from
- * /images/lessons/) and callout divs.
- *
- * NOTE: Other lesson text is starter content written for the prototype and should be
- * reviewed by the Crop Protection I instructor before real use.
+ * Lesson content comes from the CP1 lesson documents: Modules 1–3 from the Week 2–11
+ * document, Modules 4 and 5 from the Week 13–17 documents (see ./lessonContent/).
+ * It may also contain h4, figures and images (served from /images/lessons/),
+ * callout divs and the editor's objectives and key-terms lists.
  */
+import {
+  definitionOfPests,
+  disciplinesInCropProtection,
+  economicImportanceOfPests,
+  roleOfCropProtection,
+  worldPopulationAndFoodSupply,
+} from './lessonContent/module1.js';
 import {
   changeInWeedPopulation,
   classificationOfWeeds,
@@ -36,19 +41,7 @@ const lessons = [
     moduleId: 'mod_1',
     lessonNumber: 1,
     title: 'World Population and Food Supply',
-    contentBody: `
-<p>The world population has passed <strong>8 billion people</strong> and continues to grow. Every additional person needs a reliable supply of safe, nutritious food, yet the land, water and labor available for farming are limited.</p>
-<h2>Why food supply is under pressure</h2>
-<ul>
-  <li><strong>Growing demand</strong> — more people, rising incomes and urbanization increase the demand for rice, corn, vegetables and animal feed.</li>
-  <li><strong>Limited farmland</strong> — expanding cities and land degradation reduce the area that can be cultivated.</li>
-  <li><strong>Climate variability</strong> — typhoons, drought and higher temperatures lower yields and favor outbreaks of some pests and diseases.</li>
-  <li><strong>Crop losses</strong> — pests, diseases and weeds destroy a large share of harvests before and after they are collected.</li>
-</ul>
-<h2>Crop losses to pests</h2>
-<p>Global studies estimate that pests and diseases reduce the yield of major staple crops such as rice, wheat and maize by roughly one-fifth to one-third every year. Reducing these losses is one of the fastest ways to increase the food available without clearing more land.</p>
-<blockquote>Producing more food is not only about planting more — it is also about protecting what has already been planted.</blockquote>
-`.trim(),
+    contentBody: worldPopulationAndFoodSupply,
     mediaAssets: [
       {
         assetId: 'asset_1_1_a',
@@ -65,19 +58,7 @@ const lessons = [
     moduleId: 'mod_1',
     lessonNumber: 2,
     title: 'Role of Crop Protection',
-    contentBody: `
-<p><strong>Crop protection</strong> is the science and practice of managing pests, diseases and weeds so that crops reach their full yield and quality potential in a safe, economical and environmentally sound way.</p>
-<h2>What crop protection does</h2>
-<ul>
-  <li><strong>Prevents yield loss</strong> by keeping pest populations below damaging levels.</li>
-  <li><strong>Maintains quality</strong> — produce free from blemishes, rot and contamination sells at a better price.</li>
-  <li><strong>Protects farmer income</strong> and makes harvests more predictable.</li>
-  <li><strong>Supports food safety</strong> by reducing toxins (such as mycotoxins) and promoting the correct use of pesticides.</li>
-  <li><strong>Conserves the environment</strong> when decisions favor prevention and natural enemies over routine spraying.</li>
-</ul>
-<h2>Protection before, during and after harvest</h2>
-<p>Losses can happen in the seedbed, in the field and in storage. Good crop protection therefore covers the whole production cycle: clean seed and land preparation, field monitoring during growth, and proper drying and storage after harvest.</p>
-`.trim(),
+    contentBody: roleOfCropProtection,
     mediaAssets: [
       {
         assetId: 'asset_1_2_a',
@@ -94,20 +75,7 @@ const lessons = [
     moduleId: 'mod_1',
     lessonNumber: 3,
     title: 'Definition of Pests',
-    contentBody: `
-<p>A <strong>pest</strong> is any species, strain or biotype of plant, animal or pathogenic agent that is injurious to plants or plant products. An organism becomes a pest only when it causes damage that matters to people.</p>
-<h2>Major groups of crop pests</h2>
-<ul>
-  <li><strong>Pathogens</strong> — fungi, oomycetes, bacteria, viruses, viroids and phytoplasmas that cause plant diseases.</li>
-  <li><strong>Arthropods</strong> — insects and mites that chew, suck or bore into plants.</li>
-  <li><strong>Nematodes</strong> — microscopic roundworms, many of which attack roots.</li>
-  <li><strong>Weeds</strong> — unwanted plants that compete with crops.</li>
-  <li><strong>Vertebrates</strong> — rodents, birds and other animals such as wild pigs.</li>
-  <li><strong>Mollusks</strong> — snails and slugs, such as the golden apple snail in rice.</li>
-</ul>
-<h2>Pest status is not fixed</h2>
-<p>The same insect may be harmless at low numbers and a serious pest at high numbers. Pest status depends on population density, the crop, its growth stage and the value of the harvest.</p>
-`.trim(),
+    contentBody: definitionOfPests,
     mediaAssets: [
       {
         assetId: 'asset_1_3_a',
@@ -124,21 +92,7 @@ const lessons = [
     moduleId: 'mod_1',
     lessonNumber: 4,
     title: 'Economic Importance of Pests',
-    contentBody: `
-<p>Not every pest needs to be controlled. Control makes sense only when the value of the damage prevented is greater than the cost of control.</p>
-<h2>Key economic concepts</h2>
-<ul>
-  <li><strong>Economic Injury Level (EIL)</strong> — the lowest pest population that causes damage equal to the cost of control.</li>
-  <li><strong>Economic Threshold (ET)</strong> — the pest density at which control should begin so that the population never reaches the EIL. The ET is set below the EIL.</li>
-  <li><strong>General Equilibrium Position (GEP)</strong> — the average population density of a pest over time without intervention.</li>
-</ul>
-<h2>Kinds of losses</h2>
-<ul>
-  <li><strong>Direct losses</strong> — reduced yield or quality, such as holes in fruit or rotten grain.</li>
-  <li><strong>Indirect losses</strong> — costs of control, lower market prices, trade restrictions and harm to health or the environment.</li>
-</ul>
-<p>Monitoring pest numbers and comparing them with the economic threshold helps farmers avoid both crop loss and unnecessary pesticide use.</p>
-`.trim(),
+    contentBody: economicImportanceOfPests,
     mediaAssets: [
       {
         assetId: 'asset_1_4_a',
@@ -155,25 +109,7 @@ const lessons = [
     moduleId: 'mod_1',
     lessonNumber: 5,
     title: 'Various Disciplines Involved in Crop Protection',
-    contentBody: `
-<p>Crop protection brings together many fields of science. Solving a pest problem often needs knowledge from several of them at once.</p>
-<h2>Core disciplines</h2>
-<ul>
-  <li><strong>Plant Pathology</strong> — plant diseases and their causes.</li>
-  <li><strong>Entomology</strong> — insects; <strong>Acarology</strong> — mites and ticks.</li>
-  <li><strong>Nematology</strong> — plant-parasitic nematodes.</li>
-  <li><strong>Weed Science</strong> — weed biology and management.</li>
-  <li><strong>Vertebrate Pest Management</strong> — rodents, birds and other animals.</li>
-</ul>
-<h2>Supporting disciplines</h2>
-<ul>
-  <li><strong>Agronomy and Soil Science</strong> — crop and soil management that keeps plants healthy.</li>
-  <li><strong>Plant Breeding</strong> — developing resistant varieties.</li>
-  <li><strong>Chemistry and Toxicology</strong> — safe and effective pesticides.</li>
-  <li><strong>Agricultural Economics</strong> — cost–benefit decisions.</li>
-  <li><strong>Extension</strong> — bringing research-based practices to farmers.</li>
-</ul>
-`.trim(),
+    contentBody: disciplinesInCropProtection,
     mediaAssets: [],
   },
 
