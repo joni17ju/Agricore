@@ -178,15 +178,15 @@
 /* Instructor footer: an optional line under the three columns. */
 .lesson-foot__note { grid-column: 1 / -1; margin: 0; text-align: center; font-size: 0.85rem; color: var(--ink-muted); }
 
-/* ───────── Student footer: one next step, then the previous topic ───────── */
-.lesson-foot.lesson-foot--student {
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: 'next' 'prev';
-  gap: 1.1rem;
-  padding-top: 1.4rem;
-}
-.lesson-foot__next { grid-area: next; }
-.lesson-foot__prev { grid-area: prev; justify-self: start; padding-top: 0.9rem; border-top: 1px solid var(--paper-rule); min-height: 44px; }
+/*
+ * A footer link whose target is still locked (the next module): same shape,
+ * quieter colours, and a small line saying what unlocks it.
+ */
+.lesson-foot__link.is-muted .lesson-foot__dir,
+.lesson-foot__link.is-muted .lesson-foot__title { color: var(--ink-muted); }
+.lesson-foot__hint { font-size: 0.78rem; line-height: 1.35; color: var(--ink-muted); }
+.lesson-foot__link.is-muted:hover .lesson-foot__title { color: var(--forest-deep); }
+
 .lesson-foot__link:focus-visible,
 .next-step__secondary:focus-visible { outline: 2px solid var(--forest); outline-offset: 3px; border-radius: 4px; }
 
@@ -242,7 +242,6 @@
   .next-step { align-items: stretch; }
   .next-step .next-step__primary { width: 100%; max-width: none; }
   .next-step__secondary { justify-content: center; border: 1px solid var(--paper-rule); border-radius: var(--radius-md); background: var(--surface); }
-  .lesson-foot__prev { justify-self: stretch; display: flex; }
 }
 
 /* Illustration placeholders that some lessons still carry as media assets. */

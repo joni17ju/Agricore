@@ -3,8 +3,8 @@ import Button from '../common/Button.jsx';
 import Icon from '../common/Icon.jsx';
 
 /**
- * The "what next" block at the end of a lesson and on the mission result
- * screen. `step` comes from lessonNextStep() (utils/curriculum.js): one primary
+ * The "what next" block on the mission result screen. `step` comes from
+ * lessonNextStep() (utils/curriculum.js): one primary
  * action, an optional note saying what unlocks what, and an optional
  * secondary link. There is never a disabled button: when the way forward is
  * locked, the note explains it instead.
@@ -45,25 +45,5 @@ export function NextStepActions({ step, primaryLabel, className = '' }) {
         </Link>
       )}
     </div>
-  );
-}
-
-/**
- * Student lesson footer: the next step on top, then the previous topic. The
- * next topic appears only as the primary action or as the secondary link, so
- * it is never offered twice.
- */
-export default function StudentLessonFooter({ step }) {
-  const previous = step?.previous ?? null;
-  return (
-    <nav className="lesson-foot lesson-foot--student" aria-label="What to do next">
-      <NextStepActions step={step} className="lesson-foot__next" />
-      {previous && (
-        <Link to={previous.to} className="lesson-foot__link lesson-foot__prev" aria-label={`${previous.label}: ${previous.title}`}>
-          <span className="lesson-foot__dir"><Icon name="arrow-left" size={14} /> {previous.label}</span>
-          <span className="lesson-foot__title">{previous.title}</span>
-        </Link>
-      )}
-    </nav>
   );
 }

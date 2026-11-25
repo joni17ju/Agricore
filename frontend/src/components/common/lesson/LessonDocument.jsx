@@ -93,17 +93,22 @@ export default function LessonDocument({
  * Footer under a lesson: previous and next topic with their titles, and the
  * page's main action between them.
  *
- * @param {{ to: string, title: string } | null} previous
- * @param {{ to: string, title: string } | null} next
+ * A link may carry its own `label` ("Next module", "Back to dashboard"…) and
+ * `ariaLabel`; a `muted` link is one whose target is still locked, with a
+ * small `hint` line saying what unlocks it (it leads there, never nowhere).
+ *
+ * @param {{ to: string, title: string, label?: string, ariaLabel?: string, muted?: boolean, hint?: string } | null} previous
+ * @param {{ to: string, title: string, label?: string, ariaLabel?: string, muted?: boolean, hint?: string } | null} next
  */
 export function LessonFooter({ previous, next, action = null, note = null, previousLabel = 'Previous topic', nextLabel = 'Next topic' }) {
   return (
     <nav className="lesson-foot" aria-label="Topic navigation">
       <div className="lesson-foot__side">
         {previous && (
-          <Link to={previous.to} className="lesson-foot__link">
-            <span className="lesson-foot__dir"><Icon name="arrow-left" size={14} /> {previousLabel}</span>
+          <Link to={previous.to} className={`lesson-foot__link${previous.muted ? ' is-muted' : ''}`} aria-label={previous.ariaLabel}>
+            <span className="lesson-foot__dir"><Icon name="arrow-left" size={14} /> {previous.label ?? previousLabel}</span>
             <span className="lesson-foot__title">{previous.title}</span>
+            {previous.hint && <span className="lesson-foot__hint">{previous.hint}</span>}
           </Link>
         )}
       </div>
@@ -111,9 +116,10 @@ export function LessonFooter({ previous, next, action = null, note = null, previ
       {note && <p className="lesson-foot__note">{note}</p>}
       <div className="lesson-foot__side lesson-foot__side--next">
         {next && (
-          <Link to={next.to} className="lesson-foot__link">
-            <span className="lesson-foot__dir">{nextLabel} <Icon name="arrow-right" size={14} /></span>
+          <Link to={next.to} className={`lesson-foot__link${next.muted ? ' is-muted' : ''}`} aria-label={next.ariaLabel}>
+            <span className="lesson-foot__dir">{next.label ?? nextLabel} <Icon name={next.muted ? 'lock' : 'arrow-right'} size={14} /></span>
             <span className="lesson-foot__title">{next.title}</span>
+            {next.hint && <span className="lesson-foot__hint">{next.hint}</span>}
           </Link>
         )}
       </div>

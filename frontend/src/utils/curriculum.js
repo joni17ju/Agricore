@@ -279,6 +279,68 @@ export function lessonNextStep(curriculum, lessonId) {
   return result;
 }
 
+/**
+ * The previous / next links in a student lesson's footer, from the curriculum
+ * the unlock rules above already computed (the rules are unchanged).
+ *
+ *   next      the next topic when it is unlocked; on a module's last topic the
+ *             next module's first topic ("Next module"); on the course's last
+ *             topic the dashboard. A locked next module is still shown, muted,
+ *             with a hint, and leads to what unlocks it (this topic's mission,
+ *             or the module page) — never a dead link.
+ *   previous  the topic before; on a module's first topic, the previous
+ *             module's last topic when it is unlocked.
+ *
+ * Each link: { to, title, label, ariaLabel, muted?, hint? }. Returns
+ * { previous: null, next: null } for a lesson that is not in the curriculum.
+ */
+export function lessonFooterLinks(curriculum, lessonId) {
+  const modules = curriculum.filter((entry) => entry.lessons.length > 0);
+  const moduleIndex = modules.findIndex((entry) => entry.lessons.some((item) => String(item.lesson._id) === String(lessonId)));
+  if (moduleIndex === -1) return { previous: null, next: null };
+
+  const moduleEntry = modules[moduleIndex];
+  const lessonIndex = moduleEntry.lessons.findIndex((item) => String(item.lesson._id) === String(lessonId));
+  const lessonEntry = moduleEntry.lessons[lessonIndex];
+  const isOpen = (entry) => Boolean(entry) && entry.state !== LESSON_STATE.LOCKED;
+  const lessonPath = (lesson) => `/student/lessons/${lesson._id}`;
+  const moduleName = (entry) => `Module ${entry.module.moduleNumber}: ${entry.module.title}`;
+
+  let previous = null;
+  if (lessonIndex > 0) {
+    const entry = moduleEntry.lessons[lessonIndex - 1];
+    if (isOpen(entry)) previous = { to: lessonPath(entry.lesson), title: entry.lesson.title, label: 'Previous topic', ariaLabel: `Previous topic: ${entry.lesson.title}` };
+  } else if (moduleIndex > 0) {
+    const previousModule = modules[moduleIndex - 1];
+    const entry = previousModule.lessons.at(-1);
+    if (isOpen(entry)) {
+      previous = { to: lessonPath(entry.lesson), title: moduleName(previousModule), label: 'Previous module', ariaLabel: `Previous module, ${moduleName(previousModule)}: last topic, ${entry.lesson.title}` };
+    }
+  }
+
+  let next = null;
+  const nextLesson = moduleEntry.lessons[lessonIndex + 1];
+  const nextModule = modules[moduleIndex + 1];
+  if (nextLesson) {
+    if (isOpen(nextLesson)) next = { to: lessonPath(nextLesson.lesson), title: nextLesson.lesson.title, label: 'Next topic', ariaLabel: `Next topic: ${nextLesson.lesson.title}` };
+  } else if (nextModule) {
+    const first = nextModule.lessons[0];
+    if (isOpen(nextModule) && isOpen(first)) {
+      next = { to: lessonPath(first.lesson), title: moduleName(nextModule), label: 'Next module', ariaLabel: `Next module, ${moduleName(nextModule)}: first topic, ${first.lesson.title}` };
+    } else {
+      // Locked: shown muted, and it leads to what unlocks it.
+      const openLevel = lessonEntry.levels.find((level) => !level.isPassed);
+      next = openLevel
+        ? { to: `/student/missions/${openLevel.mission._id}/play`, title: moduleName(nextModule), label: 'Next module', muted: true, hint: 'Clear the mission to unlock this module', ariaLabel: `${moduleName(nextModule)} is locked. Clear the mission to unlock it: take the mission` }
+        : { to: `/student/modules/${moduleEntry.module._id}`, title: moduleName(nextModule), label: 'Next module', muted: true, hint: 'Clear every topic in this module to unlock it', ariaLabel: `${moduleName(nextModule)} is locked. Clear every topic in Module ${moduleEntry.module.moduleNumber} to unlock it: go to the module` };
+    }
+  } else {
+    next = { to: '/student', title: 'Dashboard', label: 'Back to dashboard', ariaLabel: 'Back to dashboard' };
+  }
+
+  return { previous, next };
+}
+
 export function countCompletedLessons(curriculum) {
   return curriculum.reduce((sum, moduleEntry) => sum + moduleEntry.completedLessons, 0);
 }
