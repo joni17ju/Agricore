@@ -19,7 +19,7 @@ function nextStepLink(nextStep) {
 }
 
 /** Result screen after a mission attempt: score, XP, badges, unlocks and feedback. */
-export default function MissionResult({ result, answers, mission, module, onRetry }) {
+export default function MissionResult({ result, answers, mission, module, onRetry, isRetrying = false }) {
   const { isPassed, score, xpEarned, totalXP, level, leveledUp, newBadges, unlockedLessons, unlockedModule, moduleCleared, rankBefore, rankAfter } = result;
   const feedback = describeFeedback({ gameType: missionGameType(module, mission), scenarioData: mission.scenarioData, breakdown: result.breakdown, answers });
   const next = nextStepLink(result.nextStep);
@@ -128,7 +128,7 @@ export default function MissionResult({ result, answers, mission, module, onRetr
 
       <footer className="mission-result__actions">
         <Button variant="secondary" icon="arrow-left" to={`/student/modules/${module._id}`}>Back to Module</Button>
-        <Button variant={isPassed ? 'secondary' : 'primary'} icon="refresh" onClick={onRetry}>
+        <Button variant={isPassed ? 'secondary' : 'primary'} icon="refresh" onClick={onRetry} isLoading={isRetrying}>
           {isPassed ? 'Play Again' : 'Try Again'}
         </Button>
         {isPassed && !lessonNext?.primary && next && (

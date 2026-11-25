@@ -22,6 +22,7 @@ import {
 import { calculateLevel, calculateTotalXP } from '../utils/gamification.js';
 import { ROLES } from '../constants/roles.js';
 import { api } from './apiClient.js';
+import { invalidateLeaderboards } from './leaderboardService.js';
 import { ServiceError } from './serviceError.js';
 import { getCourse, getMissionContext, getStudentActivity, invalidateCourse, requireUser } from './serviceContext.js';
 
@@ -96,11 +97,11 @@ export async function listStudentMissions(studentId) {
  * refuses to a student. The server-side leaderboard aggregation returns the
  * same ranking with only display fields, and any signed-in user may read it.
  */
-async function sectionRankOf(student) {
-  if (!student.sectionId) return null;
+async function sectionRankOf(studentId) {
   try {
-    const rows = await api.get('/leaderboard', { sectionId: student.sectionId });
-    return rows.find((row) => String(row._id) === String(student._id))?.rank ?? null;
+    // The server ranks the signed-in student's own section; no section id needed.
+    const rows = await api.get('/leaderboard');
+    return rows.find((row) => String(row._id) === String(studentId))?.rank ?? null;
   } catch {
     // Rank movement is decoration on the result screen; never fail a submit for it.
     return null;
@@ -116,39 +117,67 @@ function lessonEntryFor(curriculum, lessonId) {
 }
 
 /**
+ * Start a play of a mission level on the server.
+ *
+ * Returns the server-generated attempt id the submission must carry. Starting
+ * again — in this tab or any other — replaces the earlier attempt, so only the
+ * most recent start can be submitted.
+ *
+ * @returns {Promise<{ attemptId: string, startedAt: string, minSeconds: number }>}
+ */
+export async function startMissionAttempt(missionId) {
+  return api.post('/missionAttempts/start', { missionId });
+}
+
+/** Error codes from the server that mean "this attempt can no longer be submitted". */
+export const ATTEMPT_ENDED_CODES = Object.freeze([
+  'attempt_replaced',
+  'attempt_already_submitted',
+  'attempt_expired',
+  'attempt_failed',
+  'attempt_invalid',
+  'attempt_required',
+]);
+
+/**
  * Submit an attempt and report what changed.
  *
- * @param {{ studentId: string, missionId: string, answers: object, timeSpentSeconds: number }} input
+ * @param {{ studentId: string, missionId: string, attemptId: string, answers: object, timeSpentSeconds: number }} input
  * @returns result used by the mission result screen
  */
-export async function submitAttempt({ studentId, missionId, answers, timeSpentSeconds }) {
-  const student = await requireUser(studentId, ROLES.STUDENT);
-  const course = await getCourse();
-  const mission = await requireMission(missionId);
+export async function submitAttempt({ studentId, missionId, attemptId, answers, timeSpentSeconds }) {
+  // Everything "before" is read at once rather than one request after another.
+  const [, course, mission, before, rankBefore] = await Promise.all([
+    requireUser(studentId, ROLES.STUDENT),
+    getCourse(),
+    requireMission(missionId),
+    getStudentActivity(studentId),
+    sectionRankOf(studentId),
+  ]);
   const { lesson, module } = getMissionContext(mission, course);
 
-  const before = await getStudentActivity(studentId);
   const curriculumBefore = buildStudentCurriculum({ ...course, ...before });
   if (!canAccessMission(curriculumBefore, missionId)) {
     throw new ServiceError('This mission is locked. Complete the previous topic first.', 403);
   }
 
   const totalXPBefore = calculateTotalXP(before.attempts);
-  const rankBefore = await sectionRankOf(student);
 
   // The server scores the answers and writes both the attempt and the
   // lesson's progress row; nothing about the score is decided here.
   const submitted = await api.post('/missionAttempts', {
+    attemptId,
     studentId,
     missionId,
     answers,
     timeSpentSeconds,
   });
   const { attempt, score, isPassed, xpEarned, breakdown } = submitted;
+  // XP changed, so any cached ranking is out of date.
+  invalidateLeaderboards();
 
-  const after = await getStudentActivity(studentId);
+  const [after, rankAfter] = await Promise.all([getStudentActivity(studentId), sectionRankOf(studentId)]);
   const curriculumAfter = buildStudentCurriculum({ ...course, ...after });
-  const rankAfter = await sectionRankOf(student);
 
   /*
    * Badges come from the server now. They used to be evaluated here and written
