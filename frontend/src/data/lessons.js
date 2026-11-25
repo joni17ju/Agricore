@@ -19,6 +19,14 @@ import {
   worldPopulationAndFoodSupply,
 } from './lessonContent/module1.js';
 import {
+  causesOfPlantDiseases,
+  conceptsOfPlantDiseases,
+  diseaseCycle,
+  diseaseEpidemiology,
+  plantPathology,
+  variabilityOfPlantPathogens,
+} from './lessonContent/module2.js';
+import {
   changeInWeedPopulation,
   classificationOfWeeds,
   cropWeedCompetition,
@@ -119,18 +127,7 @@ const lessons = [
     moduleId: 'mod_2',
     lessonNumber: 1,
     title: 'Plant Pathology',
-    contentBody: `
-<p><strong>Plant pathology</strong> is the science that studies plant diseases: their causes, how they develop and spread, the losses they cause, and how they can be managed.</p>
-<h2>Disease versus injury</h2>
-<p>A <strong>plant disease</strong> is a continuing disturbance of normal plant function caused by a pathogen or an environmental factor. An <strong>injury</strong>, such as hail damage or an insect bite, is a sudden, one-time event.</p>
-<h2>Symptoms and signs</h2>
-<ul>
-  <li><strong>Symptoms</strong> are the plant's visible reactions — leaf spots, yellowing (chlorosis), wilting, blight, rot, stunting.</li>
-  <li><strong>Signs</strong> are the pathogen itself — fungal spores, mycelium, bacterial ooze.</li>
-</ul>
-<h2>Significance in the Philippines</h2>
-<p>Diseases such as rice blast, bacterial leaf blight, Fusarium wilt of banana and coconut cadang-cadang have caused major losses in Philippine agriculture, making disease diagnosis an essential skill.</p>
-`.trim(),
+    contentBody: plantPathology,
     mediaAssets: [
       {
         assetId: 'asset_2_1_a',
@@ -143,28 +140,19 @@ const lessons = [
     ],
   },
   {
-    _id: 'les_2_2',
+    _id: 'les_2_6',
     moduleId: 'mod_2',
     lessonNumber: 2,
+    title: 'Concepts of Plant Diseases',
+    contentBody: conceptsOfPlantDiseases,
+    mediaAssets: [],
+  },
+  {
+    _id: 'les_2_2',
+    moduleId: 'mod_2',
+    lessonNumber: 3,
     title: 'Causes of Plant Diseases',
-    contentBody: `
-<p>Plant diseases are caused by <strong>biotic</strong> (living) agents or <strong>abiotic</strong> (non-living) factors.</p>
-<h2>Biotic causes (infectious)</h2>
-<ul>
-  <li><strong>Fungi</strong> — the largest group; cause leaf spots, rusts, mildews, blights and rots.</li>
-  <li><strong>Oomycetes</strong> — fungus-like organisms such as <em>Phytophthora</em> (late blight).</li>
-  <li><strong>Bacteria</strong> — cause blights, soft rots and wilts, e.g. <em>Xanthomonas oryzae</em> pv. <em>oryzae</em>.</li>
-  <li><strong>Viruses and viroids</strong> — cause mosaics, stunting and leaf curl; often spread by insect vectors.</li>
-  <li><strong>Nematodes, phytoplasmas and parasitic plants.</strong></li>
-</ul>
-<h2>Abiotic causes (non-infectious)</h2>
-<ul>
-  <li>Nutrient deficiencies or toxicities</li>
-  <li>Extreme temperature, drought or flooding</li>
-  <li>Air pollutants and chemical (herbicide) injury</li>
-</ul>
-<p>Abiotic disorders do not spread from plant to plant, which helps distinguish them from infectious diseases in the field.</p>
-`.trim(),
+    contentBody: causesOfPlantDiseases,
     mediaAssets: [
       {
         assetId: 'asset_2_2_a',
@@ -179,22 +167,9 @@ const lessons = [
   {
     _id: 'les_2_3',
     moduleId: 'mod_2',
-    lessonNumber: 3,
+    lessonNumber: 4,
     title: 'Disease Cycle',
-    contentBody: `
-<p>The <strong>disease cycle</strong> is the chain of events in disease development, from the arrival of the pathogen to its survival until the next season.</p>
-<ol>
-  <li><strong>Inoculation</strong> — the pathogen (inoculum) lands on the host.</li>
-  <li><strong>Penetration</strong> — entry through natural openings, wounds or directly through the surface.</li>
-  <li><strong>Infection</strong> — the pathogen establishes contact with susceptible cells and obtains nutrients.</li>
-  <li><strong>Colonization and incubation</strong> — the pathogen grows inside the host before symptoms appear.</li>
-  <li><strong>Symptom development and reproduction</strong> — new spores or cells are produced.</li>
-  <li><strong>Dissemination</strong> — spread by wind, water, insects, tools, seed or people.</li>
-  <li><strong>Survival</strong> — overwintering or oversummering in debris, soil, seed or alternate hosts.</li>
-</ol>
-<h2>Monocyclic and polycyclic diseases</h2>
-<p><strong>Monocyclic</strong> pathogens complete one cycle per season. <strong>Polycyclic</strong> pathogens, such as those causing rice blast and late blight, complete many cycles and can build up rapidly into epidemics.</p>
-`.trim(),
+    contentBody: diseaseCycle,
     mediaAssets: [
       {
         assetId: 'asset_2_3_a',
@@ -209,27 +184,9 @@ const lessons = [
   {
     _id: 'les_2_4',
     moduleId: 'mod_2',
-    lessonNumber: 4,
+    lessonNumber: 5,
     title: 'Disease Epidemiology',
-    contentBody: `
-<p><strong>Epidemiology</strong> studies how disease develops and spreads in plant populations over time and space.</p>
-<h2>The disease triangle</h2>
-<p>A disease develops only when three elements occur together:</p>
-<ul>
-  <li>a <strong>susceptible host</strong>,</li>
-  <li>a <strong>virulent pathogen</strong>, and</li>
-  <li>a <strong>favorable environment</strong> (temperature, humidity, leaf wetness).</li>
-</ul>
-<p>Adding <strong>time</strong> — and the influence of <strong>human activities</strong> such as planting a single susceptible variety over large areas — turns the triangle into the disease pyramid.</p>
-<h2>What drives an epidemic</h2>
-<ul>
-  <li>Large areas of genetically uniform, susceptible crops</li>
-  <li>Abundant initial inoculum</li>
-  <li>Long periods of favorable weather</li>
-  <li>Short pathogen generation time and efficient spread</li>
-</ul>
-<p>Breaking any side of the triangle — resistant varieties, clean planting material, or changing field conditions — reduces disease.</p>
-`.trim(),
+    contentBody: diseaseEpidemiology,
     mediaAssets: [
       {
         assetId: 'asset_2_4_a',
@@ -244,26 +201,9 @@ const lessons = [
   {
     _id: 'les_2_5',
     moduleId: 'mod_2',
-    lessonNumber: 5,
+    lessonNumber: 6,
     title: 'Variability of Plant Pathogens',
-    contentBody: `
-<p>Pathogen populations are not uniform. Individuals differ in the hosts they can attack and in how aggressive they are. This <strong>variability</strong> explains why resistant varieties and pesticides can lose effectiveness.</p>
-<h2>Sources of variability</h2>
-<ul>
-  <li><strong>Mutation</strong> — sudden changes in genetic material.</li>
-  <li><strong>Sexual recombination</strong> — mixing of genes from two parents.</li>
-  <li><strong>Parasexual processes and heterokaryosis</strong> in fungi.</li>
-  <li><strong>Gene exchange in bacteria</strong> through plasmids and transformation.</li>
-</ul>
-<h2>Races and pathotypes</h2>
-<p>Pathogen strains that attack different sets of varieties are called <strong>races</strong> or <strong>pathotypes</strong>. Rice blast (<em>Magnaporthe oryzae</em>) has many races, so a variety resistant in one location can become susceptible elsewhere.</p>
-<h2>Managing variability</h2>
-<ul>
-  <li>Rotate or combine resistant varieties</li>
-  <li>Rotate fungicides with different modes of action</li>
-  <li>Monitor for new races and resistance</li>
-</ul>
-`.trim(),
+    contentBody: variabilityOfPlantPathogens,
     mediaAssets: [],
   },
 

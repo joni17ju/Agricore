@@ -21,6 +21,7 @@
  */
 
 import { module4ConceptMissions, module4InvasiveMissions } from './missionContent/module4.js';
+import { module2ConceptMissions } from './missionContent/module2.js';
 
 // ───────────────────────── Module 1 · Decision-Making ─────────────────────────
 const module1Missions = [
@@ -456,7 +457,7 @@ const module2Missions = [
   {
     _id: 'mis_2_2',
     lessonId: 'les_2_2',
-    levelNumber: 2,
+    levelNumber: 3,
     maxXP: 150,
     scenarioData: {
       title: 'Yellowing Rice Leaves',
@@ -483,7 +484,7 @@ const module2Missions = [
   {
     _id: 'mis_2_3',
     lessonId: 'les_2_2',
-    levelNumber: 3,
+    levelNumber: 4,
     maxXP: 150,
     scenarioData: {
       title: 'Mottled Pepper Leaves',
@@ -509,7 +510,7 @@ const module2Missions = [
   {
     _id: 'mis_2_4',
     lessonId: 'les_2_3',
-    levelNumber: 4,
+    levelNumber: 5,
     maxXP: 150,
     scenarioData: {
       title: 'White Powder on Cucumber',
@@ -536,7 +537,7 @@ const module2Missions = [
   {
     _id: 'mis_2_5',
     lessonId: 'les_2_3',
-    levelNumber: 5,
+    levelNumber: 6,
     maxXP: 150,
     scenarioData: {
       title: 'Dark Lesions on Mango',
@@ -562,7 +563,7 @@ const module2Missions = [
   {
     _id: 'mis_2_6',
     lessonId: 'les_2_4',
-    levelNumber: 6,
+    levelNumber: 7,
     maxXP: 150,
     scenarioData: {
       title: 'Blight After the Rains',
@@ -590,7 +591,7 @@ const module2Missions = [
   {
     _id: 'mis_2_7',
     lessonId: 'les_2_4',
-    levelNumber: 7,
+    levelNumber: 8,
     maxXP: 150,
     scenarioData: {
       title: 'Pustules Across the Cornfield',
@@ -617,7 +618,7 @@ const module2Missions = [
   {
     _id: 'mis_2_8',
     lessonId: 'les_2_5',
-    levelNumber: 8,
+    levelNumber: 9,
     maxXP: 150,
     scenarioData: {
       title: 'The Resistant Variety Fails',
@@ -1385,6 +1386,7 @@ const module5Missions = [
 const missions = [
   ...module1Missions,
   ...module2Missions,
+  ...module2ConceptMissions,
   ...module3Missions,
   ...module4Missions,
   ...module4ConceptMissions,
