@@ -3,7 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover lets the layout pad itself for notches and rounded corners (env(safe-area-inset-*));
+         interactive-widget=resizes-content makes Chrome shrink the page when the on-screen keyboard opens,
+         so a focused field and the button under it can always be scrolled into view. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
     <!--
       First paint, before any stylesheet loads: the paper colour (--paper in
       src/styles/tokens.css), so a slow connection never flashes white. Keep

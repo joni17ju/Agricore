@@ -34,7 +34,7 @@
     grid-template-areas: 'main aside';
   }
   .lesson-doc__grid.has-aside.is-aside-closed { --lesson-aside-width: 2.75rem; }
-  .lesson-doc__aside { position: sticky; top: calc(var(--topbar-height) + var(--space-4)); }
+  .lesson-doc__aside { position: sticky; top: calc(var(--topbar-total) + var(--space-4)); }
 }
 
 /* Wide: the outline becomes a sticky rail on the left. */
@@ -44,7 +44,7 @@
     grid-template-columns: 11rem minmax(0, 1fr) var(--lesson-aside-width, 17rem);
     grid-template-areas: 'toc main aside';
   }
-  .lesson-doc__toc { display: block; position: sticky; top: calc(var(--topbar-height) + var(--space-5)); }
+  .lesson-doc__toc { display: block; position: sticky; top: calc(var(--topbar-total) + var(--space-5)); }
   .lesson-toc--drop { display: none; }
 }
 

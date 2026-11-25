@@ -450,12 +450,13 @@
 .modal--bare > * { flex: 1; min-height: 0; }
 @media (max-width: 560px) {
   .modal-backdrop { place-items: end center; padding: 0; }
-  .modal { border-radius: var(--radius-xl) var(--radius-xl) 0 0; max-height: 92vh; }
+  /* Bottom sheet: dvh follows Chrome's bars and the keyboard; the sheet pads the gesture bar. */
+  .modal { border-radius: var(--radius-xl) var(--radius-xl) 0 0; max-height: 92vh; max-height: 92dvh; padding-bottom: var(--safe-bottom); }
   .modal__footer .btn { flex: 1; }
 }
 
 /* ───────── Toasts ───────── */
-.toast-region { position: fixed; right: var(--space-4); bottom: var(--space-4); z-index: 200; display: flex; flex-direction: column; gap: var(--space-2); max-width: min(380px, calc(100vw - 32px)); }
+.toast-region { position: fixed; right: calc(var(--space-4) + var(--safe-right)); bottom: calc(var(--space-4) + var(--safe-bottom)); z-index: 200; display: flex; flex-direction: column; gap: var(--space-2); max-width: min(380px, calc(100vw - 32px)); }
 .toast {
   display: flex;
   align-items: center;
@@ -493,8 +494,8 @@
    backdrop (100) and toasts (200) so none of those are ever covered by it. */
 .scroll-top {
   position: fixed;
-  right: var(--space-4);
-  bottom: var(--space-4);
+  right: calc(var(--space-4) + var(--safe-right));
+  bottom: calc(var(--space-4) + var(--safe-bottom));
   z-index: 50;
   display: grid;
   place-items: center;

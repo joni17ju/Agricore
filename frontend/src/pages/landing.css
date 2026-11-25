@@ -3,7 +3,8 @@
    ───────────────────────────────────────────────────────────── */
 
 .landing {
-  --nav-height: 68px;
+  /* The fixed nav's 68px row plus the top safe area (notches; see index.html). */
+  --nav-height: calc(68px + env(safe-area-inset-top, 0px));
   background: var(--canvas);
   color: var(--text);
   overflow-x: hidden;
@@ -74,6 +75,7 @@ html:has(.landing) {
   inset: 0 0 auto 0;
   z-index: 50;
   height: var(--nav-height);
+  padding-top: var(--safe-top);
   display: flex;
   align-items: center;
   background: rgba(var(--white-rgb), 0.82);

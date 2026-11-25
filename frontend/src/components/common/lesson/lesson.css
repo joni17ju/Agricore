@@ -47,7 +47,7 @@
   font-weight: 600;
   line-height: 1.25;
   color: var(--forest-deep);
-  scroll-margin-top: calc(var(--topbar-height) + var(--space-5));
+  scroll-margin-top: calc(var(--topbar-total) + var(--space-5));
 }
 .lesson-prose h2 {
   margin-top: 2.1em;

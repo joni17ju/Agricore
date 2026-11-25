@@ -257,5 +257,16 @@
   --sidebar-width: 248px;
   --sidebar-rail: 76px;
   --topbar-height: 64px;
+
+  /*
+   * Safe areas (notches, rounded corners, gesture bars), non-zero only with
+   * viewport-fit=cover (index.html). --topbar-total is the top bar as drawn:
+   * its 64px row plus the top inset; sticky things below it offset by this.
+   */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --topbar-total: calc(var(--topbar-height) + var(--safe-top));
   --content-max: 1280px;
 }

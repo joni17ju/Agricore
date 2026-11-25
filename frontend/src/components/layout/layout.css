@@ -8,7 +8,10 @@
   display: flex;
   flex-direction: column;
   width: var(--sidebar-width);
-  padding: var(--space-4) var(--space-3);
+  padding: calc(var(--space-4) + var(--safe-top)) var(--space-3) calc(var(--space-4) + var(--safe-bottom)) calc(var(--space-3) + var(--safe-left));
+  /* Short screens (phones held sideways): the links scroll instead of being cut off. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background:
     radial-gradient(circle at 0% 100%, rgba(var(--green-400-rgb), 0.18), transparent 45%),
     linear-gradient(180deg, var(--green-900), var(--green-950));
@@ -23,7 +26,7 @@
 /* Docked on the seam between sidebar and content, level with the topbar. */
 .sidebar__collapse {
   position: absolute;
-  top: calc(var(--topbar-height) / 2 - 13px);
+  top: calc(var(--safe-top) + var(--topbar-height) / 2 - 13px);
   right: -13px;
   z-index: 2;
   display: none;
@@ -82,9 +85,10 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  height: var(--topbar-height);
-  padding: 0 var(--space-6);
-  background: rgba(var(--white-rgb), 0.88);
+  height: var(--topbar-total);
+  padding: var(--safe-top) calc(var(--space-6) + var(--safe-right)) 0 var(--space-6);
+  /* Warm paper, slightly see-through, like the page under it. */
+  background: rgba(255, 252, 246, 0.9);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
 }
@@ -97,7 +101,7 @@
 .topbar__right { margin-left: auto; display: flex; align-items: center; gap: var(--space-3); }
 .topbar__streak { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; font-size: var(--text-sm); color: var(--warning-fg); }
 
-.app-content { flex: 1; width: 100%; max-width: var(--content-max); margin: 0 auto; padding: var(--space-6); padding-bottom: calc(var(--space-6) + var(--fab-safe-area)); }
+.app-content { flex: 1; width: 100%; max-width: var(--content-max); margin: 0 auto; padding: var(--space-6) calc(var(--space-6) + var(--safe-right)) calc(var(--space-6) + var(--fab-safe-area) + var(--safe-bottom)) var(--space-6); }
 
 /* Desktop: the sidebar can be collapsed to the same icon rail the tablet
    breakpoint already uses. Everything here is inside this media query so the
@@ -179,11 +183,12 @@
   .drawer-scrim { display: block; position: fixed; inset: 0; z-index: 55; background: rgba(var(--ink-rgb), 0.45); opacity: 0; pointer-events: none; transition: opacity var(--duration-base) ease; }
   .drawer-open .drawer-scrim { opacity: 1; pointer-events: auto; }
   .app-main { margin-left: 0; }
-  .topbar { padding: 0 var(--space-3); }
+  .topbar { padding: var(--safe-top) calc(var(--space-3) + var(--safe-right)) 0 calc(var(--space-3) + var(--safe-left)); }
   .topbar__menu { display: inline-grid; }
   .topbar__course { display: none; }
   .topbar__crumbs .icon { display: none; }
-  .app-content { padding: var(--space-4) var(--space-3) calc(var(--space-8) + var(--fab-safe-area)); }
+  /* Extra room at the bottom so the last content clears the floating button and Chrome's bottom bar. */
+  .app-content { padding: var(--space-4) calc(var(--space-3) + var(--safe-right)) calc(var(--space-8) + var(--fab-safe-area) + var(--safe-bottom)) calc(var(--space-3) + var(--safe-left)); }
 }
 
 /* ───────── Auth layout ───────── */

@@ -67,7 +67,7 @@
 .workspace--editor {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - var(--topbar-height) - var(--space-6) - var(--space-6) - var(--fab-safe-area));
+  height: calc(100dvh - var(--topbar-total) - var(--space-6) - var(--space-6) - var(--fab-safe-area) - var(--safe-bottom));
   min-height: 520px;
 }
 .workspace--editor .workspace-body {
@@ -92,7 +92,7 @@
  */
 @media (max-width: 768px) {
   .workspace--editor {
-    height: calc(100dvh - var(--topbar-height) - var(--space-4) - var(--space-8) - var(--fab-safe-area));
+    height: calc(100dvh - var(--topbar-total) - var(--space-4) - var(--space-8) - var(--fab-safe-area) - var(--safe-bottom));
     /* The card header wraps to ~200px on a phone; this keeps the writing pane
        usable, and the page scrolls only on viewports too short for even that. */
     min-height: 420px;
