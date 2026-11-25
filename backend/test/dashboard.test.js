@@ -41,7 +41,10 @@ test("the dashboard returns the student's own data in one response", async () =>
   assert.equal(body.course.lessons[0].contentBody, '<p>First real paragraph.</p>');
   // Own section only, display fields only.
   assert.deepEqual(body.leaderboard.rows.map((r) => r.firstName), ['Ana', 'Ben']);
-  for (const row of body.leaderboard.rows) assert.equal(row.email, undefined);
+  for (const row of body.leaderboard.rows) {
+    assert.equal(row.email, undefined);
+    assert.equal(row.avatarUrl, null);
+  }
 });
 
 test('the leaderboard ranks the same with the aggregation (week and overall)', async () => {

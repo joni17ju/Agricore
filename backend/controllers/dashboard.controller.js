@@ -36,7 +36,16 @@ export async function getDashboard(req, res) {
 
   const ownRow = ranking.find((row) => String(row._id) === String(user._id)) ?? null;
   const top = ranking.slice(0, PREVIEW_ROWS);
-  const rows = ownRow && !top.includes(ownRow) ? [...top, ownRow] : top;
+  /*
+   * Without profile pictures: they are stored as images inside the account
+   * and were most of this response's size. The page fills them in from the
+   * full leaderboard request it makes once the dashboard is on screen.
+   */
+  const rows = (ownRow && !top.includes(ownRow) ? [...top, ownRow] : top).map((row) => ({
+    ...row,
+    avatarUrl: null,
+    hasAvatar: Boolean(row.avatarUrl),
+  }));
 
   // Never the reset-code bookkeeping, even hashed.
   const { passwordReset, passwordHash, ...account } = user.toObject();
