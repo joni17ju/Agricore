@@ -33,21 +33,40 @@ const STATUS_SEVERITY = {
   [PERFORMANCE_STATUS.ON_TRACK]: 3,
 };
 
+/**
+ * Every student's attempts and progress in two requests, grouped by student.
+ *
+ * This used to be two requests per student (eighty for a class of forty),
+ * each waiting its turn on the network. Instructors may read all records, so
+ * the lists are fetched whole and split here.
+ */
+async function loadActivityByStudent() {
+  const [attempts, progress] = await Promise.all([api.get('/missionAttempts'), api.get('/progress')]);
+  const byStudent = new Map();
+  const entry = (id) => {
+    const key = String(id);
+    if (!byStudent.has(key)) byStudent.set(key, { attempts: [], progress: [] });
+    return byStudent.get(key);
+  };
+  for (const attempt of attempts) entry(attempt.studentId).attempts.push(attempt);
+  for (const row of progress) entry(row.studentId).progress.push(row);
+  return (studentId) => byStudent.get(String(studentId)) ?? { attempts: [], progress: [] };
+}
+
 /** Metrics, statuses and course-level analytics for a group of students. */
-async function analyzeStudents(students, course, now = new Date()) {
-  // One activity fetch per student, in parallel. Instructors are
-  // allowed to read any student's records, so this needs no special scoping.
-  const studentData = await Promise.all(
-    students.map(async (student) => {
-      const { attempts, progress } = await getStudentActivity(student._id);
-      const curriculum = buildStudentCurriculum({ ...course, attempts, progress });
-      const metrics = computeStudentMetrics({ attempts, curriculum, missionsById: course.missionsById, now });
-      return { student, attempts, curriculum, metrics };
-    }),
-  );
+async function analyzeStudents(students, course, { activityOf, sectionList: knownSections } = {}, now = new Date()) {
+  const [lookup, sectionList] = await Promise.all([
+    activityOf ?? loadActivityByStudent(),
+    knownSections ?? api.get('/sections'),
+  ]);
+  const studentData = students.map((student) => {
+    const { attempts, progress } = lookup(student._id);
+    const curriculum = buildStudentCurriculum({ ...course, attempts, progress });
+    const metrics = computeStudentMetrics({ attempts, curriculum, missionsById: course.missionsById, now });
+    return { student, attempts, curriculum, metrics };
+  });
 
   // Sections are fetched once and looked up locally rather than per student.
-  const sectionList = await api.get('/sections');
   const sectionsById = new Map(sectionList.map((section) => [String(section._id), section]));
 
   // Status is relative to the student's own section average.
@@ -110,14 +129,18 @@ const sortBySeverity = (rows) =>
  * @param {{ sectionId?: string }} options  omit sectionId for all assigned sections
  */
 export async function getInstructorDashboard(instructorId, { sectionId } = {}) {
-  const { instructor, students } = await instructorStudents(instructorId, sectionId);
-  const analysis = await analyzeStudents(students, await getCourse());
-  const sections = await Promise.all(
-    (instructor.assignedSectionIds ?? []).map((id) => api.get(`/sections/${id}`).catch(() => null)),
-  );
+  // Everything at once: the students, the course, all activity and the sections.
+  const [{ instructor, students }, course, activityOf, sectionList] = await Promise.all([
+    instructorStudents(instructorId, sectionId),
+    getCourse(),
+    loadActivityByStudent(),
+    api.get('/sections'),
+  ]);
+  const analysis = await analyzeStudents(students, course, { activityOf, sectionList });
+  const assigned = new Set((instructor.assignedSectionIds ?? []).map(String));
   return {
     instructor,
-    sections: sections.filter(Boolean),
+    sections: sectionList.filter((section) => assigned.has(String(section._id))),
     selectedSectionId: sectionId ?? null,
     ...analysis,
     rows: sortBySeverity(analysis.rows),

@@ -24,7 +24,7 @@ import { ROLES } from '../constants/roles.js';
 import { api } from './apiClient.js';
 import { invalidateLeaderboards } from './leaderboardService.js';
 import { ServiceError } from './serviceError.js';
-import { getCourse, getMissionContext, getStudentActivity, invalidateCourse, requireUser } from './serviceContext.js';
+import { getCourse, getMissionContext, getStudentActivity, invalidateActivity, invalidateCourse, invalidateUser, requireUser } from './serviceContext.js';
 
 async function requireMission(missionId) {
   const { missionsById } = await getCourse();
@@ -173,8 +173,10 @@ export async function submitAttempt({ studentId, missionId, attemptId, answers, 
     timeSpentSeconds,
   });
   const { attempt, score, isPassed, xpEarned, breakdown } = submitted;
-  // XP changed, so any cached ranking is out of date.
+  // XP, progress and possibly badges changed: nothing cached about them is current.
   invalidateLeaderboards();
+  invalidateActivity(studentId);
+  invalidateUser(studentId);
 
   const [after, rankAfter] = await Promise.all([getStudentActivity(studentId), sectionRankOf(studentId)]);
   const curriculumAfter = buildStudentCurriculum({ ...course, ...after });

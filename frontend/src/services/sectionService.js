@@ -10,13 +10,15 @@ import { ROLES, USER_STATUS } from '../constants/roles.js';
 import { isBlank } from '../utils/validation.js';
 import { api } from './apiClient.js';
 import { ServiceError } from './serviceError.js';
-import { requireSection, requireUser } from './serviceContext.js';
+import { invalidateUser, requireSection, requireUser } from './serviceContext.js';
 
 /**
  * Point a section at an instructor, keeping users.assignedSectionIds in step.
  * Both sides are written here because the API stores the link on both.
  */
 async function setSectionInstructor(section, instructorId) {
+  // Instructor records change below; drop any cached copy (the cache is short-lived anyway).
+  invalidateUser();
   if (section.instructorId) {
     const previous = await api.get(`/users/${section.instructorId}`).catch(() => null);
     if (previous) {
@@ -35,6 +37,7 @@ async function setSectionInstructor(section, instructorId) {
       await api.patch(`/users/${instructor._id}`, { assignedSectionIds: [...assigned, section._id] });
     }
   }
+  invalidateUser();
   return api.patch(`/sections/${section._id}`, { instructorId: instructorId || null });
 }
 

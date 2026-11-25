@@ -5,6 +5,7 @@ import { useBreadcrumb } from '../../context/BreadcrumbContext.jsx';
 import { useAsync } from '../../hooks/useAsync.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
 import { getLessonForStudent, markLessonViewed } from '../../services/progressService.js';
+import { prefetchLesson } from '../../services/serviceContext.js';
 import Button from '../../components/common/Button.jsx';
 import { ErrorState, LoadingState } from '../../components/common/Display.jsx';
 import LessonDocument, { LessonFooter } from '../../components/common/lesson/LessonDocument.jsx';
@@ -30,6 +31,14 @@ export default function LessonViewerPage() {
   useEffect(() => {
     markLessonViewed(user._id, lessonId).catch(() => {});
   }, [user._id, lessonId]);
+
+  // While this lesson is being read, fetch the next one so "Next topic" opens at once.
+  const nextLessonId = data?.nextLesson?._id;
+  useEffect(() => {
+    if (!nextLessonId) return undefined;
+    const timer = window.setTimeout(() => prefetchLesson(nextLessonId), 1500);
+    return () => window.clearTimeout(timer);
+  }, [nextLessonId]);
 
   if (isLoading) return <LoadingState label="Loading lesson…" />;
   if (error) return <ErrorState error={error} onRetry={reload} backTo="/student/modules" />;

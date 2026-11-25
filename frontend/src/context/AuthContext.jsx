@@ -1,7 +1,29 @@
 import { createContext, startTransition, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import * as authService from '../services/authService.js';
-import { SESSION_EXPIRED_EVENT } from '../services/apiClient.js';
-import { invalidateCourse } from '../services/serviceContext.js';
+import { SESSION_EXPIRED_EVENT, getToken } from '../services/apiClient.js';
+import { prefetchDashboard } from '../services/progressService.js';
+import { clearSessionCaches, invalidateUser, setCourseAudience } from '../services/serviceContext.js';
+import { preloadHome } from '../routes/preload.js';
+
+/** Role and id from the stored token, without verifying it (the server does that). */
+function readTokenClaims() {
+  try {
+    const payload = JSON.parse(atob(getToken().split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return { id: payload.sub, role: payload.role };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Warm everything the user's home page needs: its code and, for a student,
+ * the dashboard data (which also brings the course outline for Modules).
+ */
+function warmHome({ id, role }) {
+  setCourseAudience(role);
+  preloadHome(role);
+  if (role === 'student') prefetchDashboard(id);
+}
 
 const AuthContext = createContext(null);
 
@@ -23,6 +45,7 @@ export function AuthProvider({ children }) {
     authService
       .getCurrentUser()
       .then((current) => {
+        if (current) setCourseAudience(current.role);
         setUser(current);
         setIsReady(true);
       })
@@ -30,6 +53,14 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    /*
+     * With a saved session, start loading the home page and its data at the
+     * same time as the session check, instead of one after the other. If the
+     * session turns out to be invalid, the requests simply fail and nothing
+     * is shown from them.
+     */
+    const claims = readTokenClaims();
+    if (claims?.id) warmHome(claims);
     checkSession();
   }, [checkSession]);
 
@@ -42,7 +73,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const onExpired = () => {
       setSessionNotice('Your session has expired. Sign in again to continue where you left off.');
-      invalidateCourse();
+      clearSessionCaches();
       startTransition(() => setUser(null));
     };
     window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
@@ -50,7 +81,9 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = useCallback(async (credentials) => {
+    clearSessionCaches();
     const signedIn = await authService.login(credentials);
+    warmHome({ id: signedIn._id, role: signedIn.role });
     setSessionNotice(null);
     setUser(signedIn);
     return signedIn;
@@ -74,11 +107,12 @@ export function AuthProvider({ children }) {
     authService.logout();
     setSessionNotice(null);
     // Nothing fetched under the old session is reused by the next one.
-    invalidateCourse();
+    clearSessionCaches();
     startTransition(() => setUser(null));
   }, []);
 
   const refreshUser = useCallback(async () => {
+    invalidateUser();
     const current = await authService.getCurrentUser();
     setUser(current);
     return current;

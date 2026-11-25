@@ -11,7 +11,7 @@ import { MAX_MOCK_UPLOAD_BYTES } from '../constants/rules.js';
 import { isBlank, isValidEmail, normalizeEmail } from '../utils/validation.js';
 import { api } from './apiClient.js';
 import { ServiceError } from './serviceError.js';
-import { requireInstructorSection, requireUser } from './serviceContext.js';
+import { requireInstructorSection, requireUser, invalidateUser } from './serviceContext.js';
 
 const EDITABLE_FIELDS = ['firstName', 'lastName', 'email', 'schoolId'];
 
@@ -71,7 +71,7 @@ export async function updateUser(userId, changes) {
   if ('lastName' in updates && isBlank(updates.lastName)) throw new ServiceError('Last name is required.');
   if ('email' in updates) updates.email = validateEmail(updates.email);
   if ('schoolId' in updates) updates.schoolId = isBlank(updates.schoolId) ? null : String(updates.schoolId).trim();
-  return api.patch(`/users/${userId}`, updates);
+  return api.patch(`/users/${userId}`, updates).finally(() => invalidateUser(userId));
 }
 
 /**
@@ -91,21 +91,21 @@ export async function uploadAvatar(userId, file) {
     reader.onerror = () => reject(new ServiceError('The file could not be read.'));
     reader.readAsDataURL(file);
   });
-  return api.patch(`/users/${userId}`, { avatarUrl });
+  return api.patch(`/users/${userId}`, { avatarUrl }).finally(() => invalidateUser(userId));
 }
 
 export function removeAvatar(userId) {
-  return api.patch(`/users/${userId}`, { avatarUrl: null });
+  return api.patch(`/users/${userId}`, { avatarUrl: null }).finally(() => invalidateUser(userId));
 }
 
 export async function setUserStatus(userId, status) {
   if (!Object.values(USER_STATUS).includes(status)) throw new ServiceError('Choose a valid status.');
-  return api.patch(`/users/${userId}`, { status });
+  return api.patch(`/users/${userId}`, { status }).finally(() => invalidateUser(userId));
 }
 
 export async function enrollStudent(studentId, sectionId) {
   await requireUser(studentId, ROLES.STUDENT);
-  return api.patch(`/users/${studentId}`, { sectionId });
+  return api.patch(`/users/${studentId}`, { sectionId }).finally(() => invalidateUser(studentId));
 }
 
 /**
@@ -116,7 +116,7 @@ export async function enrollStudent(studentId, sectionId) {
  */
 export async function deleteUser(userId) {
   // The server removes the account; its attempts and progress go with it.
-  return api.del(`/users/${userId}`);
+  return api.del(`/users/${userId}`).finally(() => invalidateUser(userId));
 }
 
 // ───────── Account requests ─────────
@@ -135,7 +135,7 @@ export function listPendingStudents() {
 /** Approve a pending student. The server notifies them. */
 export async function approveStudent(studentId) {
   await requireUser(studentId, ROLES.STUDENT);
-  return api.patch(`/users/${studentId}`, { status: USER_STATUS.ACTIVE });
+  return api.patch(`/users/${studentId}`, { status: USER_STATUS.ACTIVE }).finally(() => invalidateUser(studentId));
 }
 
 /**
@@ -151,7 +151,7 @@ export async function rejectStudent(studentId) {
   if (student.status !== USER_STATUS.PENDING) {
     throw new ServiceError('Only a pending request can be rejected.', 409);
   }
-  return api.del(`/users/${studentId}`);
+  return api.del(`/users/${studentId}`).finally(() => invalidateUser(studentId));
 }
 
 // ───────── Instructor roster (Proposal Fig 26) ─────────
@@ -198,12 +198,12 @@ export async function updateRosterStudent(instructorId, studentId, changes) {
     if (!Object.values(USER_STATUS).includes(changes.status)) throw new ServiceError('Choose a valid status.');
     updates.status = changes.status;
   }
-  return api.patch(`/users/${studentId}`, updates);
+  return api.patch(`/users/${studentId}`, updates).finally(() => invalidateUser(studentId));
 }
 
 /** Instructor removes a student from the course (the account is deactivated, not deleted). */
 export async function removeRosterStudent(instructorId, studentId) {
   const student = await requireUser(studentId, ROLES.STUDENT);
   await requireInstructorSection(instructorId, student.sectionId);
-  return api.patch(`/users/${studentId}`, { status: USER_STATUS.INACTIVE });
+  return api.patch(`/users/${studentId}`, { status: USER_STATUS.INACTIVE }).finally(() => invalidateUser(studentId));
 }

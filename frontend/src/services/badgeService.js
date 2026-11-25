@@ -22,7 +22,11 @@ export async function getBadgeCatalog() {
 
 /** Every badge with the student's earned state, earned badges first (newest first). */
 export async function getStudentBadges(studentId) {
-  const student = await requireUser(studentId, ROLES.STUDENT);
+  return badgesFor(await requireUser(studentId, ROLES.STUDENT));
+}
+
+/** The badge list for a student record already in hand. */
+export function badgesFor(student) {
   const earnedAtByCode = new Map((student.earnedBadges ?? []).map((badge) => [badge.code, badge.earnedAt]));
   return BADGES.map((badge) => ({
     ...badge,

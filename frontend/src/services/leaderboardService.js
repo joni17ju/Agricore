@@ -55,22 +55,27 @@ async function buildLeaderboard(sectionId, { period = LEADERBOARD_PERIODS.OVERAL
     // Which board this is, so a page can tell it from a board it asked for earlier.
     moduleId: period === LEADERBOARD_PERIODS.MODULE ? moduleId : null,
     totalStudents: rows.length,
-    rows: rows.map((row) => ({
-      rank: row.rank,
-      xp: row.totalXP,
-      // Arrows only make sense against an all-time ranking.
-      rankChange: period === LEADERBOARD_PERIODS.OVERALL && row.previousRank ? row.previousRank - row.rank : 0,
-      student: {
-        _id: row._id,
-        firstName: row.firstName,
-        lastName: row.lastName,
-        avatarUrl: row.avatarUrl ?? null,
-        badgeCount: row.badgeCount ?? 0,
-      },
-      // Level always reflects lifetime XP, even on a weekly or per-module board.
-      level: calculateLevel(row.overallXP ?? row.totalXP).level,
-    })),
+    rows: toBoardRows(rows, period),
   };
+}
+
+/** API ranking rows → the row shape the leaderboard components read. */
+export function toBoardRows(rows, period = LEADERBOARD_PERIODS.OVERALL) {
+  return rows.map((row) => ({
+    rank: row.rank,
+    xp: row.totalXP,
+    // Arrows only make sense against an all-time ranking.
+    rankChange: period === LEADERBOARD_PERIODS.OVERALL && row.previousRank ? row.previousRank - row.rank : 0,
+    student: {
+      _id: row._id,
+      firstName: row.firstName,
+      lastName: row.lastName,
+      avatarUrl: row.avatarUrl ?? null,
+      badgeCount: row.badgeCount ?? 0,
+    },
+    // Level always reflects lifetime XP, even on a weekly or per-module board.
+    level: calculateLevel(row.overallXP ?? row.totalXP).level,
+  }));
 }
 
 /** Leaderboard of the student's own section. */

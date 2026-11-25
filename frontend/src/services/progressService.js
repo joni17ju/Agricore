@@ -4,7 +4,7 @@
  */
 import { ROLES } from '../constants/roles.js';
 import { LESSON_STATE, PROGRESS_STATUS } from '../constants/rules.js';
-import { canAccessLesson, countCompletedLessons, findNextStep, lessonFooterLinks } from '../utils/curriculum.js';
+import { buildStudentCurriculum, canAccessLesson, countCompletedLessons, findNextStep, lessonFooterLinks } from '../utils/curriculum.js';
 import {
   calculateLevel,
   calculateStreak,
@@ -14,12 +14,31 @@ import {
 import { isWithinLastDays, toDayKey } from '../utils/dates.js';
 import { api } from './apiClient.js';
 import { ServiceError } from './serviceError.js';
-import { getCourse, getStudentActivity, getStudentCurriculum, requireUser } from './serviceContext.js';
+import { badgesFor, getStudentBadges } from './badgeService.js';
+import { LEADERBOARD_PERIODS, getStudentLeaderboard, toBoardRows } from './leaderboardService.js';
+import {
+  getCourse,
+  getLessonContent,
+  getStudentActivity,
+  getStudentCurriculum,
+  invalidateActivity,
+  onSessionClear,
+  requireUser,
+  seedActivity,
+  seedCourse,
+  seedUser,
+  releasePendingBootstrap,
+  setPendingBootstrap,
+} from './serviceContext.js';
 
 const WEEKLY_PASS_GOAL = 3;
 
 /** Lightweight XP/level/streak summary for the top bar. */
 export async function getStudentXpSummary(studentId) {
+  // If the dashboard is loading, its response brings the attempts: wait for it rather than ask twice.
+  if (dashboardInFlight && String(dashboardInFlight.studentId) === String(studentId)) {
+    await dashboardInFlight.promise.catch(() => {});
+  }
   const { attempts } = await getStudentActivity(studentId);
   const totalXP = calculateTotalXP(attempts);
   return { totalXP, level: calculateLevel(totalXP), streak: calculateStreak(attempts, new Date()) };
@@ -44,9 +63,11 @@ export async function getStudentModule(studentId, moduleId) {
  * Rejects locked lessons.
  */
 export async function getLessonForStudent(studentId, lessonId) {
-  await requireUser(studentId, ROLES.STUDENT);
+  // The lesson's full text is downloaded alongside the outline, not after it.
+  const fullLesson = getLessonContent(lessonId);
+  fullLesson.catch(() => {});
+  const [, curriculum] = await Promise.all([requireUser(studentId, ROLES.STUDENT), getStudentCurriculum(studentId)]);
   {
-    const curriculum = await getStudentCurriculum(studentId);
     if (!canAccessLesson(curriculum, lessonId)) {
       throw new ServiceError('This topic is locked. Complete the previous topic first.', 403);
     }
@@ -58,7 +79,8 @@ export async function getLessonForStudent(studentId, lessonId) {
     const next = allLessons[index + 1];
 
     return {
-      lesson: entry.lesson,
+      // The outline holds a summary; the opened lesson shows its full text and media.
+      lesson: { ...entry.lesson, ...(await fullLesson) },
       module: entry.module,
       state: entry.state,
       levels: entry.levels,
@@ -76,9 +98,13 @@ export async function markLessonViewed(studentId, lessonId) {
   if (!canAccessLesson(curriculum, lessonId)) throw new ServiceError('This topic is locked.', 403);
 
   // Only the first view records anything; a completed lesson is never demoted.
-  const rows = await api.get('/progress', { studentId, lessonId });
-  if (rows.length > 0) return rows[0];
-  return api.patch('/progress', { studentId, lessonId, status: PROGRESS_STATUS.IN_PROGRESS });
+  // The student's progress rows are already loaded with the curriculum.
+  const { progress } = await getStudentActivity(studentId);
+  const existing = progress.find((row) => String(row.lessonId) === String(lessonId));
+  if (existing) return existing;
+  const row = await api.patch('/progress', { studentId, lessonId, status: PROGRESS_STATUS.IN_PROGRESS });
+  invalidateActivity(studentId);
+  return row;
 }
 
 function buildObjectives({ curriculum, attempts, streak, now }) {
@@ -125,37 +151,121 @@ function buildObjectives({ curriculum, attempts, streak, now }) {
   return objectives;
 }
 
+/** Dashboard overview for a student (Proposal Fig 16), from data already loaded. */
+function buildDashboard({ student, section, course, attempts, progress }) {
+  const now = new Date();
+  const curriculum = buildStudentCurriculum({ ...course, attempts, progress });
+  const totalXP = calculateTotalXP(attempts);
+  const streak = calculateStreak(attempts, now);
+  const totalLessons = curriculum.reduce((sum, entry) => sum + entry.totalLessons, 0);
+  const currentModule =
+    curriculum.find((entry) => entry.state !== LESSON_STATE.LOCKED && !entry.isCleared) ?? curriculum.at(-1);
+
+  return {
+    student,
+    section,
+    totalXP,
+    level: calculateLevel(totalXP),
+    streak,
+    completedLessons: countCompletedLessons(curriculum),
+    totalLessons,
+    modulesCleared: curriculum.filter((entry) => entry.isCleared).length,
+    currentModule,
+    nextStep: findNextStep(curriculum),
+    weeklyActivity: calculateWeeklyActivity(attempts, now),
+    objectives: buildObjectives({ curriculum, attempts, streak, now }),
+    recentAttempts: [...attempts]
+      .sort((a, b) => String(b.attemptedAt).localeCompare(String(a.attemptedAt)))
+      .slice(0, 5)
+      .map((attempt) => ({ attempt, mission: course.missionsById.get(String(attempt.missionId)) ?? null })),
+  };
+}
+
 /** Dashboard overview for a student (Proposal Fig 16). */
 export async function getStudentDashboard(studentId) {
-  {
-    const student = await requireUser(studentId, ROLES.STUDENT);
-    const now = new Date();
-    const course = await getCourse();
-    const { attempts } = await getStudentActivity(studentId);
-    const curriculum = await getStudentCurriculum(studentId, course);
-    const totalXP = calculateTotalXP(attempts);
-    const streak = calculateStreak(attempts, now);
-    const totalLessons = curriculum.reduce((sum, entry) => sum + entry.totalLessons, 0);
-    const currentModule =
-      curriculum.find((entry) => entry.state !== LESSON_STATE.LOCKED && !entry.isCleared) ?? curriculum.at(-1);
+  const [student, course, { attempts, progress }] = await Promise.all([
+    requireUser(studentId, ROLES.STUDENT),
+    getCourse(),
+    getStudentActivity(studentId),
+  ]);
+  const section = student.sectionId ? await api.get(`/sections/${student.sectionId}`).catch(() => null) : null;
+  return buildDashboard({ student, section, course, attempts, progress });
+}
 
-    return {
-      student,
-      section: student.sectionId ? await api.get(`/sections/${student.sectionId}`).catch(() => null) : null,
-      totalXP,
-      level: calculateLevel(totalXP),
-      streak,
-      completedLessons: countCompletedLessons(curriculum),
-      totalLessons,
-      modulesCleared: curriculum.filter((entry) => entry.isCleared).length,
-      currentModule,
-      nextStep: findNextStep(curriculum),
-      weeklyActivity: calculateWeeklyActivity(attempts, now),
-      objectives: buildObjectives({ curriculum, attempts, streak, now }),
-      recentAttempts: [...attempts]
-        .sort((a, b) => String(b.attemptedAt).localeCompare(String(a.attemptedAt)))
-        .slice(0, 5)
-        .map((attempt) => ({ attempt, mission: course.missionsById.get(String(attempt.missionId)) ?? null })),
-    };
+/*
+ * The whole dashboard — overview, badges and leaderboard preview — from one
+ * request (GET /dashboard), kept in memory so returning to the dashboard shows
+ * it at once while a fresh copy loads in the background (stale-while-
+ * revalidate). The data it brings (account, course outline, attempts and
+ * progress) also fills the shared caches, so the Modules and lesson pages
+ * opened next need no extra round trips.
+ */
+let dashboardCache = null;
+let dashboardInFlight = null;
+onSessionClear(() => {
+  dashboardCache = null;
+  dashboardInFlight = null;
+});
+
+/** The last dashboard loaded for this student in this session, or null. */
+export function getCachedDashboard(studentId) {
+  return dashboardCache && String(dashboardCache.studentId) === String(studentId) ? dashboardCache.view : null;
+}
+
+async function fetchDashboardView(studentId) {
+  let raw;
+  try {
+    raw = await api.get('/dashboard');
+  } catch (error) {
+    releasePendingBootstrap();
+    // An API without the combined endpoint: assemble it the old way.
+    if (error.status !== 404) throw error;
+    const [dashboard, badges, board] = await Promise.all([
+      getStudentDashboard(studentId),
+      getStudentBadges(studentId),
+      getStudentLeaderboard(studentId, { period: LEADERBOARD_PERIODS.OVERALL }).catch(() => null),
+    ]);
+    return { dashboard, badges, board };
   }
+
+  seedUser(raw.user);
+  seedCourse(raw.course);
+  seedActivity(studentId, raw);
+  releasePendingBootstrap();
+  const course = await getCourse();
+  const dashboard = buildDashboard({ student: raw.user, section: raw.section, course, attempts: raw.attempts, progress: raw.progress });
+  const rows = toBoardRows(raw.leaderboard?.rows ?? [], LEADERBOARD_PERIODS.OVERALL);
+  const board = raw.section
+    ? {
+        section: raw.section,
+        period: LEADERBOARD_PERIODS.OVERALL,
+        moduleId: null,
+        totalStudents: raw.leaderboard?.totalStudents ?? rows.length,
+        rows,
+        currentStudentRow: rows.find((row) => String(row.student._id) === String(studentId)) ?? null,
+      }
+    : null;
+  return { dashboard, badges: badgesFor(raw.user), board };
+}
+
+/** Load (or reuse an in-flight load of) the dashboard, and remember it. */
+export function loadDashboard(studentId) {
+  if (dashboardInFlight && String(dashboardInFlight.studentId) === String(studentId)) return dashboardInFlight.promise;
+  const promise = fetchDashboardView(studentId)
+    .then((view) => {
+      dashboardCache = { studentId, view, at: Date.now() };
+      return view;
+    })
+    .finally(() => {
+      if (dashboardInFlight?.promise === promise) dashboardInFlight = null;
+    });
+  dashboardInFlight = { studentId, promise };
+  setPendingBootstrap(promise);
+  return promise;
+}
+
+/** Start loading the dashboard early (right after sign-in or on app start). */
+export function prefetchDashboard(studentId) {
+  if (!studentId) return;
+  loadDashboard(studentId).catch(() => {});
 }
