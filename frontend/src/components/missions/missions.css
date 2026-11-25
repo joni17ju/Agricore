@@ -429,6 +429,8 @@
 .feedback-list__item.is-miss { background: #fffaf2; }
 .feedback-list__item.is-miss .feedback-list__icon { background: var(--red-500); color: var(--white); }
 .mission-result__actions { display: flex; justify-content: flex-end; gap: var(--space-3); flex-wrap: wrap; }
+/* The next step (next level, topic or module), right under the score. */
+.mission-result__next { padding: var(--space-5); border: 1px solid var(--paper-rule); border-top: 3px solid var(--forest); border-radius: var(--radius-lg); background: var(--surface); }
 @media (max-width: 640px) {
   .mission-result section { padding: var(--space-4); }
   .mission-result__hero h1 { font-size: var(--text-2xl); }

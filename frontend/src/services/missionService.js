@@ -17,6 +17,7 @@ import {
   getLessonGameMissions,
   getModuleGameMissions,
   getModuleLessons,
+  lessonNextStep,
 } from '../utils/curriculum.js';
 import { calculateLevel, calculateTotalXP } from '../utils/gamification.js';
 import { ROLES } from '../constants/roles.js';
@@ -194,6 +195,8 @@ export async function submitAttempt({ studentId, missionId, answers, timeSpentSe
     unlockedModule:
       nextModuleAfter && moduleAfter?.isCleared && !moduleBefore?.isCleared ? nextModuleAfter.module : null,
     nextStep: findNextStep(curriculumAfter),
+    // Where this mission's lesson leads now: its next level, topic or module.
+    lessonNext: lessonNextStep(curriculumAfter, lesson._id),
   };
 }
 

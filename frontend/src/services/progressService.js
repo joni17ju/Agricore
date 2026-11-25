@@ -4,7 +4,7 @@
  */
 import { ROLES } from '../constants/roles.js';
 import { LESSON_STATE, PROGRESS_STATUS } from '../constants/rules.js';
-import { canAccessLesson, countCompletedLessons, findNextStep } from '../utils/curriculum.js';
+import { canAccessLesson, countCompletedLessons, findNextStep, lessonNextStep } from '../utils/curriculum.js';
 import {
   calculateLevel,
   calculateStreak,
@@ -64,6 +64,8 @@ export async function getLessonForStudent(studentId, lessonId) {
       levels: entry.levels,
       previousLesson: allLessons[index - 1]?.lesson ?? null,
       nextLesson: next && next.state !== LESSON_STATE.LOCKED ? next.lesson : null,
+      // The end-of-lesson action (take the mission, next topic, next module…).
+      nextStep: lessonNextStep(curriculum, lessonId),
     };
   }
 }

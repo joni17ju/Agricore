@@ -96,7 +96,7 @@ export default function LessonDocument({
  * @param {{ to: string, title: string } | null} previous
  * @param {{ to: string, title: string } | null} next
  */
-export function LessonFooter({ previous, next, action = null, previousLabel = 'Previous topic', nextLabel = 'Next topic' }) {
+export function LessonFooter({ previous, next, action = null, note = null, previousLabel = 'Previous topic', nextLabel = 'Next topic' }) {
   return (
     <nav className="lesson-foot" aria-label="Topic navigation">
       <div className="lesson-foot__side">
@@ -108,6 +108,7 @@ export function LessonFooter({ previous, next, action = null, previousLabel = 'P
         )}
       </div>
       <div className="lesson-foot__action">{action}</div>
+      {note && <p className="lesson-foot__note">{note}</p>}
       <div className="lesson-foot__side lesson-foot__side--next">
         {next && (
           <Link to={next.to} className="lesson-foot__link">

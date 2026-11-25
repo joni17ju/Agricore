@@ -162,6 +162,123 @@ export function canAccessLesson(curriculum, lessonId) {
   return false;
 }
 
+/**
+ * What a student should do at the end of a lesson, from the curriculum the
+ * unlock rules above already computed (nothing here changes those rules).
+ *
+ * Returns
+ *   primary    the one main action: { kind, to, label, ariaLabel }
+ *              kind 'mission' | 'lesson' | 'module' | 'dashboard' | 'module-page'
+ *   secondary  an extra link, or null (the next topic while the mission is
+ *              still open, when that topic is already unlocked)
+ *   previous   { to, title, label } of the topic before, or null — the
+ *              previous module's last topic for a module's first topic
+ *   note       one sentence explaining what unlocks what, or null
+ *   isCourseComplete  true on the last topic once every module is cleared
+ *
+ * Never returns a disabled or dead action: when the way forward is locked it
+ * points at the mission (or the module page) and the note says what unlocks it.
+ * Returns null when the lesson is not in the curriculum.
+ */
+export function lessonNextStep(curriculum, lessonId) {
+  const modules = curriculum.filter((entry) => entry.lessons.length > 0);
+  const moduleIndex = modules.findIndex((entry) => entry.lessons.some((item) => String(item.lesson._id) === String(lessonId)));
+  if (moduleIndex === -1) return null;
+
+  const moduleEntry = modules[moduleIndex];
+  const { module } = moduleEntry;
+  const lessonIndex = moduleEntry.lessons.findIndex((item) => String(item.lesson._id) === String(lessonId));
+  const lessonEntry = moduleEntry.lessons[lessonIndex];
+  const nextLessonEntry = moduleEntry.lessons[lessonIndex + 1] ?? null;
+  const nextModuleEntry = modules[moduleIndex + 1] ?? null;
+  const previousModuleEntry = modules[moduleIndex - 1] ?? null;
+
+  const lessonPath = (lesson) => `/student/lessons/${lesson._id}`;
+  const isOpen = (entry) => Boolean(entry) && entry.state !== LESSON_STATE.LOCKED;
+  const topicLabel = (lesson) => `Next topic: ${lesson.title}`;
+  const moduleLabel = (entry) => `Module ${entry.module.moduleNumber}: ${entry.module.title}`;
+
+  // Previous: the topic before in this module, else the previous module's last topic.
+  const previousEntry = lessonIndex > 0 ? moduleEntry.lessons[lessonIndex - 1] : previousModuleEntry?.lessons.at(-1) ?? null;
+  const previous = isOpen(previousEntry)
+    ? { to: lessonPath(previousEntry.lesson), title: previousEntry.lesson.title, label: lessonIndex > 0 ? 'Previous topic' : `Previous module · Module ${previousModuleEntry.module.moduleNumber}` }
+    : null;
+
+  const openLevel = lessonEntry.levels.find((level) => !level.isPassed) ?? null;
+  const isCompleted = lessonEntry.state === LESSON_STATE.COMPLETED;
+  const result = { primary: null, secondary: null, previous, note: null, isCourseComplete: false };
+
+  // 0. A locked lesson (normally never shown): point back to its module.
+  if (lessonEntry.state === LESSON_STATE.LOCKED) {
+    result.primary = { kind: 'module-page', to: `/student/modules/${module._id}`, label: `Back to Module ${module.moduleNumber}`, ariaLabel: `Back to ${moduleLabel(moduleEntry)}` };
+    result.note = 'This topic opens once the topics before it are cleared.';
+    return result;
+  }
+
+  // 1. The lesson still has a mission to clear: that is the main action.
+  if (!isCompleted && openLevel) {
+    result.primary = {
+      kind: 'mission',
+      to: `/student/missions/${openLevel.mission._id}/play`,
+      label: 'Take the mission',
+      ariaLabel: `Take the mission: ${openLevel.mission.scenarioData?.title ?? lessonEntry.lesson.title}`,
+    };
+    if (nextLessonEntry && isOpen(nextLessonEntry)) {
+      result.secondary = { to: lessonPath(nextLessonEntry.lesson), label: topicLabel(nextLessonEntry.lesson), ariaLabel: topicLabel(nextLessonEntry.lesson) };
+    } else if (nextLessonEntry) {
+      result.note = `Clear this mission to unlock the next topic, ${nextLessonEntry.lesson.title}.`;
+    } else if (nextModuleEntry && !isOpen(nextModuleEntry)) {
+      result.note = `Clear this mission to unlock Module ${nextModuleEntry.module.moduleNumber}: ${nextModuleEntry.module.title}.`;
+    } else if (!nextModuleEntry) {
+      result.note = 'Clear this mission to finish the course.';
+    }
+    return result;
+  }
+
+  // 2. Not completed and no mission at all: it cannot be cleared by the student.
+  if (!isCompleted && !openLevel) {
+    if (nextLessonEntry && isOpen(nextLessonEntry)) {
+      result.primary = { kind: 'lesson', to: lessonPath(nextLessonEntry.lesson), label: topicLabel(nextLessonEntry.lesson), ariaLabel: topicLabel(nextLessonEntry.lesson) };
+    } else {
+      result.primary = { kind: 'module-page', to: `/student/modules/${module._id}`, label: `Back to Module ${module.moduleNumber}`, ariaLabel: `Back to ${moduleLabel(moduleEntry)}` };
+      result.note = 'This topic has no mission yet, so the topics after it stay locked. Your instructor needs to add one.';
+    }
+    return result;
+  }
+
+  // 3. Completed, and another topic follows in this module.
+  if (nextLessonEntry) {
+    if (isOpen(nextLessonEntry)) {
+      result.primary = { kind: 'lesson', to: lessonPath(nextLessonEntry.lesson), label: topicLabel(nextLessonEntry.lesson), ariaLabel: topicLabel(nextLessonEntry.lesson) };
+    } else {
+      result.primary = { kind: 'module-page', to: `/student/modules/${module._id}`, label: `Back to Module ${module.moduleNumber}`, ariaLabel: `Back to ${moduleLabel(moduleEntry)}` };
+      result.note = `${nextLessonEntry.lesson.title} opens once every topic before it is cleared.`;
+    }
+    return result;
+  }
+
+  // 4. Completed, last topic of the module, and a module follows.
+  if (nextModuleEntry) {
+    if (isOpen(nextModuleEntry)) {
+      const first = nextModuleEntry.lessons[0];
+      const label = `Continue to ${moduleLabel(nextModuleEntry)}`;
+      result.primary = { kind: 'module', to: lessonPath(first.lesson), label, ariaLabel: `${label}, first topic: ${first.lesson.title}` };
+    } else {
+      result.primary = { kind: 'module-page', to: `/student/modules/${module._id}`, label: `Back to Module ${module.moduleNumber}`, ariaLabel: `Back to ${moduleLabel(moduleEntry)}` };
+      result.note = `Clear every topic in Module ${module.moduleNumber} to unlock Module ${nextModuleEntry.module.moduleNumber}: ${nextModuleEntry.module.title}.`;
+    }
+    return result;
+  }
+
+  // 5. Completed, last topic of the last module.
+  result.isCourseComplete = modules.every((entry) => entry.isCleared);
+  result.primary = { kind: 'dashboard', to: '/student', label: 'Back to dashboard', ariaLabel: 'Back to dashboard' };
+  result.note = result.isCourseComplete
+    ? 'You have cleared every module of the course. Well done!'
+    : 'This was the last topic. Clear the remaining topics to finish the course.';
+  return result;
+}
+
 export function countCompletedLessons(curriculum) {
   return curriculum.reduce((sum, moduleEntry) => sum + moduleEntry.completedLessons, 0);
 }

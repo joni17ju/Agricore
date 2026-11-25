@@ -175,6 +175,76 @@
   .lesson-foot__side .lesson-foot__link { display: flex; width: 100%; padding: 0.7rem 0; border-top: 1px solid var(--paper-rule); }
 }
 
+/* Instructor footer: an optional line under the three columns. */
+.lesson-foot__note { grid-column: 1 / -1; margin: 0; text-align: center; font-size: 0.85rem; color: var(--ink-muted); }
+
+/* ───────── Student footer: one next step, then the previous topic ───────── */
+.lesson-foot.lesson-foot--student {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'next' 'prev';
+  gap: 1.1rem;
+  padding-top: 1.4rem;
+}
+.lesson-foot__next { grid-area: next; }
+.lesson-foot__prev { grid-area: prev; justify-self: start; padding-top: 0.9rem; border-top: 1px solid var(--paper-rule); min-height: 44px; }
+.lesson-foot__link:focus-visible,
+.next-step__secondary:focus-visible { outline: 2px solid var(--forest); outline-offset: 3px; border-radius: 4px; }
+
+/* The next-step block, shared by the lesson footer and the mission result. */
+.next-step { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; text-align: center; }
+.next-step .next-step__primary {
+  max-width: min(100%, 32rem);
+  min-height: 52px;
+  height: auto;
+  padding-block: 0.65rem;
+  white-space: normal;
+  line-height: 1.3;
+  text-align: center;
+}
+.next-step__primary:focus-visible { box-shadow: var(--focus-ring); outline: 2px solid var(--forest-deep); outline-offset: 2px; }
+.next-step__note {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  max-width: 34rem;
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  text-align: left;
+}
+.next-step__note svg { flex: none; margin-top: 0.2em; color: var(--forest-muted); }
+.next-step__done {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--forest-deep);
+}
+.next-step__done svg { color: var(--ochre); }
+.next-step__secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  padding: 0 0.4rem;
+  font-weight: 600;
+  color: var(--forest);
+  text-decoration: none;
+}
+.next-step__secondary:hover { text-decoration: underline; text-underline-offset: 0.2em; }
+
+@media (max-width: 640px) {
+  /* Phones: full-width buttons and rows, comfortable to tap. */
+  .next-step { align-items: stretch; }
+  .next-step .next-step__primary { width: 100%; max-width: none; }
+  .next-step__secondary { justify-content: center; border: 1px solid var(--paper-rule); border-radius: var(--radius-md); background: var(--surface); }
+  .lesson-foot__prev { justify-self: stretch; display: flex; }
+}
+
 /* Illustration placeholders that some lessons still carry as media assets. */
 .lesson-plates { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--paper-rule); }
 .lesson-plates__label { margin: 0 0 0.8rem; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-muted); }

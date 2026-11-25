@@ -59,6 +59,7 @@ export default function LessonEditorPage() {
     <div className="page">
       <LessonWorkspace
         key={lessonEntry.lesson._id}
+        structure={structure}
         moduleEntry={moduleEntry}
         lessonEntry={lessonEntry}
         onChanged={reload}
@@ -70,7 +71,7 @@ export default function LessonEditorPage() {
 }
 
 /** Lesson Content Editor (Proposal Fig 25) — unchanged behaviour, now full page. */
-function LessonWorkspace({ moduleEntry, lessonEntry, onChanged, onDeleted, toast }) {
+function LessonWorkspace({ structure, moduleEntry, lessonEntry, onChanged, onDeleted, toast }) {
   const { module } = moduleEntry;
   const { lesson, missions } = lessonEntry;
   const [tab, setTab] = useState('content');
@@ -202,6 +203,7 @@ function LessonWorkspace({ moduleEntry, lessonEntry, onChanged, onDeleted, toast
         )}
         {tab === 'preview' && (
           <StudentViewPreview
+            structure={structure}
             moduleEntry={moduleEntry}
             lesson={lesson}
             missions={missions}
@@ -266,10 +268,17 @@ function LessonWorkspace({ moduleEntry, lessonEntry, onChanged, onDeleted, toast
  * and the mission side panel — are left out; the lesson's missions are
  * listed under the content instead, with instructor actions in the footer.
  */
-function StudentViewPreview({ moduleEntry, lesson, missions, title, html, isDirty, onEditLesson, onEditMissions }) {
+function StudentViewPreview({ structure, moduleEntry, lesson, missions, title, html, isDirty, onEditLesson, onEditMissions }) {
   const { module, lessons } = moduleEntry;
   const index = lessons.findIndex((item) => item.lesson._id === lesson._id);
-  const neighbour = (item) => (item ? { to: `/instructor/modules/${module._id}/lessons/${item.lesson._id}`, title: item.lesson.title } : null);
+  const neighbour = (item, owner = module) => (item ? { to: `/instructor/modules/${owner._id}/lessons/${item.lesson._id}`, title: item.lesson.title } : null);
+  // Past the ends of the module, step into the neighbouring module, as students do.
+  const filled = (structure ?? []).filter((entry) => entry.lessons.length > 0);
+  const at = filled.findIndex((entry) => entry.module._id === module._id);
+  const previousModule = index === 0 && at > 0 ? filled[at - 1] : null;
+  const nextModule = index === lessons.length - 1 && at !== -1 ? filled[at + 1] ?? null : null;
+  const previous = previousModule ? neighbour(previousModule.lessons.at(-1), previousModule.module) : neighbour(lessons[index - 1]);
+  const next = nextModule ? neighbour(nextModule.lessons[0], nextModule.module) : neighbour(lessons[index + 1]);
 
   return (
     <div className="lesson-surface lesson-preview">
@@ -312,10 +321,11 @@ function StudentViewPreview({ moduleEntry, lesson, missions, title, html, isDirt
         )}
         footer={(
           <LessonFooter
-            previous={neighbour(lessons[index - 1])}
-            next={neighbour(lessons[index + 1])}
-            previousLabel="Previous lesson"
-            nextLabel="Next lesson"
+            previous={previous}
+            next={next}
+            previousLabel={previousModule ? `Module ${previousModule.module.moduleNumber}` : 'Previous lesson'}
+            nextLabel={nextModule ? `Module ${nextModule.module.moduleNumber}` : 'Next lesson'}
+            note="Students see one next step here instead: take the mission, the next topic, or the next module once this one is cleared."
             action={<Button variant="secondary" icon="edit" onClick={onEditLesson}>Edit lesson</Button>}
           />
         )}

@@ -4,6 +4,7 @@ import { CountUp, StatusPill } from '../common/Display.jsx';
 import Icon from '../common/Icon.jsx';
 import { ProgressBar, ProgressRing } from '../common/Progress.jsx';
 import BadgeTile from '../student/BadgeTile.jsx';
+import { NextStepActions } from '../student/LessonNextStep.jsx';
 import { missionGameType } from '../../constants/gameTypes.js';
 import { describeFeedback } from './missionFeedback.js';
 
@@ -22,6 +23,9 @@ export default function MissionResult({ result, answers, mission, module, onRetr
   const { isPassed, score, xpEarned, totalXP, level, leveledUp, newBadges, unlockedLessons, unlockedModule, moduleCleared, rankBefore, rankAfter } = result;
   const feedback = describeFeedback({ gameType: missionGameType(module, mission), scenarioData: mission.scenarioData, breakdown: result.breakdown, answers });
   const next = nextStepLink(result.nextStep);
+  // Passed: the same next step as the end of the lesson (next level, topic or module).
+  const lessonNext = isPassed ? result.lessonNext : null;
+  const nextLabel = lessonNext?.primary?.kind === 'mission' ? 'Next level' : undefined;
   const rankImproved = rankBefore && rankAfter && rankAfter < rankBefore;
 
   return (
@@ -101,6 +105,12 @@ export default function MissionResult({ result, answers, mission, module, onRetr
         </section>
       )}
 
+      {lessonNext?.primary && (
+        <section className="mission-result__next" aria-label="What to do next">
+          <NextStepActions step={{ ...lessonNext, secondary: null }} primaryLabel={nextLabel} />
+        </section>
+      )}
+
       <section className="mission-result__feedback">
         <h2><Icon name="clipboard" size={20} /> Feedback</h2>
         <ul className="feedback-list">
@@ -121,7 +131,7 @@ export default function MissionResult({ result, answers, mission, module, onRetr
         <Button variant={isPassed ? 'secondary' : 'primary'} icon="refresh" onClick={onRetry}>
           {isPassed ? 'Play Again' : 'Try Again'}
         </Button>
-        {isPassed && next && (
+        {isPassed && !lessonNext?.primary && next && (
           <Button size="lg" iconRight="arrow-right" to={next.to}>{next.label}</Button>
         )}
       </footer>
