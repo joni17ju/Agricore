@@ -2,6 +2,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { NotificationProvider } from './context/NotificationContext.jsx';
 import { ToastProvider } from './context/ToastContext.jsx';
+import ServerWakeNotice from './components/common/ServerWakeNotice.jsx';
 import AppRouter from './routes/AppRouter.jsx';
 
 export default function App() {
@@ -12,6 +13,7 @@ export default function App() {
           {/* Inside AuthProvider: it only polls while someone is signed in. */}
           <NotificationProvider>
             <AppRouter />
+            <ServerWakeNotice />
           </NotificationProvider>
         </ToastProvider>
       </AuthProvider>

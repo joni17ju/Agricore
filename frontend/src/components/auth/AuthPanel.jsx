@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { returnPathFor } from '../../routes/RequireRole.jsx';
 import Button, { IconButton } from '../common/Button.jsx';
 import Icon from '../common/Icon.jsx';
 import { ROLE_HOME, ROLES } from '../../constants/roles.js';
@@ -39,9 +41,13 @@ export default function AuthPanel({ view, onChangeView, onClose }) {
      this callback, so a new function each render would loop. */
   const handleResetTitle = useCallback((title) => setResetTitle(title), []);
 
+  const location = useLocation();
+  const { sessionNotice } = useAuth();
+
+  // Back to the page a route guard (or an expired session) sent them away from.
   const goHome = (user) => {
     onClose?.();
-    navigate(ROLE_HOME[user.role], { replace: true });
+    navigate(returnPathFor(user, location.state?.from), { replace: true });
   };
 
   const heading =
@@ -88,6 +94,11 @@ export default function AuthPanel({ view, onChangeView, onClose }) {
 
           {view === AUTH_VIEWS.LOGIN && (
             <>
+              {sessionNotice && (
+                <p className="auth-notice" role="status">
+                  <Icon name="info" size={16} /> {sessionNotice}
+                </p>
+              )}
               <LoginForm onSuccess={goHome} onForgotPassword={() => onChangeView(AUTH_VIEWS.FORGOT)} />
               <p className="auth-switch">
                 Don&apos;t have an account?{' '}

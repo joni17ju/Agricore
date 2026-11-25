@@ -1,5 +1,6 @@
 import { createContext, startTransition, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import * as authService from '../services/authService.js';
+import { SESSION_EXPIRED_EVENT } from '../services/apiClient.js';
 import { invalidateCourse } from '../services/serviceContext.js';
 
 const AuthContext = createContext(null);
@@ -7,16 +8,50 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isReady, setIsReady] = useState(false);
+  /*
+   * Set when the session could not be checked at start-up because the server
+   * did not answer (asleep, offline). The token is kept, so "Try again" can
+   * pick up where the student was instead of treating them as signed out.
+   */
+  const [startupError, setStartupError] = useState(null);
+  // Shown on the sign-in page after a session expired mid-use.
+  const [sessionNotice, setSessionNotice] = useState(null);
 
-  useEffect(() => {
+  const checkSession = useCallback(() => {
+    setStartupError(null);
+    setIsReady(false);
     authService
       .getCurrentUser()
-      .then(setUser)
-      .finally(() => setIsReady(true));
+      .then((current) => {
+        setUser(current);
+        setIsReady(true);
+      })
+      .catch((error) => setStartupError(error));
+  }, []);
+
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
+
+  /*
+   * A request answered "session expired" (apiClient raises the event). Without
+   * this the app kept showing a signed-in screen whose every request failed.
+   * Now the student is sent to sign in with a clear message, and the route
+   * guard remembers where they were so signing in brings them straight back.
+   */
+  useEffect(() => {
+    const onExpired = () => {
+      setSessionNotice('Your session has expired. Sign in again to continue where you left off.');
+      invalidateCourse();
+      startTransition(() => setUser(null));
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
   }, []);
 
   const login = useCallback(async (credentials) => {
     const signedIn = await authService.login(credentials);
+    setSessionNotice(null);
     setUser(signedIn);
     return signedIn;
   }, []);
@@ -37,6 +72,7 @@ export function AuthProvider({ children }) {
    */
   const logout = useCallback(() => {
     authService.logout();
+    setSessionNotice(null);
     // Nothing fetched under the old session is reused by the next one.
     invalidateCourse();
     startTransition(() => setUser(null));
@@ -49,8 +85,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, isReady, login, register, logout, refreshUser }),
-    [user, isReady, login, register, logout, refreshUser],
+    () => ({ user, isReady, startupError, retryStartup: checkSession, sessionNotice, login, register, logout, refreshUser }),
+    [user, isReady, startupError, checkSession, sessionNotice, login, register, logout, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

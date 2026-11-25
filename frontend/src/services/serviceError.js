@@ -6,9 +6,11 @@
  * mock database (and dragging the seed data into the bundle).
  */
 export class ServiceError extends Error {
-  constructor(message, status = 400) {
+  constructor(message, status = 400, code = undefined) {
     super(message);
     this.name = 'ServiceError';
     this.status = status;
+    // The API's machine-readable reason, e.g. "attempt_replaced", when it sent one.
+    if (code) this.code = code;
   }
 }

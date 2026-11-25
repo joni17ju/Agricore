@@ -14,13 +14,33 @@
     -->
     <style>
       html, body { background: #f6f2e8; margin: 0; }
+      /* Shown until the app's script runs (React replaces #root's contents). */
+      .boot { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; font: 600 1.05rem Georgia, 'Source Serif 4', serif; color: #143823; }
+      .boot svg { overflow: visible; }
+      .boot .stem { stroke: #1f5136; stroke-width: 2.6; stroke-linecap: round; fill: none; stroke-dasharray: 1; stroke-dashoffset: 1; animation: boot-stem 1.8s ease-in-out infinite; }
+      .boot .leaf { fill: #1f5136; transform-box: fill-box; transform: scale(0); animation: boot-leaf 1.8s ease-in-out infinite; }
+      .boot .leaf-l { fill: #477258; transform-origin: 100% 100%; }
+      .boot .leaf-r { transform-origin: 0% 100%; animation-delay: 0.1s; }
+      @keyframes boot-stem { 0% { stroke-dashoffset: 1; } 35%, 80% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+      @keyframes boot-leaf { 0%, 30% { transform: scale(0); } 55%, 80% { transform: scale(1); } 100% { transform: scale(1); opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) { .boot .stem, .boot .leaf { animation: none; stroke-dashoffset: 0; transform: none; } }
     </style>
     <meta name="description" content="AgriCore — gamified learning platform for Principles of Crop Protection I, DOrSU" />
     <meta name="theme-color" content="#f6f2e8" />
     <title>AgriCore · Principles of Crop Protection I</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot" role="status">
+        <svg viewBox="0 0 48 48" width="56" height="56" aria-hidden="true">
+          <path d="M10 41.5h28" stroke="#d9d0bb" stroke-width="2.4" stroke-linecap="round" fill="none" />
+          <path class="stem" d="M24 41V20" pathLength="1" />
+          <path class="leaf leaf-r" d="M24 24c0-7 4.6-11.5 12-11.5 0 7.8-4.6 11.8-12 11.5Z" />
+          <path class="leaf leaf-l" d="M24 30c0-6-3.9-9.6-10-9.6 0 6.6 3.9 10 10 9.6Z" />
+        </svg>
+        <span>Loading AgriCore…</span>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
