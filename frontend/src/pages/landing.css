@@ -1183,3 +1183,52 @@ html:has(.landing) {
   /* Narrowest phones: the hero right below still offers Login. */
   .landing-nav__login { display: none; }
 }
+
+/* ───────── Institution logos (LogoPair) ───────── */
+.landing-nav__brandgroup { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.landing-nav__logos { padding-left: var(--space-3); border-left: 1px solid var(--paper-rule); }
+.landing-nav__inst { display: none; }
+
+/* Phones: logos in a slim band above the header row; it folds away once the page scrolls. */
+@media (max-width: 640px) {
+  .landing { --nav-height: calc(68px + 52px + env(safe-area-inset-top, 0px)); }
+  .landing-nav { height: auto; min-height: calc(68px + env(safe-area-inset-top, 0px)); flex-direction: column; align-items: stretch; }
+  .landing-nav__inner { height: 68px; }
+  /* The menu panel opens right under the header, whether the band is showing or folded away. */
+  .landing-nav.is-scrolled .landing-nav__links { top: calc(68px + env(safe-area-inset-top, 0px)); }
+  .landing-nav__logos { display: none; }
+  .landing-nav__inst {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    height: 52px;
+    padding: 6px 16px;
+    border-bottom: 1px solid var(--paper-rule);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--forest-deep);
+    overflow: hidden;
+    transition: height var(--duration-base, 200ms) ease, padding var(--duration-base, 200ms) ease, opacity var(--duration-base, 200ms) ease;
+  }
+  .landing-nav__inst span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .landing-nav.is-scrolled .landing-nav__inst { height: 0; padding-block: 0; opacity: 0; border-bottom-width: 0; }
+}
+@media (max-width: 640px) and (prefers-reduced-motion: reduce) {
+  .landing-nav__inst { transition: none; }
+}
+
+/* Sign-in, register and password reset: above "Welcome to" on the brand column,
+   at the end of the green banner on narrow screens. */
+.auth-brand__logos { margin-bottom: var(--space-3); }
+@media (max-width: 860px) {
+  .auth-brand__content { width: 100%; }
+  .auth-brand__logos { order: 3; margin: 0 0 0 auto; }
+}
+
+.landing-nav__inst-short { display: none; }
+@media (max-width: 420px) {
+  .landing-nav__inst-long { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .landing-nav__inst-short { display: inline; }
+}

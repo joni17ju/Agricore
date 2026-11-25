@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { returnPathFor } from '../../routes/RequireRole.jsx';
 import Button, { IconButton } from '../common/Button.jsx';
 import Icon from '../common/Icon.jsx';
+import LogoPair from '../common/LogoPair.jsx';
 import { ROLE_HOME, ROLES } from '../../constants/roles.js';
 import LoginForm from './LoginForm.jsx';
 import PasswordResetFlow from './PasswordResetFlow.jsx';
@@ -69,6 +70,7 @@ export default function AuthPanel({ view, onChangeView, onClose }) {
         </svg>
 
         <div className="auth-brand__content">
+          <LogoPair tone="dark" className="auth-brand__logos" />
           <p className="auth-brand__welcome">Welcome to</p>
           <span className="auth-brand__mark">
             <Icon name="sprout" size={44} />

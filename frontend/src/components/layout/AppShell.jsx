@@ -7,6 +7,7 @@ import { markAppHealthy } from '../common/ErrorBoundary.jsx';
 import { Avatar, Logo, SkeletonBlock } from '../common/Display.jsx';
 import { IconButton } from '../common/Button.jsx';
 import Icon from '../common/Icon.jsx';
+import LogoPair from '../common/LogoPair.jsx';
 import NotificationBell from '../common/NotificationBell.jsx';
 import ScrollToTopButton from '../common/ScrollToTopButton.jsx';
 
@@ -120,6 +121,8 @@ function AppShellInner({ navGroups, topbarRight, homePath, outletContext }) {
           </NavLink>
           <IconButton icon="x" label="Close menu" className="sidebar__close" onClick={() => setIsDrawerOpen(false)} />
         </div>
+        {/* University and department logos; hidden on the icon rail. */}
+        <LogoPair size="sm" tone="dark" className="sidebar__logos" />
 
         {/*
           Docked on the seam rather than inside the brand row: it keeps the

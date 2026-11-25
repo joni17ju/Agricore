@@ -3,6 +3,7 @@ import AuthModal, { AUTH_VIEWS } from '../components/auth/AuthModal.jsx';
 import Button from '../components/common/Button.jsx';
 import { Logo } from '../components/common/Display.jsx';
 import Icon from '../components/common/Icon.jsx';
+import LogoPair from '../components/common/LogoPair.jsx';
 import ScrollToTopButton from '../components/common/ScrollToTopButton.jsx';
 import { ROLE_HOME } from '../constants/roles.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -129,10 +130,20 @@ function LandingNav({ onSignIn, onRegister }) {
 
   return (
     <header className={`landing-nav ${isScrolled ? 'is-scrolled' : ''}`}>
+      {/* Phones: the header row is full (logo, Login, Register, menu), so the
+          institution logos sit in a slim band above it that folds away on scroll. */}
+      <div className="landing-nav__inst">
+        <LogoPair size="sm" />
+        <span className="landing-nav__inst-long">Davao Oriental State University · BS Agriculture</span>
+        <span className="landing-nav__inst-short" aria-hidden="true">DOrSU · BS Agriculture</span>
+      </div>
       <div className="landing-nav__inner">
-        <a href="#home" className="landing-nav__brand" onClick={close}>
-          <Logo />
-        </a>
+        <div className="landing-nav__brandgroup">
+          <a href="#home" className="landing-nav__brand" onClick={close}>
+            <Logo />
+          </a>
+          <LogoPair className="landing-nav__logos" />
+        </div>
 
         <nav className={`landing-nav__links ${isOpen ? 'is-open' : ''}`} aria-label="Page sections">
           {NAV_LINKS.map((link) => (
