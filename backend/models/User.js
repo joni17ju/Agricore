@@ -52,6 +52,23 @@ const userSchema = new Schema(
       ),
       default: null,
     },
+    /*
+     * Agreement to the Terms of Use and Privacy Notice, recorded at
+     * registration. Optional: accounts created before the notice existed have
+     * no value here and keep working unchanged. This is not research consent;
+     * the study's Informed Consent Form is collected separately.
+     */
+    termsAcceptance: {
+      type: new Schema(
+        {
+          accepted: { type: Boolean, default: false },
+          acceptedAt: { type: Date, default: null },
+          version: { type: String, default: null },
+        },
+        { _id: false },
+      ),
+      default: undefined,
+    },
     isSeedData: { type: Boolean, default: false },
   },
   { collection: 'users', timestamps: true },

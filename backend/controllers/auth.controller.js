@@ -64,7 +64,17 @@ export async function login(req, res) {
  * approves them, so no token is issued here.
  */
 export async function register(req, res) {
-  const { firstName, lastName, email, password, role = 'student', schoolId = null, sectionId = null } = req.body ?? {};
+  const { firstName, lastName, email, password, role = 'student', schoolId = null, sectionId = null, acceptedTerms, termsVersion } = req.body ?? {};
+
+  /*
+   * The register form now requires agreeing to the Terms of Use and Privacy
+   * Notice. A request that says it did not agree is refused; one that does
+   * not mention it at all comes from the form as it was before the notice
+   * existed and is accepted as before, with nothing recorded.
+   */
+  if (acceptedTerms === false) {
+    throw httpError(400, 'Please agree to the Terms and Conditions and the Privacy Notice to create an account.');
+  }
 
   if (!firstName?.trim() || !lastName?.trim()) throw httpError(400, 'First and last name are required.');
   if (!email?.trim()) throw httpError(400, 'Email is required.');
@@ -116,6 +126,15 @@ export async function register(req, res) {
     // Waits for an instructor. Seeded students are untouched and stay active.
     status: 'pending',
     earnedBadges: [],
+    ...(acceptedTerms === true
+      ? {
+          termsAcceptance: {
+            accepted: true,
+            acceptedAt: new Date(),
+            version: String(termsVersion ?? '').trim().slice(0, 40) || null,
+          },
+        }
+      : {}),
   });
 
   // Best-effort inside notify.js, so a notification failure cannot fail the
