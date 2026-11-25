@@ -30,5 +30,7 @@ const missionAttemptSchema = new Schema(
 
 // Leaderboard and performance queries read a student's attempts newest-first.
 missionAttemptSchema.index({ studentId: 1, attemptedAt: -1 });
+// Replays and lesson completion read one student's attempts at one mission.
+missionAttemptSchema.index({ studentId: 1, missionId: 1 });
 
 export default mongoose.model('MissionAttempt', missionAttemptSchema);

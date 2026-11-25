@@ -80,6 +80,9 @@ const userSchema = new Schema(
  * ID — instructors and admins may legitimately have none. The partial filter
  * constrains real strings only.
  */
+// The leaderboard and roster read a section's active students.
+userSchema.index({ sectionId: 1, role: 1, status: 1 });
+
 userSchema.index(
   { schoolId: 1 },
   { unique: true, partialFilterExpression: { schoolId: { $type: 'string' } } },

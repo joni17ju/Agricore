@@ -6,7 +6,7 @@ export async function listProgress(req, res) {
   const filter = {};
   if (req.query.studentId) filter.studentId = toObjectId(req.query.studentId, 'studentId');
   if (req.query.lessonId) filter.lessonId = toObjectId(req.query.lessonId, 'lessonId');
-  res.json(await Progress.find(filter));
+  res.json(await Progress.find(filter).lean());
 }
 
 /**

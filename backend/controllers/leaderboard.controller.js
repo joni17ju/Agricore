@@ -69,45 +69,46 @@ export async function getLeaderboard(req, res) {
   }
   if (!scope) return res.json([]);
 
-  const userFilter = { role: 'student', status: 'active', sectionId: toObjectId(scope, 'sectionId') };
-  const students = await User.find(userFilter).select('firstName lastName avatarUrl earnedBadges').lean();
-  if (students.length === 0) return res.json([]);
+  res.json(await rankSection(scope, { period, moduleId, limit }));
+}
 
-  const studentIds = students.map((s) => s._id);
-  const attempts = await MissionAttempt.find({ studentId: { $in: studentIds } })
-    .select('studentId missionId xpEarned attemptedAt')
-    .lean();
-
-  // "module" scopes XP to the missions belonging to that module's lessons.
-  let missionFilter = null;
+/**
+ * The ranking of one section: dense ranks by XP for the period, with each
+ * student's all-time XP and last week's position for the movement arrows.
+ *
+ * XP is summed inside MongoDB with one aggregation rather than by downloading
+ * every attempt of the section, and the student list is read in parallel.
+ * Shared by GET /leaderboard and GET /dashboard.
+ */
+export async function rankSection(sectionId, { period = 'overall', moduleId, limit = 100 } = {}) {
+  let missionIds = null;
   if (period === 'module') {
     if (!moduleId) throw httpError(400, 'moduleId is required when period is "module".');
-    const lessons = await Lesson.find({ moduleId: toObjectId(moduleId, 'moduleId') }).select('_id');
-    const missions = await Mission.find({ lessonId: { $in: lessons.map((l) => l._id) } }).select('_id');
-    missionFilter = new Set(missions.map((m) => String(m._id)));
+    const lessons = await Lesson.find({ moduleId: toObjectId(moduleId, 'moduleId') }).select('_id').lean();
+    missionIds = (await Mission.find({ lessonId: { $in: lessons.map((l) => l._id) } }).select('_id').lean()).map((m) => m._id);
   }
 
+  const students = await User.find({ role: 'student', status: 'active', sectionId: toObjectId(sectionId, 'sectionId') })
+    .select('firstName lastName avatarUrl earnedBadges')
+    .lean();
+  if (students.length === 0) return [];
+
   const now = Date.now();
-  const inPeriod = (attempt) => {
-    if (period === 'week') return now - new Date(attempt.attemptedAt).getTime() <= WEEK_MS;
-    if (period === 'module') return missionFilter.has(String(attempt.missionId));
-    return true;
-  };
-
-  const sumBy = (predicate) => {
-    const totals = new Map(studentIds.map((id) => [String(id), 0]));
-    for (const attempt of attempts) {
-      if (!predicate(attempt)) continue;
-      const key = String(attempt.studentId);
-      totals.set(key, (totals.get(key) ?? 0) + attempt.xpEarned);
-    }
-    return totals;
-  };
-
-  const periodTotals = sumBy(inPeriod);
-  const overallTotals = sumBy(() => true);
-  // Ranking as it stood a week ago, for the movement arrows.
-  const lastWeekTotals = sumBy((a) => now - new Date(a.attemptedAt).getTime() > WEEK_MS);
+  const weekAgo = new Date(now - WEEK_MS);
+  const totals = await MissionAttempt.aggregate([
+    { $match: { studentId: { $in: students.map((s) => s._id) } } },
+    {
+      $group: {
+        _id: '$studentId',
+        overall: { $sum: '$xpEarned' },
+        week: { $sum: { $cond: [{ $gte: ['$attemptedAt', weekAgo] }, '$xpEarned', 0] } },
+        beforeWeek: { $sum: { $cond: [{ $lt: ['$attemptedAt', weekAgo] }, '$xpEarned', 0] } },
+        module: missionIds ? { $sum: { $cond: [{ $in: ['$missionId', missionIds] }, '$xpEarned', 0] } } : { $sum: 0 },
+      },
+    },
+  ]);
+  const byStudent = new Map(totals.map((t) => [String(t._id), t]));
+  const total = (id, key) => byStudent.get(String(id))?.[key] ?? 0;
 
   const base = students.map((student) => ({
     _id: student._id,
@@ -115,22 +116,16 @@ export async function getLeaderboard(req, res) {
     lastName: student.lastName,
     avatarUrl: student.avatarUrl ?? null,
     badgeCount: (student.earnedBadges ?? []).length,
-    overallXP: overallTotals.get(String(student._id)) ?? 0,
+    overallXP: total(student._id, 'overall'),
   }));
 
+  // Ranking as it stood a week ago, for the movement arrows.
   const previousRanks = new Map(
-    rank(
-      base
-        .map((row) => ({ ...row, totalXP: lastWeekTotals.get(String(row._id)) ?? 0 }))
-        .sort(byXP),
-    ).map((row) => [String(row._id), row.rank]),
+    rank(base.map((row) => ({ ...row, totalXP: total(row._id, 'beforeWeek') })).sort(byXP)).map((row) => [String(row._id), row.rank]),
   );
 
-  const ranked = rank(
-    base.map((row) => ({ ...row, totalXP: periodTotals.get(String(row._id)) ?? 0 })).sort(byXP),
-  )
+  const periodKey = period === 'week' ? 'week' : period === 'module' ? 'module' : 'overall';
+  return rank(base.map((row) => ({ ...row, totalXP: total(row._id, periodKey) })).sort(byXP))
     .slice(0, limit)
     .map((row) => ({ ...row, previousRank: previousRanks.get(String(row._id)) ?? null }));
-
-  res.json(ranked);
 }

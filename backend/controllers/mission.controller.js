@@ -7,7 +7,7 @@ import { validateMaxXP, validateScenario } from '../utils/missionValidation.js';
 export async function listMissions(req, res) {
   const filter = {};
   if (req.query.lessonId) filter.lessonId = toObjectId(req.query.lessonId, 'lessonId');
-  res.json(await Mission.find(filter).sort({ lessonId: 1, levelNumber: 1 }));
+  res.json(await Mission.find(filter).sort({ lessonId: 1, levelNumber: 1 }).lean());
 }
 
 /** GET /api/missions/:id */

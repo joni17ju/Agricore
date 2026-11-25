@@ -3,7 +3,7 @@ import { findOr404, httpError } from '../utils/http.js';
 
 /** GET /api/modules */
 export async function listModules(req, res) {
-  res.json(await Module.find().sort({ moduleNumber: 1 }));
+  res.json(await Module.find().sort({ moduleNumber: 1 }).lean());
 }
 
 /** GET /api/modules/:id */
