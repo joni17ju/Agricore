@@ -1,9 +1,10 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, Suspense, useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { BreadcrumbProvider, useBreadcrumbTrail } from '../../context/BreadcrumbContext.jsx';
 import { ROLE_LABELS } from '../../constants/roles.js';
-import { Avatar, Logo } from '../common/Display.jsx';
+import { markAppHealthy } from '../common/ErrorBoundary.jsx';
+import { Avatar, Logo, SkeletonBlock } from '../common/Display.jsx';
 import { IconButton } from '../common/Button.jsx';
 import Icon from '../common/Icon.jsx';
 import NotificationBell from '../common/NotificationBell.jsx';
@@ -62,6 +63,8 @@ function AppShellInner({ navGroups, topbarRight, homePath, outletContext }) {
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setCanAnimate(true));
+    // The app is up on the current version, so a future stale-file reload is allowed again.
+    markAppHealthy();
     return () => window.cancelAnimationFrame(frame);
   }, []);
 
@@ -148,6 +151,8 @@ function AppShellInner({ navGroups, topbarRight, homePath, outletContext }) {
                   // data-label feeds the CSS tooltip shown when the sidebar is
                   // collapsed; no title, whose delay makes it useless here.
                   data-label={item.label}
+                  // The visible label is hidden on the rail; this keeps the link named for screen readers.
+                  aria-label={item.badge > 0 ? `${item.label} (${item.badge} waiting)` : item.label}
                 >
                   <Icon name={item.icon} size={20} />
                   <span className="sidebar__link-label">{item.label}</span>
@@ -166,15 +171,20 @@ function AppShellInner({ navGroups, topbarRight, homePath, outletContext }) {
         </nav>
 
         <div className="sidebar__footer">
-          <div className="sidebar__user">
+          <Link
+            to={`${homePath}/profile`}
+            className="sidebar__user"
+            data-label="Profile"
+            aria-label={`Profile: ${user.firstName} ${user.lastName}`}
+          >
             <Avatar firstName={user.firstName} lastName={user.lastName} size={36} src={user.avatarUrl} />
             <div className="sidebar__user-text">
               <strong>{user.role === 'instructor' ? `Prof. ${user.lastName}` : `${user.firstName} ${user.lastName}`}</strong>
               <span>{ROLE_LABELS[user.role]}</span>
             </div>
-          </div>
-          <button type="button" className="sidebar__logout" onClick={handleLogout} data-label="Log out">
-            <Icon name="logout" size={18} />
+          </Link>
+          <button type="button" className="sidebar__logout" onClick={handleLogout} data-label="Log out" aria-label="Log out">
+            <Icon name="logout" size={20} />
             <span className="sidebar__link-label">Log out</span>
           </button>
         </div>
@@ -206,7 +216,10 @@ function AppShellInner({ navGroups, topbarRight, homePath, outletContext }) {
 
         <main className="app-content">
           <div key={location.pathname} className="page-transition">
-            <Outlet context={outletContext} />
+            {/* Pages load on first visit; the shell stays put and the page area shows its shape meanwhile. */}
+            <Suspense fallback={<SkeletonBlock variant="page" rows={4} label="Loading page" />}>
+              <Outlet context={outletContext} />
+            </Suspense>
           </div>
         </main>
       </div>
