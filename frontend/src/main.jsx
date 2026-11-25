@@ -15,6 +15,8 @@ import './components/leaderboard/leaderboard.css';
 import './components/missions/missions.css';
 import './components/instructor/instructor.css';
 import './pages/landing.css';
+// Touch and phone sizes, last so they win over component styles.
+import './styles/touch.css';
 
 import App from './App.jsx';
 

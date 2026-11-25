@@ -1,0 +1,81 @@
+/*
+ * Phones, tablets and any touch screen: comfortable targets and no zoom.
+ *
+ * Imported last (see main.jsx) so these sizes win over component styles.
+ * Every tappable control gets at least a 44 × 44 px target; small icon-only
+ * controls keep their look and gain an invisible hit area instead. Inputs use
+ * 16px text, below which Chrome and Safari zoom the page on focus.
+ */
+/* Phone and tablet widths, phones held sideways, and any coarse pointer. */
+@media (max-width: 768px), (max-height: 500px) and (orientation: landscape), (pointer: coarse) {
+  /* Buttons, icon buttons and tab-like controls. */
+  .btn,
+  .btn--sm,
+  .tabs__tab,
+  .role-toggle__option,
+  .notif-page__filter,
+  .lesson-toc__summary,
+  .rte-help summary,
+  .pagination__page,
+  .pagination__size { min-height: 44px; }
+  .icon-btn,
+  .icon-btn--sm,
+  .page-header__back,
+  .mission-topbar__back,
+  .landing-nav__toggle,
+  .avatar-upload__btn { min-width: 44px; min-height: 44px; }
+  .icon-btn,
+  .icon-btn--sm,
+  .mission-topbar__back,
+  .landing-nav__toggle { width: 44px; height: 44px; }
+  .pagination__page { min-width: 44px; }
+
+  /* Text links that act as controls get the height of a button, not a line. */
+  .topbar__crumb,
+  .auth-switch__link,
+  .link-button,
+  .student-progress__more,
+  .sidebar__logo,
+  .landing-nav__brand,
+  a.text-sm { display: inline-flex; align-items: center; min-height: 44px; }
+  .sidebar__link,
+  .sidebar__logout,
+  .landing-nav__link { min-height: 44px; }
+  .topbar__crumb { padding-inline: 4px; }
+  .mission-topbar__logo,
+  .sidebar__logo { min-width: 44px; }
+  .mission-topbar__logo { display: inline-flex; align-items: center; min-height: 44px; }
+
+  /* Lesson page controls. */
+  .lesson-foot__link,
+  .mission-levels__play { min-height: 44px; }
+  .mission-levels__play { display: inline-flex; align-items: center; justify-content: center; min-width: 64px; }
+
+  /* Tiny icon controls keep their size and gain a 44px invisible hit area. */
+  .info-tip__btn,
+  .lesson-row__grip { position: relative; }
+  .info-tip__btn::after,
+  .lesson-row__grip::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+
+  /* 16px text in every field, so focusing one never zooms the page. */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+  select,
+  textarea { font-size: 16px !important; }
+  /* Fields are 44px tall; component styles size some fields themselves, so this wins on purpose. */
+  .input,
+  input[type='search'],
+  input[type='text'],
+  input[type='email'],
+  input[type='password'],
+  input:not([type]) { min-height: 44px !important; }
+  /* Row checkboxes: a larger box inside the row. */
+  input[type='checkbox'] { width: 20px; height: 20px; }
+}
