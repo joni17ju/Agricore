@@ -20,17 +20,40 @@ export const LEADERBOARD_PERIODS = Object.freeze({
   MODULE: 'module',
 });
 
+/*
+ * Rankings change only when someone finishes a mission, so a board fetched in
+ * the last half-minute is reused. Flicking between Overall, This Week and By
+ * Module then answers instantly instead of waiting on the server each time.
+ * Keyed by section, period and module, so one tab's rows can never be served
+ * for another.
+ */
+const CACHE_MS = 30 * 1000;
+const boardCache = new Map();
+
+/** Forget cached rankings (after submitting an attempt, the student's XP changed). */
+export function invalidateLeaderboards() {
+  boardCache.clear();
+}
+
+function fetchRows(sectionId, period, moduleId) {
+  const key = `${sectionId}|${period}|${period === LEADERBOARD_PERIODS.MODULE ? moduleId : ''}`;
+  const cached = boardCache.get(key);
+  if (cached && Date.now() - cached.at < CACHE_MS) return cached.promise;
+  const promise = api.get('/leaderboard', { sectionId, period, moduleId: period === LEADERBOARD_PERIODS.MODULE ? moduleId : undefined });
+  boardCache.set(key, { at: Date.now(), promise });
+  promise.catch(() => boardCache.delete(key));
+  return promise;
+}
+
 async function buildLeaderboard(sectionId, { period = LEADERBOARD_PERIODS.OVERALL, moduleId } = {}) {
   if (period === LEADERBOARD_PERIODS.MODULE && !moduleId) throw new ServiceError('Choose a module.');
-  const [section, rows] = await Promise.all([
-    requireSection(sectionId),
-    api.get('/leaderboard', { sectionId, period, moduleId }),
-  ]);
+  const [section, rows] = await Promise.all([requireSection(sectionId), fetchRows(sectionId, period, moduleId)]);
 
   return {
     section,
     period,
-    moduleId: moduleId ?? null,
+    // Which board this is, so a page can tell it from a board it asked for earlier.
+    moduleId: period === LEADERBOARD_PERIODS.MODULE ? moduleId : null,
     totalStudents: rows.length,
     rows: rows.map((row) => ({
       rank: row.rank,
@@ -64,5 +87,19 @@ export async function getStudentLeaderboard(studentId, options) {
 /** Leaderboard of one of the instructor's sections. */
 export async function getSectionLeaderboard(instructorId, sectionId, options) {
   await requireInstructorSection(instructorId, sectionId);
-  return buildLeaderboard(sectionId, options);
+  return { ...(await buildLeaderboard(sectionId, options)), sectionId };
+}
+
+/**
+ * Whether a loaded board is the one currently selected. Pages keep showing
+ * the previous result while the next one loads, and without this check a
+ * By Module board stayed on screen after switching back to This Week or
+ * Overall (pilot feedback) — until the slow request finished, or for good if
+ * it failed.
+ */
+export function isBoardFor(board, { period, moduleId, sectionId } = {}) {
+  if (!board || board.period !== period) return false;
+  if (period === LEADERBOARD_PERIODS.MODULE && String(board.moduleId) !== String(moduleId)) return false;
+  if (sectionId !== undefined && board.sectionId !== undefined && String(board.sectionId) !== String(sectionId)) return false;
+  return true;
 }

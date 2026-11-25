@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useAsync } from '../../hooks/useAsync.js';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.js';
-import { LEADERBOARD_PERIODS, getStudentLeaderboard } from '../../services/leaderboardService.js';
+import { LEADERBOARD_PERIODS, getStudentLeaderboard, isBoardFor } from '../../services/leaderboardService.js';
 import { listModules } from '../../services/moduleService.js';
 import Card from '../../components/common/Card.jsx';
-import { EmptyState, ErrorState, LoadingState, PageHeader } from '../../components/common/Display.jsx';
+import { EmptyState, ErrorState, PageHeader, SkeletonBlock } from '../../components/common/Display.jsx';
 import { SelectInput } from '../../components/common/Form.jsx';
 import Tabs from '../../components/common/Tabs.jsx';
 import { LeaderboardTable, Podium } from '../../components/leaderboard/Leaderboard.jsx';
@@ -29,18 +29,22 @@ export default function LeaderboardPage() {
   const [moduleId, setModuleId] = useState('');
   const modules = useAsync(listModules, []);
   const selectedModuleId = moduleId || modules.data?.[0]?._id || '';
+  const isModuleBoard = period === LEADERBOARD_PERIODS.MODULE;
+  // The By Module board waits for the module list instead of asking for "no module".
+  const canLoad = !isModuleBoard || Boolean(selectedModuleId);
   const board = useAsync(
     () =>
-      getStudentLeaderboard(user._id, {
-        period,
-        moduleId: period === LEADERBOARD_PERIODS.MODULE ? selectedModuleId : undefined,
-      }),
-    [user._id, period, selectedModuleId],
+      canLoad
+        ? getStudentLeaderboard(user._id, { period, moduleId: isModuleBoard ? selectedModuleId : undefined })
+        : Promise.resolve(null),
+    [user._id, period, isModuleBoard ? selectedModuleId : '', canLoad],
   );
 
-  const data = board.data;
+  // Only ever show the board that matches the current tab and module.
+  const data = isBoardFor(board.data, { period, moduleId: selectedModuleId }) ? board.data : null;
   const me = data?.currentStudentRow;
   const above = me ? data.rows.filter((row) => row.xp > me.xp).at(-1) : null;
+  const moduleError = isModuleBoard && modules.error;
 
   return (
     <div className="page">
@@ -48,13 +52,14 @@ export default function LeaderboardPage() {
         title="Leaderboard"
         subtitle={data ? `${data.section.sectionName} · rankings are visible only within your section` : 'Section rankings'}
         actions={
-          period === LEADERBOARD_PERIODS.MODULE && (
+          isModuleBoard && (
             <div className="inline-select">
               <SelectInput
                 aria-label="Module"
                 value={selectedModuleId}
                 onChange={(event) => setModuleId(event.target.value)}
                 options={(modules.data ?? []).map((m) => ({ value: m._id, label: `Module ${m.moduleNumber}: ${m.title}` }))}
+                disabled={!modules.data}
               />
             </div>
           )
@@ -62,8 +67,9 @@ export default function LeaderboardPage() {
       />
       <Tabs tabs={PERIOD_TABS} value={period} onChange={setPeriod} label="Leaderboard period" />
 
-      {board.isLoading && !data && <LoadingState label="Loading rankings…" />}
-      {board.error && <ErrorState error={board.error} onRetry={board.reload} />}
+      {moduleError && <ErrorState error={modules.error} onRetry={modules.reload} />}
+      {!moduleError && board.error && <ErrorState error={board.error} onRetry={board.reload} />}
+      {!moduleError && !board.error && !data && <SkeletonBlock variant="list" rows={6} label="Loading rankings" />}
       {data && (
         <div className="leaderboard-layout">
           <Card key={`${period}-${selectedModuleId}`} className="anim-fade-in">
