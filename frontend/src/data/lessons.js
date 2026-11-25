@@ -27,6 +27,14 @@ import {
   variabilityOfPlantPathogens,
 } from './lessonContent/module2.js';
 import {
+  arthropodPests,
+  naturalEnemies,
+  recognizingInsectOrders,
+  representativeInsectPests,
+  vertebratePests,
+  whyInsectsSucceed,
+} from './lessonContent/module3.js';
+import {
   changeInWeedPopulation,
   classificationOfWeeds,
   cropWeedCompetition,
@@ -213,25 +221,7 @@ const lessons = [
     moduleId: 'mod_3',
     lessonNumber: 1,
     title: 'Arthropod Pests',
-    contentBody: `
-<p><strong>Arthropods</strong> have jointed legs, segmented bodies and an exoskeleton. The most important crop pests are <strong>insects</strong> and <strong>mites</strong>.</p>
-<h2>Insects versus mites</h2>
-<ul>
-  <li><strong>Insects</strong> — three body regions (head, thorax, abdomen), six legs, usually one pair of antennae and often wings.</li>
-  <li><strong>Mites (Acari)</strong> — two body regions, eight legs as adults, no antennae or wings.</li>
-</ul>
-<h2>Major insect orders of crop pests</h2>
-<ul>
-  <li><strong>Coleoptera</strong> (beetles, weevils) — chewing mouthparts.</li>
-  <li><strong>Lepidoptera</strong> (moths, butterflies) — caterpillars chew leaves or bore into stems and fruit.</li>
-  <li><strong>Hemiptera</strong> (true bugs, aphids, planthoppers, whiteflies) — piercing-sucking mouthparts.</li>
-  <li><strong>Orthoptera</strong> (grasshoppers, locusts) — chewing.</li>
-  <li><strong>Thysanoptera</strong> (thrips) — rasping-sucking.</li>
-  <li><strong>Diptera</strong> (flies) — larvae mine leaves or bore into fruit.</li>
-</ul>
-<h2>Reading the damage</h2>
-<p>The type of damage points to the mouthparts and the order: holes and ragged edges suggest chewing insects; yellowing, curling and honeydew suggest sucking insects; tunnels and wilted shoots suggest borers.</p>
-`.trim(),
+    contentBody: arthropodPests,
     mediaAssets: [
       {
         assetId: 'asset_3_1_a',
@@ -244,29 +234,35 @@ const lessons = [
     ],
   },
   {
-    _id: 'les_3_2',
+    _id: 'les_3_4',
     moduleId: 'mod_3',
     lessonNumber: 2,
+    title: 'Why Insects Succeed and How They Affect People',
+    contentBody: whyInsectsSucceed,
+    mediaAssets: [],
+  },
+  {
+    _id: 'les_3_5',
+    moduleId: 'mod_3',
+    lessonNumber: 3,
+    title: 'Recognizing Insect Orders',
+    contentBody: recognizingInsectOrders,
+    mediaAssets: [],
+  },
+  {
+    _id: 'les_3_6',
+    moduleId: 'mod_3',
+    lessonNumber: 4,
+    title: 'Representative Insect Pests and Principles of Insect Pest Management',
+    contentBody: representativeInsectPests,
+    mediaAssets: [],
+  },
+  {
+    _id: 'les_3_2',
+    moduleId: 'mod_3',
+    lessonNumber: 5,
     title: 'Vertebrate Pests',
-    contentBody: `
-<p><strong>Vertebrate pests</strong> are backboned animals that damage crops in the field or in storage.</p>
-<h2>Common vertebrate pests</h2>
-<ul>
-  <li><strong>Rodents</strong> — the rice field rat (<em>Rattus tanezumi</em>) cuts tillers and eats grain; rodents also contaminate stored products.</li>
-  <li><strong>Birds</strong> — sparrows and munias feed on ripening grain.</li>
-  <li><strong>Wild pigs</strong> — uproot root crops and trample fields near forests.</li>
-  <li><strong>Fruit bats</strong> — feed on ripening fruit in orchards.</li>
-</ul>
-<h2>Management</h2>
-<ul>
-  <li><strong>Barriers</strong> — plastic fences and the Trap Barrier System (TBS) for rats; netting for birds.</li>
-  <li><strong>Habitat management</strong> — clean field bunds and remove harborage.</li>
-  <li><strong>Synchronous planting</strong> across a community so pests have a shorter feeding window.</li>
-  <li><strong>Community-wide trapping</strong> timed with the crop stage.</li>
-  <li><strong>Conserving predators</strong> such as barn owls and snakes.</li>
-  <li><strong>Rodenticides</strong> used carefully in bait stations, only when needed.</li>
-</ul>
-`.trim(),
+    contentBody: vertebratePests,
     mediaAssets: [
       {
         assetId: 'asset_3_2_a',
@@ -281,24 +277,9 @@ const lessons = [
   {
     _id: 'les_3_3',
     moduleId: 'mod_3',
-    lessonNumber: 3,
+    lessonNumber: 6,
     title: 'Natural Enemies of Insects and Vertebrate Pests',
-    contentBody: `
-<p><strong>Natural enemies</strong> are organisms that kill, weaken or reduce the reproduction of pests. Conserving and using them is the foundation of biological control.</p>
-<h2>Groups of natural enemies</h2>
-<ul>
-  <li><strong>Predators</strong> — consume many prey during their lives: lady beetles, spiders, dragonflies, lacewings, earwigs.</li>
-  <li><strong>Parasitoids</strong> — lay eggs in or on a host that is killed as the larva develops: <em>Trichogramma</em> egg parasitoids and braconid wasps.</li>
-  <li><strong>Entomopathogens</strong> — microorganisms that cause disease in insects: <em>Metarhizium</em>, <em>Beauveria</em>, <em>Bacillus thuringiensis</em> (Bt).</li>
-  <li><strong>Vertebrate predators</strong> — barn owls, raptors and snakes that feed on rodents.</li>
-</ul>
-<h2>Conserving natural enemies</h2>
-<ul>
-  <li>Avoid broad-spectrum insecticides, especially early in the season</li>
-  <li>Keep flowering plants on bunds to provide nectar and shelter</li>
-  <li>Install owl boxes and perches near fields</li>
-</ul>
-`.trim(),
+    contentBody: naturalEnemies,
     mediaAssets: [
       {
         assetId: 'asset_3_3_a',

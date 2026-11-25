@@ -22,6 +22,7 @@
 
 import { module4ConceptMissions, module4InvasiveMissions } from './missionContent/module4.js';
 import { module2ConceptMissions } from './missionContent/module2.js';
+import { module3ConceptMissions, module3PestMissions } from './missionContent/module3.js';
 
 // ───────────────────────── Module 1 · Decision-Making ─────────────────────────
 const module1Missions = [
@@ -771,7 +772,7 @@ const module3Missions = [
   {
     _id: 'mis_3_3',
     lessonId: 'les_3_2',
-    levelNumber: 3,
+    levelNumber: 7,
     maxXP: 150,
     scenarioData: {
       title: 'Cut Tillers in the Paddy',
@@ -826,7 +827,7 @@ const module3Missions = [
   {
     _id: 'mis_3_4',
     lessonId: 'les_3_2',
-    levelNumber: 4,
+    levelNumber: 8,
     maxXP: 150,
     scenarioData: {
       title: 'Empty Grains at Ripening',
@@ -881,7 +882,7 @@ const module3Missions = [
   {
     _id: 'mis_3_5',
     lessonId: 'les_3_3',
-    levelNumber: 5,
+    levelNumber: 9,
     maxXP: 150,
     scenarioData: {
       title: 'Ragged Corn Whorls',
@@ -1388,6 +1389,8 @@ const missions = [
   ...module2Missions,
   ...module2ConceptMissions,
   ...module3Missions,
+  ...module3ConceptMissions,
+  ...module3PestMissions,
   ...module4Missions,
   ...module4ConceptMissions,
   ...module4InvasiveMissions,
