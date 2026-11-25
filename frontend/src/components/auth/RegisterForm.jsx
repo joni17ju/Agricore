@@ -153,7 +153,6 @@ export default function RegisterForm({ onSuccess, onPendingApproval }) {
           checked={agreed}
           onChange={(event) => setAgreed(event.target.checked)}
           required
-          aria-describedby="terms-check-note"
         />
         <span>
           I have read and agree to the{' '}
@@ -161,10 +160,6 @@ export default function RegisterForm({ onSuccess, onPendingApproval }) {
           <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Notice</a>.
         </span>
       </label>
-      <p id="terms-check-note" className="register-hint">
-        <Icon name="info" size={14} />
-        This covers using the app. Taking part in the research study is asked separately, on the Informed Consent Form.
-      </p>
 
       <div className="login-actions login-actions--single">
         <Button type="submit" size="lg" isLoading={isSubmitting} disabled={!agreed || isSubmitting}>Create account</Button>
