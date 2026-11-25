@@ -1,0 +1,32 @@
+# Keeps the AgriCore API on Render's free tier awake by calling its health
+# check every 10 minutes, so students do not wait for a cold start.
+#
+# Notes
+# - GitHub runs scheduled workflows on the default branch only, and may delay
+#   a run by a few minutes when it is busy; it pauses schedules in a repository
+#   with no activity for 60 days.
+# - To stop it: delete this file (or disable "Keep API awake" under the
+#   repository's Actions tab).
+name: Keep API awake
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping the health check
+        run: |
+          for attempt in 1 2 3; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 https://agricore-api.onrender.com/api/health || true)
+            echo "attempt $attempt: HTTP $code"
+            if [ "$code" = "200" ]; then exit 0; fi
+            sleep 10
+          done
+          echo "The API did not answer 200 (it may still be starting)."
