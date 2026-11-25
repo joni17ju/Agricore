@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import authRoutes from './auth.routes.js';
+import dashboardRoutes from './dashboard.routes.js';
 import healthRoutes from './health.routes.js';
 import leaderboardRoutes from './leaderboard.routes.js';
 import lessonRoutes from './lesson.routes.js';
@@ -23,4 +24,5 @@ router.use(missionAttemptRoutes);
 router.use(progressRoutes);
 router.use(leaderboardRoutes);
 router.use(notificationRoutes);
+router.use(dashboardRoutes);
 export default router;

@@ -13,11 +13,40 @@ function cleanContentBody(contentBody) {
   return sanitizeLessonHtml(contentBody);
 }
 
-/** GET /api/lessons?moduleId=... */
+/**
+ * A lesson without its full text, for lists: the course map only shows the
+ * first real paragraph, so that paragraph is sent as the whole body. The full
+ * lesson (all text, media) comes from GET /lessons/:id when it is opened.
+ */
+const SUMMARY_PARAGRAPH = /<p[^>]*>(.*?)<\/p>/gs;
+export function summarizeLesson(lesson) {
+  const html = String(lesson.contentBody ?? '');
+  const paragraphs = [...html.matchAll(SUMMARY_PARAGRAPH)]
+    .map((match) => match[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+  const text = paragraphs.find((p) => !p.endsWith(':')) ?? paragraphs[0] ?? html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  const { contentBody, mediaAssets, ...rest } = lesson;
+  return {
+    ...rest,
+    contentBody: text ? `<p>${text.slice(0, 300)}</p>` : '',
+    mediaAssets: [],
+    mediaCount: (mediaAssets ?? []).length,
+    isSummary: true,
+  };
+}
+
+/**
+ * GET /api/lessons?moduleId=...&fields=summary
+ *
+ * `fields=summary` returns every lesson without its full text (see
+ * summarizeLesson) — a fraction of the size, for the student course lists.
+ * Without it the full lessons are returned, as before.
+ */
 export async function listLessons(req, res) {
   const filter = {};
   if (req.query.moduleId) filter.moduleId = toObjectId(req.query.moduleId, 'moduleId');
-  res.json(await Lesson.find(filter).sort({ moduleId: 1, lessonNumber: 1 }));
+  const lessons = await Lesson.find(filter).sort({ moduleId: 1, lessonNumber: 1 }).lean();
+  res.json(req.query.fields === 'summary' ? lessons.map(summarizeLesson) : lessons);
 }
 
 /** GET /api/lessons/:id */
