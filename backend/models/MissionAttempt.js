@@ -21,6 +21,9 @@ const missionAttemptSchema = new Schema(
     isPassed: { type: Boolean, required: true },
     attemptedAt: { type: Date, required: true, default: Date.now },
     isSeedData: { type: Boolean, default: false },
+    // The started session this attempt was submitted from. Absent on attempts
+    // recorded before sessions existed, which stay valid as they are.
+    sessionId: { type: Schema.Types.ObjectId, ref: 'MissionSession', default: undefined },
   },
   { collection: 'missionAttempts', timestamps: true },
 );
