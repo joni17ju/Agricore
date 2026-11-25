@@ -175,9 +175,6 @@
   .lesson-foot__side .lesson-foot__link { display: flex; width: 100%; padding: 0.7rem 0; border-top: 1px solid var(--paper-rule); }
 }
 
-/* Instructor footer: an optional line under the three columns. */
-.lesson-foot__note { grid-column: 1 / -1; margin: 0; text-align: center; font-size: 0.85rem; color: var(--ink-muted); }
-
 /*
  * A footer link whose target is still locked (the next module): same shape,
  * quieter colours, and a small line saying what unlocks it.

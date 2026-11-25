@@ -277,8 +277,10 @@ function StudentViewPreview({ structure, moduleEntry, lesson, missions, title, h
   const at = filled.findIndex((entry) => entry.module._id === module._id);
   const previousModule = index === 0 && at > 0 ? filled[at - 1] : null;
   const nextModule = index === lessons.length - 1 && at !== -1 ? filled[at + 1] ?? null : null;
-  const previous = previousModule ? neighbour(previousModule.lessons.at(-1), previousModule.module) : neighbour(lessons[index - 1]);
-  const next = nextModule ? neighbour(nextModule.lessons[0], nextModule.module) : neighbour(lessons[index + 1]);
+  // At a module's ends the links name the neighbouring module, as the student footer does.
+  const moduleLink = (entry, item) => ({ ...neighbour(item, entry.module), title: `Module ${entry.module.moduleNumber}: ${entry.module.title}` });
+  const previous = previousModule ? { ...moduleLink(previousModule, previousModule.lessons.at(-1)), label: 'Previous module' } : neighbour(lessons[index - 1]);
+  const next = nextModule ? { ...moduleLink(nextModule, nextModule.lessons[0]), label: 'Next module' } : neighbour(lessons[index + 1]);
 
   return (
     <div className="lesson-surface lesson-preview">
@@ -323,9 +325,8 @@ function StudentViewPreview({ structure, moduleEntry, lesson, missions, title, h
           <LessonFooter
             previous={previous}
             next={next}
-            previousLabel={previousModule ? `Module ${previousModule.module.moduleNumber}` : 'Previous lesson'}
-            nextLabel={nextModule ? `Module ${nextModule.module.moduleNumber}` : 'Next lesson'}
-            note="Students see one next step here instead: take the mission, the next topic, or the next module once this one is cleared."
+            previousLabel="Previous lesson"
+            nextLabel="Next lesson"
             action={<Button variant="secondary" icon="edit" onClick={onEditLesson}>Edit lesson</Button>}
           />
         )}
