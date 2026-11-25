@@ -1,0 +1,213 @@
+/*
+ * Mission play on phones (pilot feedback: "the answer choices are at the
+ * bottom and need scrolling to be seen").
+ *
+ * While a game is being played on a phone — or on any short screen, such as a
+ * phone held sideways — the page becomes one 100dvh column:
+ *
+ *   compact top bar                       (fixed height)
+ *   ┌ scrolling play area ───────────────┐
+ *   │ status chips (timer, objectives)    │
+ *   │ the scenario / picture  ≤ 38% high, │  sticks to the top and scrolls
+ *   │                       on its own   │  by itself when taller
+ *   │ the answer choices                  │  start right below it
+ *   │ Submit / Next             (sticky)  │  never below Chrome's toolbar
+ *   └─────────────────────────────────────┘
+ *
+ * The games keep their own markup; only the play shell and each game's
+ * scenario element are positioned here. Desktop and tablet are unchanged.
+ */
+@media (max-width: 768px), (max-height: 520px) {
+  .mission-page--playing {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .mission-page--playing .mission-topbar {
+    position: relative;
+    flex: none;
+    height: calc(50px + var(--safe-top));
+  }
+  .mission-page--playing .mission-main {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    max-width: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px calc(12px + var(--safe-right)) 0 calc(12px + var(--safe-left));
+  }
+  .mission-page--playing .mission-stage { min-height: 100%; display: flex; flex-direction: column; }
+  .mission-page--playing .mission-stage > :first-child { flex: 1 0 auto; display: flex; flex-direction: column; }
+  .mission-page--playing .mission-stage.is-submitting .loading-state { padding-top: 20dvh; }
+
+  /* Status chips only: the lesson title is already in the top bar. */
+  .mission-page--playing .game-header { flex: none; margin-bottom: 8px; gap: 6px; }
+  .mission-page--playing .game-header > :not(.game-header__chips) { display: none; }
+  .mission-page--playing .game-header__chips { gap: 6px; }
+  .mission-page--playing .hud-chip { padding: 4px 10px; font-size: var(--text-xs); box-shadow: none; }
+  .mission-page--playing .countdown { padding: 2px 10px 2px 2px; box-shadow: none; }
+  .mission-page--playing .countdown svg { width: 34px; height: 34px; }
+  .mission-page--playing .countdown__text span { font-size: 0.6rem; }
+  .mission-page--playing .countdown__text strong { font-size: var(--text-md); }
+
+  /* The scenario: pinned at the top, at most 38% of the screen, scrolls by itself. */
+  .mission-page--playing :is(.decision-stage, .id-workspace, .match-target, .strategy-hero) {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    flex: none;
+    max-height: 38dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    box-shadow: 0 8px 14px -10px rgba(var(--ink-rgb), 0.35);
+  }
+
+  /* Submit / Next: always reachable, above Chrome's bottom bar and the home indicator. */
+  .mission-page--playing .game-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    flex: none;
+    margin-top: auto;
+    padding: 10px 0 calc(10px + var(--safe-bottom));
+    background: linear-gradient(to bottom, rgba(246, 242, 232, 0), var(--canvas) 14px);
+  }
+  .mission-page--playing .game-actions:empty { display: none; }
+  .mission-page--playing .game-actions .btn,
+  .mission-page--playing .next-level-btn { min-height: 48px; }
+
+  /* 1 · Decision-Making — the prompt above, three compact choice cards below. */
+  .mission-page--playing .decision-game { gap: 8px; }
+  .mission-page--playing .decision-stage { border-radius: var(--radius-lg); }
+  .mission-page--playing .decision-stage__progress { top: 8px; right: 8px; padding: 3px 8px; }
+  .mission-page--playing .decision-stage__guide { padding: 36px 10px 8px; gap: 6px; }
+  .mission-page--playing .decision-stage__guide .guide-character { width: 54px; height: 68px; }
+  .mission-page--playing .decision-stage__guide .speech-bubble { margin-bottom: 10px; padding: 10px 12px; font-size: var(--text-sm); line-height: 1.45; }
+  .mission-page--playing .decision-visual { margin: 0 10px 10px; padding: 6px 10px; gap: 8px; }
+  .mission-page--playing .decision-visual__value { width: 44px; height: 44px; font-size: var(--text-sm); }
+  .mission-page--playing .decision-visual__bars { height: 34px; }
+  .mission-page--playing .decision-panel { flex: 1 0 auto; padding: 12px; border-radius: var(--radius-lg); margin-top: 0; }
+  .mission-page--playing .decision-panel__header { margin-bottom: 10px; }
+  .mission-page--playing .decision-cards { gap: 8px; }
+  .mission-page--playing .decision-card { min-height: 0; }
+  .mission-page--playing .decision-card__inner { min-height: 72px; display: grid; }
+  /* Both faces share one grid cell, so the card is as tall as its longer face. */
+  .mission-page--playing .decision-card__face { position: relative; inset: auto; grid-area: 1 / 1; min-height: 72px; padding: 10px 12px 10px 52px; gap: 2px; justify-content: center; }
+  .mission-page--playing .decision-card__number { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); }
+  .mission-page--playing .decision-card__icon { display: none; }
+  .mission-page--playing .decision-card__front strong { font-size: var(--text-base); }
+  .mission-page--playing .decision-card__front > span:last-child { font-size: var(--text-xs); line-height: 1.4; }
+  .mission-page--playing .decision-feedback { position: sticky; bottom: calc(8px + var(--safe-bottom)); z-index: 5; margin-top: 10px; box-shadow: var(--shadow-md); }
+  .mission-page--playing .decision-feedback p { min-width: 0; font-size: var(--text-xs); }
+
+  /* 2 · Identification — the leaf scope above, field notes and pathogens below. */
+  .mission-page--playing .id-workspace { gap: 6px; padding: 0; background: var(--canvas); border-radius: var(--radius-lg); }
+  /* The picture keeps its 4:3 shape (marks are placed in its own coordinates); it is
+     narrowed rather than squashed so it fits the scenario band with the zoom bar. */
+  .mission-page--playing .id-viewport { width: min(100%, calc((38dvh - 62px) * 4 / 3)); aspect-ratio: 4 / 3; margin-inline: auto; }
+  .mission-page--playing .zoom-control { padding: 4px 6px; gap: 6px; }
+  .mission-page--playing .zoom-control__btn { width: 36px; height: 36px; }
+  .mission-page--playing .id-bottom { margin-top: 8px; gap: 8px; display: flex; flex-direction: column; }
+  /* The pathogen choices are the answer: they come before the notes. */
+  .mission-page--playing .id-pathogens { order: -1; }
+
+  /* 3 · Matching — the target pest above, the three answer columns below. */
+  .mission-page--playing .match-board { display: flex; flex-direction: column; gap: 8px; }
+  .mission-page--playing .match-target { padding: 10px; gap: 6px; flex-direction: row; flex-wrap: wrap; align-items: center; background: var(--surface); }
+  .mission-page--playing .match-target__label { flex-basis: 100%; }
+  .mission-page--playing .match-target__image { flex: 0 0 96px; padding: 6px; }
+  .mission-page--playing .match-target__image .pest-illustration { width: 84px; }
+  .mission-page--playing .match-target__info { flex: 1 1 160px; min-width: 0; }
+  .mission-page--playing .match-target__info h2 { font-size: var(--text-md); }
+  .mission-page--playing .match-target__hint { font-size: var(--text-xs); }
+  .mission-page--playing .match-chain { flex-basis: 100%; }
+  .mission-page--playing .match-column { padding: 10px; gap: 8px; }
+  .mission-page--playing .match-option { min-height: 48px; }
+  .mission-page--playing .other-pests { display: none; }
+  .mission-page--playing .match-chain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .mission-page--playing .match-chain__slot { min-height: 36px; padding: 4px 8px; font-size: var(--text-xs); }
+  /* The instruction line is in the column headers already; the bar keeps only the result and the button. */
+  .mission-page--playing .game-actions--split > p.text-muted { display: none; }
+  .mission-page--playing .game-actions--split { gap: 8px; }
+
+  /* 4 · Drag-and-Drop — the specimen and its label dock share the screen. */
+  .mission-page--playing .dd-layout { gap: 8px; }
+  .mission-page--playing .dd-workspace { padding: 10px; }
+  .mission-page--playing .dd-workspace__header { margin-bottom: 6px; }
+  .mission-page--playing .dd-specimen { max-width: none; }
+  /* Square, as the drop zones are placed in the drawing's own square; narrowed to fit. */
+  .mission-page--playing .dd-stage { width: min(100%, 44dvh); margin-inline: auto; }
+  /* Once checked, the result and its Next button float above the bottom edge
+     instead of waiting further down the page. */
+  .mission-page--playing .dd-result { position: fixed; left: calc(12px + var(--safe-left)); right: calc(12px + var(--safe-right)); bottom: calc(10px + var(--safe-bottom)); z-index: 6; box-shadow: var(--shadow-lg); }
+  .mission-page--playing .dd-label { min-height: 44px; }
+  .mission-page--playing .dd-inventory { padding: 10px; }
+
+  /* 5 · Strategy & Management — the field above, pest and tactic choices below, in step order. */
+  .mission-page--playing .strategy-hero { min-height: 0; height: auto; padding: 8px; gap: 6px; }
+  .mission-page--playing .strategy-hero__guide .guide-character { display: none; }
+  .mission-page--playing .strategy-hero__guide .speech-bubble { max-width: none; font-size: var(--text-xs); padding: 8px 10px; }
+  .mission-page--playing .strategy-hero__guide .speech-bubble::before { display: none; }
+  .mission-page--playing .strategy-meters { gap: 6px; }
+  .mission-page--playing .strategy-meter { padding: 6px 10px; }
+  .mission-page--playing .strategy-panels { margin-top: 8px; gap: 8px; }
+  .mission-page--playing .strategy-panel--tactics { order: 0; }
+  .mission-page--playing .tactic-card { min-height: 44px; }
+}
+
+/* Short landscape phones: the scenario gets a little less, the answers a little more. */
+@media (max-height: 520px) {
+  .mission-page--playing :is(.decision-stage, .id-workspace, .match-target, .strategy-hero) { max-height: 34dvh; }
+  .mission-page--playing .id-viewport { width: min(100%, calc((34dvh - 56px) * 4 / 3)); }
+  .mission-page--playing .dd-stage { width: min(100%, 58dvh); }
+}
+
+/* Phones held sideways: too short to stack, wide enough to sit side by side —
+   the scenario on the left (pinned), the answers on the right. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .mission-page--playing :is(.decision-stage, .match-target, .strategy-hero) { max-height: calc(100dvh - 120px); }
+
+  .mission-page--playing .mission-stage > .decision-game { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 10px; align-items: start; }
+
+  .mission-page--playing .match-board { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 8px; align-items: start; }
+  .mission-page--playing .match-target { grid-row: 1 / span 3; }
+
+  .mission-page--playing .mission-stage > .strategy-game { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); column-gap: 10px; align-items: start; }
+  .mission-page--playing .strategy-game > .game-header,
+  .mission-page--playing .strategy-game > .game-actions { grid-column: 1 / -1; }
+  .mission-page--playing .strategy-panels { margin-top: 0; }
+
+  .mission-page--playing .dd-specimen { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: stretch; }
+  .mission-page--playing .dd-stage { width: min(58dvh, 50vw); }
+  .mission-page--playing .dd-dock { overflow-y: auto; }
+}
+
+/* Wider than the games' own phone breakpoints (640–760px) but just as short:
+   use their phone arrangements while playing. */
+@media (max-width: 768px), (max-height: 520px) {
+  .mission-page--playing .hide-sm { display: none !important; }
+  .mission-page--playing .mission-topbar__logo { display: none; }
+  .mission-page--playing .decision-cards { grid-template-columns: 1fr; }
+  .mission-page--playing .decision-stage { min-height: 0; display: flex; flex-direction: column; }
+  .mission-page--playing .decision-stage .farm-scene { position: absolute; }
+  .mission-page--playing .decision-stage__guide { position: relative; left: auto; max-width: none; }
+  .mission-page--playing .decision-visual { position: relative; right: auto; bottom: auto; align-self: flex-end; }
+  .mission-page--playing .strategy-hero { display: flex; flex-direction: column; justify-content: space-between; }
+  .mission-page--playing .strategy-hero__guide,
+  .mission-page--playing .strategy-meters { position: relative; left: auto; right: auto; top: auto; width: 100%; }
+  .mission-page--playing .strategy-panels { grid-template-columns: 1fr; }
+  .mission-page--playing .tactic-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Short portrait phones (e.g. 360 × 560–640 with browser bars). */
+@media (max-width: 768px) and (max-height: 680px) {
+  .mission-page--playing .dd-stage { width: min(100%, 34dvh); }
+  .mission-page--playing .dd-workspace__header h2 { font-size: var(--text-sm); }
+  .mission-page--playing .dd-dock__labels { gap: 6px; }
+  .mission-page--playing .dd-label { padding-block: 6px; }
+}
