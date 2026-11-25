@@ -22,6 +22,22 @@ export async function upsertProgress(req, res) {
   if (!PROGRESS_STATUSES.includes(status)) {
     throw httpError(400, `status must be one of: ${PROGRESS_STATUSES.join(', ')}`);
   }
+
+  /*
+   * A student can only record that they opened a lesson. Completion is
+   * written by the mission-attempt route from passed attempts, so a student
+   * marking their own lesson "completed" here would unlock the next module
+   * without playing. An existing row is never demoted either.
+   */
+  if (req.user?.role === 'student') {
+    if (status !== 'in-progress') throw httpError(403, 'Lesson completion is recorded when you pass its missions.');
+    const row = await Progress.findOneAndUpdate(
+      { studentId: toObjectId(studentId, 'studentId'), lessonId: toObjectId(lessonId, 'lessonId') },
+      { $setOnInsert: { status } },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
+    );
+    return res.json(row);
+  }
   const row = await Progress.findOneAndUpdate(
     { studentId: toObjectId(studentId, 'studentId'), lessonId: toObjectId(lessonId, 'lessonId') },
     { $set: { status } },

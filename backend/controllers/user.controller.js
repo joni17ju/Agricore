@@ -23,9 +23,20 @@ export async function listUsers(req, res) {
   res.json(await User.find(filter).select(PUBLIC_FIELDS).sort({ lastName: 1, firstName: 1 }));
 }
 
-/** GET /api/users/:id */
+/**
+ * GET /api/users/:id
+ *
+ * A student may read only their own account. Classmates' names and XP reach
+ * a student only through the leaderboard, which carries display fields and
+ * nothing else; emails and school IDs are never readable by another student.
+ * Instructors manage accounts, so they may read any.
+ */
 export async function getUser(req, res) {
-  const user = await User.findById(toObjectId(req.params.id, 'user id')).select(PUBLIC_FIELDS);
+  const id = toObjectId(req.params.id, 'user id');
+  if (req.user.role === 'student' && String(id) !== String(req.user._id)) {
+    throw httpError(403, 'You can only access your own account.');
+  }
+  const user = await User.findById(id).select(PUBLIC_FIELDS);
   if (!user) throw httpError(404, 'User not found.');
   res.json(user);
 }
@@ -40,6 +51,13 @@ export async function getUser(req, res) {
  * write them at all.
  */
 const EDITABLE = ['firstName', 'lastName', 'email', 'schoolId', 'sectionId', 'assignedSectionIds', 'avatarUrl', 'status', 'role'];
+
+/**
+ * What a student may change on their own account. Section, status and role
+ * are the instructor's to set: a student moving themselves to another section
+ * would also move themselves onto that section's leaderboard.
+ */
+const STUDENT_SELF_EDITABLE = ['firstName', 'lastName', 'email', 'schoolId', 'avatarUrl'];
 
 /**
  * Who may change whose account.
@@ -81,6 +99,13 @@ export async function updateUser(req, res) {
 
   const refusal = managementRefusal(req.user, user, { isDestructive: isDeactivating(updates, user) });
   if (refusal) throw httpError(403, refusal);
+
+  if (req.user.role === 'student') {
+    const blocked = Object.keys(updates).filter(
+      (key) => !STUDENT_SELF_EDITABLE.includes(key) && String(updates[key]) !== String(user[key]),
+    );
+    if (blocked.length > 0) throw httpError(403, `Ask your instructor to change: ${blocked.join(', ')}.`);
+  }
 
   /*
    * Role is in EDITABLE for the instructor screens, but nobody may mint an
