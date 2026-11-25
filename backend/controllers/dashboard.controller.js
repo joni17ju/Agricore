@@ -1,7 +1,7 @@
-import { Lesson, Mission, MissionAttempt, Module, Progress, Section } from '../models/index.js';
+import { Mission, MissionAttempt, Module, Progress, Section } from '../models/index.js';
 import { httpError } from '../utils/http.js';
 import { rankSection } from './leaderboard.controller.js';
-import { summarizeLesson } from './lesson.controller.js';
+import { listLessonOutlines } from './lesson.controller.js';
 
 /** How many of the top ranks the dashboard's leaderboard card shows. */
 const PREVIEW_ROWS = 5;
@@ -26,7 +26,7 @@ export async function getDashboard(req, res) {
 
   const [modules, lessons, missions, attempts, progress, section, ranking] = await Promise.all([
     Module.find().sort({ moduleNumber: 1 }).lean(),
-    Lesson.find().sort({ moduleId: 1, lessonNumber: 1 }).lean(),
+    listLessonOutlines(),
     Mission.find().sort({ lessonId: 1, levelNumber: 1 }).lean(),
     MissionAttempt.find({ studentId: user._id }).sort({ attemptedAt: -1 }).lean(),
     Progress.find({ studentId: user._id }).lean(),
@@ -53,7 +53,7 @@ export async function getDashboard(req, res) {
   res.json({
     user: account,
     section: section ? { _id: section._id, sectionName: section.sectionName } : null,
-    course: { modules, lessons: lessons.map(summarizeLesson), missions },
+    course: { modules, lessons, missions },
     attempts,
     progress,
     leaderboard: { period: 'overall', totalStudents: ranking.length, rows },

@@ -25,14 +25,42 @@ export function summarizeLesson(lesson) {
     .map((match) => match[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim())
     .filter(Boolean);
   const text = paragraphs.find((p) => !p.endsWith(':')) ?? paragraphs[0] ?? html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-  const { contentBody, mediaAssets, ...rest } = lesson;
+  const { contentBody, mediaAssets, mediaCount, ...rest } = lesson;
   return {
     ...rest,
     contentBody: text ? `<p>${text.slice(0, 300)}</p>` : '',
     mediaAssets: [],
-    mediaCount: (mediaAssets ?? []).length,
+    mediaCount: mediaCount ?? (mediaAssets ?? []).length,
     isSummary: true,
   };
+}
+
+/** Enough of the start of a lesson to find its first paragraph. */
+const OUTLINE_CHARS = 6000;
+
+/**
+ * Lesson outlines straight from the database: only the start of each lesson's
+ * text leaves MongoDB, not the whole of it — about half the data and half the
+ * time of reading every lesson in full. Used by the course lists and /dashboard.
+ */
+export async function listLessonOutlines(filter = {}) {
+  const lessons = await Lesson.aggregate([
+    { $match: filter },
+    { $sort: { moduleId: 1, lessonNumber: 1 } },
+    {
+      $project: {
+        moduleId: 1,
+        lessonNumber: 1,
+        title: 1,
+        isSeedData: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        mediaCount: { $size: { $ifNull: ['$mediaAssets', []] } },
+        contentBody: { $substrCP: [{ $ifNull: ['$contentBody', ''] }, 0, OUTLINE_CHARS] },
+      },
+    },
+  ]);
+  return lessons.map(summarizeLesson);
 }
 
 /**
@@ -45,8 +73,8 @@ export function summarizeLesson(lesson) {
 export async function listLessons(req, res) {
   const filter = {};
   if (req.query.moduleId) filter.moduleId = toObjectId(req.query.moduleId, 'moduleId');
-  const lessons = await Lesson.find(filter).sort({ moduleId: 1, lessonNumber: 1 }).lean();
-  res.json(req.query.fields === 'summary' ? lessons.map(summarizeLesson) : lessons);
+  if (req.query.fields === 'summary') return res.json(await listLessonOutlines(filter));
+  return res.json(await Lesson.find(filter).sort({ moduleId: 1, lessonNumber: 1 }).lean());
 }
 
 /** GET /api/lessons/:id */
