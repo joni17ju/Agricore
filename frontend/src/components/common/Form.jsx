@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import Icon from './Icon.jsx';
 
 export function Field({ label, hint, error, children, htmlFor, required }) {
@@ -16,11 +16,38 @@ export function Field({ label, hint, error, children, htmlFor, required }) {
   );
 }
 
-export function TextInput({ label, hint, error, required, className = '', ...props }) {
+export function TextInput({ label, hint, error, required, className = '', type, ...props }) {
   const id = useId();
+  // Password fields get a show/hide button, so a long password typed on a phone can be checked.
+  const [revealed, setRevealed] = useState(false);
+  const isPassword = type === 'password';
+  const input = (
+    <input
+      id={id}
+      type={isPassword && revealed ? 'text' : type}
+      className={`input ${isPassword ? 'input--has-toggle' : ''} ${className}`}
+      aria-invalid={Boolean(error)}
+      required={required}
+      {...props}
+    />
+  );
   return (
     <Field label={label} hint={hint} error={error} htmlFor={id} required={required}>
-      <input id={id} className={`input ${className}`} aria-invalid={Boolean(error)} required={required} {...props} />
+      {isPassword ? (
+        <div className="input-reveal">
+          {input}
+          <button
+            type="button"
+            className="input-reveal__toggle"
+            aria-label={revealed ? 'Hide password' : 'Show password'}
+            aria-pressed={revealed}
+            aria-controls={id}
+            onClick={() => setRevealed((value) => !value)}
+          >
+            <Icon name={revealed ? 'eye-off' : 'eye'} size={18} />
+          </button>
+        </div>
+      ) : input}
     </Field>
   );
 }

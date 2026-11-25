@@ -103,26 +103,33 @@ export default function PasswordResetFlow({ onTitleChange, onCancel, onSignIn })
     [RESET_STEPS.REQUEST]: (
       <>
         <Button variant="secondary" onClick={onCancel}>Cancel</Button>
-        <Button onClick={sendCode} isLoading={isBusy}>Send code</Button>
+        <Button type="submit" isLoading={isBusy}>Send code</Button>
       </>
     ),
     [RESET_STEPS.CODE]: (
       <>
         <Button variant="secondary" onClick={startOver} disabled={isBusy}>Back</Button>
-        <Button onClick={checkCode} isLoading={isBusy}>Verify code</Button>
+        <Button type="submit" isLoading={isBusy}>Verify code</Button>
       </>
     ),
     [RESET_STEPS.PASSWORD]: (
       <>
         <Button variant="secondary" onClick={onCancel} disabled={isBusy}>Cancel</Button>
-        <Button onClick={savePassword} isLoading={isBusy}>Save password</Button>
+        <Button type="submit" isLoading={isBusy}>Save password</Button>
       </>
     ),
-    [RESET_STEPS.DONE]: <Button onClick={onSignIn}>Back to sign in</Button>,
+    [RESET_STEPS.DONE]: <Button type="submit">Back to sign in</Button>,
+  };
+
+  // A real form, so the keyboard's Go / Enter key runs the step's main action.
+  const submitStep = { [RESET_STEPS.REQUEST]: sendCode, [RESET_STEPS.CODE]: checkCode, [RESET_STEPS.PASSWORD]: savePassword, [RESET_STEPS.DONE]: onSignIn };
+  const onSubmit = (event) => {
+    event.preventDefault();
+    if (!isBusy) submitStep[step]?.();
   };
 
   return (
-    <div className="auth-view">
+    <form className="auth-view" onSubmit={onSubmit} noValidate>
       {/* The error belongs to the step, not to one field: an expired code and a
           rejected token are both step-level problems. */}
       {error && (
@@ -142,7 +149,10 @@ export default function PasswordResetFlow({ onTitleChange, onCancel, onSignIn })
             /* Not type="email": a school ID would fail the browser's check. */
             type="text"
             autoComplete="username"
-            placeholder="juan.delacruz@dorsu.edu.ph or 2023-0101"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder="juan.delacruz@dorsu.edu.ph"
             value={form.identifier}
             onChange={(event) => set({ identifier: event.target.value })}
             required
@@ -203,6 +213,6 @@ export default function PasswordResetFlow({ onTitleChange, onCancel, onSignIn })
       )}
 
       <div className="auth-view__actions">{actions[step]}</div>
-    </div>
+    </form>
   );
 }

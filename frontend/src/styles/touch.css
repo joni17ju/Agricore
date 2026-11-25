@@ -76,6 +76,8 @@
   input[type='email'],
   input[type='password'],
   input:not([type]) { min-height: 44px !important; }
+  /* Sign-in, registration and password reset: a little taller still. */
+  .auth-split .input { min-height: 48px !important; }
   /* Row checkboxes: a larger box inside the row. */
   input[type='checkbox'] { width: 20px; height: 20px; }
 }

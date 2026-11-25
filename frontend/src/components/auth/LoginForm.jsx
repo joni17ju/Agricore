@@ -86,7 +86,10 @@ export default function LoginForm({ onSuccess, onForgotPassword }) {
           /* Not type="email": the browser would reject a school ID. */
           type="text"
           autoComplete="username"
-          placeholder={role === ROLES.STUDENT ? 'juan.delacruz@dorsu.edu.ph or 2023-0101' : 'c.reyes@dorsu.edu.ph'}
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          placeholder={role === ROLES.STUDENT ? 'juan.delacruz@dorsu.edu.ph' : 'c.reyes@dorsu.edu.ph'}
           hint={role === ROLES.STUDENT ? 'Sign in with your email address or your school ID number.' : undefined}
           value={form.identifier}
           onChange={(event) => setForm({ ...form, identifier: event.target.value })}

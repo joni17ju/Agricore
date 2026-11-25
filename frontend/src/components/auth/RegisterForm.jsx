@@ -65,8 +65,8 @@ export default function RegisterForm({ onSuccess, onPendingApproval }) {
       )}
 
       <div className="login-row login-field">
-        <TextInput label="First name" value={form.firstName} onChange={update('firstName')} placeholder="Juan" required />
-        <TextInput label="Last name" value={form.lastName} onChange={update('lastName')} placeholder="Dela Cruz" required />
+        <TextInput label="First name" autoComplete="given-name" value={form.firstName} onChange={update('firstName')} placeholder="Juan" required />
+        <TextInput label="Last name" autoComplete="family-name" value={form.lastName} onChange={update('lastName')} placeholder="Dela Cruz" required />
       </div>
 
       <div className="login-field">
@@ -74,6 +74,8 @@ export default function RegisterForm({ onSuccess, onPendingApproval }) {
           label="Email address"
           type="email"
           autoComplete="email"
+          autoCapitalize="none"
+          spellCheck={false}
           value={form.email}
           onChange={update('email')}
           placeholder="you@dorsu.edu.ph"
