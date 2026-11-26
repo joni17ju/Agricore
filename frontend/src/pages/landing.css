@@ -496,8 +496,8 @@ html:has(.landing) {
 
 @media (max-width: 840px) {
   /*
-   * The links drop into a panel below the bar, but the Login button stays in
-   * the bar itself — the primary action should never be hidden behind a menu.
+   * The links drop into a panel below the bar, opened by the menu button.
+   * Register and Login are on the page itself (hero and closing section).
    */
   .landing-nav__toggle {
     display: inline-flex;
@@ -1167,6 +1167,11 @@ html:has(.landing) {
 /* ───────── Register next to Login (pilot feedback) ───────── */
 .landing-nav__actions { gap: var(--space-2); }
 .landing-nav__actions .btn { min-height: 40px; }
+/* Desktop: with no dashboard button (signed out) the actions box only holds the
+   hidden menu toggle; drop it so the links sit flush with the right edge. */
+@media (min-width: 841px) {
+  .landing-nav__actions:not(:has(.btn)) { display: none; }
+}
 .landing-hero__actions {
   display: flex;
   flex-wrap: wrap;
@@ -1179,44 +1184,18 @@ html:has(.landing) {
   .landing-nav__actions .btn--sm { padding-inline: 12px; }
   .landing-nav__brand .logo__text { font-size: 1.05rem; }
 }
-@media (max-width: 340px) {
-  /* Narrowest phones: the hero right below still offers Login. */
-  .landing-nav__login { display: none; }
-}
 
-/* ───────── Institution logos (LogoPair) ───────── */
-.landing-nav__brandgroup { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
-.landing-nav__logos { padding-left: var(--space-3); border-left: 1px solid var(--paper-rule); }
-.landing-nav__inst { display: none; }
-
-/* Phones: logos in a slim band above the header row; it folds away once the page scrolls. */
-@media (max-width: 640px) {
-  .landing { --nav-height: calc(68px + 52px + env(safe-area-inset-top, 0px)); }
-  .landing-nav { height: auto; min-height: calc(68px + env(safe-area-inset-top, 0px)); flex-direction: column; align-items: stretch; }
-  .landing-nav__inner { height: 68px; }
-  /* The menu panel opens right under the header, whether the band is showing or folded away. */
-  .landing-nav.is-scrolled .landing-nav__links { top: calc(68px + env(safe-area-inset-top, 0px)); }
-  .landing-nav__logos { display: none; }
-  .landing-nav__inst {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-3);
-    height: 52px;
-    padding: 6px 16px;
-    border-bottom: 1px solid var(--paper-rule);
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    color: var(--forest-deep);
-    overflow: hidden;
-    transition: height var(--duration-base, 200ms) ease, padding var(--duration-base, 200ms) ease, opacity var(--duration-base, 200ms) ease;
-  }
-  .landing-nav__inst span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .landing-nav.is-scrolled .landing-nav__inst { height: 0; padding-block: 0; opacity: 0; border-bottom-width: 0; }
-}
-@media (max-width: 640px) and (prefers-reduced-motion: reduce) {
-  .landing-nav__inst { transition: none; }
+/* ───────── Brand lockup: [logo] [logo] | [AgriCore icon] AgriCore ─────────
+   One component (BrandLockup) for the navbar and the footer. */
+.brand-lockup { display: inline-flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.brand-lockup__divider { flex: 0 0 1px; align-self: stretch; min-height: 32px; margin-block: 4px; background: var(--paper-rule); }
+.brand-lockup__name { display: inline-flex; align-items: center; flex-shrink: 0; color: inherit; text-decoration: none; }
+.brand-lockup__name:hover { text-decoration: none; }
+.landing-footer__brand { justify-content: center; }
+@media (max-width: 380px) {
+  /* Narrowest phones: a little less space between the pieces, same sizes. */
+  .brand-lockup { gap: var(--space-2); }
+  .brand-lockup .logo-pair { gap: 6px; }
 }
 
 /* Sign-in, register and password reset: above "Welcome to" on the brand column,
@@ -1227,8 +1206,3 @@ html:has(.landing) {
   .auth-brand__logos { order: 3; margin: 0 0 0 auto; }
 }
 
-.landing-nav__inst-short { display: none; }
-@media (max-width: 420px) {
-  .landing-nav__inst-long { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .landing-nav__inst-short { display: inline; }
-}

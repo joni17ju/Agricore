@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import AuthModal, { AUTH_VIEWS } from '../components/auth/AuthModal.jsx';
 import Button from '../components/common/Button.jsx';
-import { Logo } from '../components/common/Display.jsx';
 import Icon from '../components/common/Icon.jsx';
-import LogoPair from '../components/common/LogoPair.jsx';
+import BrandLockup from '../components/common/BrandLockup.jsx';
 import ScrollToTopButton from '../components/common/ScrollToTopButton.jsx';
 import { ROLE_HOME } from '../constants/roles.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -108,7 +107,7 @@ function HeroBackdrop() {
   );
 }
 
-function LandingNav({ onSignIn, onRegister }) {
+function LandingNav() {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -130,20 +129,8 @@ function LandingNav({ onSignIn, onRegister }) {
 
   return (
     <header className={`landing-nav ${isScrolled ? 'is-scrolled' : ''}`}>
-      {/* Phones: the header row is full (logo, Login, Register, menu), so the
-          institution logos sit in a slim band above it that folds away on scroll. */}
-      <div className="landing-nav__inst">
-        <LogoPair size="sm" />
-        <span className="landing-nav__inst-long">Davao Oriental State University · BS Agriculture</span>
-        <span className="landing-nav__inst-short" aria-hidden="true">DOrSU · BS Agriculture</span>
-      </div>
       <div className="landing-nav__inner">
-        <div className="landing-nav__brandgroup">
-          <a href="#home" className="landing-nav__brand" onClick={close}>
-            <Logo />
-          </a>
-          <LogoPair className="landing-nav__logos" />
-        </div>
+        <BrandLockup href="#home" onNavigate={close} className="landing-nav__brandgroup" />
 
         <nav className={`landing-nav__links ${isOpen ? 'is-open' : ''}`} aria-label="Page sections">
           {NAV_LINKS.map((link) => (
@@ -159,15 +146,10 @@ function LandingNav({ onSignIn, onRegister }) {
           ))}
         </nav>
 
+        {/* Register and Login live in the hero and the closing call to action;
+            a signed-in visitor still gets a way back to their dashboard here. */}
         <div className="landing-nav__actions">
-          {user ? (
-            <Button to={ROLE_HOME[user.role]} size="sm" iconRight="arrow-right">Go to dashboard</Button>
-          ) : (
-            <>
-              <Button variant="secondary" size="sm" className="landing-nav__login" onClick={onSignIn}>Login</Button>
-              <Button size="sm" className="landing-nav__register" onClick={onRegister}>Register</Button>
-            </>
-          )}
+          {user && <Button to={ROLE_HOME[user.role]} size="sm" iconRight="arrow-right">Go to dashboard</Button>}
           <button
             type="button"
             className="landing-nav__toggle"
@@ -233,7 +215,7 @@ export default function LandingPage() {
 
   return (
     <div className={`landing ${isPageVisible ? '' : 'is-paused'}`}>
-      <LandingNav onSignIn={() => openAuth(AUTH_VIEWS.LOGIN)} onRegister={() => openAuth(AUTH_VIEWS.REGISTER)} />
+      <LandingNav />
 
       <main>
         {/* ── Hero ── */}
@@ -335,7 +317,7 @@ export default function LandingPage() {
 
       <footer className="landing-footer">
         <div className="landing-footer__inner">
-          <Logo />
+          <BrandLockup className="landing-footer__brand" />
           <p>
             Davao Oriental State University · Principles of Crop Protection I
           </p>
