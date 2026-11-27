@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import AuthModal, { AUTH_VIEWS } from '../components/auth/AuthModal.jsx';
 import Button from '../components/common/Button.jsx';
 import Icon from '../components/common/Icon.jsx';
@@ -321,6 +322,11 @@ export default function LandingPage() {
           <p>
             Davao Oriental State University · Principles of Crop Protection I
           </p>
+          <nav className="landing-footer__legal" aria-label="Legal">
+            <Link to="/terms">Terms and Conditions</Link>
+            <span aria-hidden="true">·</span>
+            <Link to="/privacy">Privacy Notice</Link>
+          </nav>
           <p className="landing-footer__meta">© {new Date().getFullYear()} AgriCore</p>
         </div>
       </footer>
