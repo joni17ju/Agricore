@@ -15,8 +15,11 @@ import { CountdownTimer } from '../MissionHud.jsx';
 const DRAG_THRESHOLD = 6;
 const ZONE_HIT_RADIUS = 44;
 
+import { useMissionSound } from '../sound/MissionSound.jsx';
+
 export default function DragDropGame({ mission, module, totalLevels, onComplete }) {
   const data = mission.scenarioData;
+  const sound = useMissionSound();
   const zoneRefs = useRef({});
   const [placements, setPlacements] = useState({}); // zoneId → labelId
   const [selectedLabelId, setSelectedLabelId] = useState(null);
@@ -37,6 +40,7 @@ export default function DragDropGame({ mission, module, totalLevels, onComplete 
   const correctCount = data.targets.filter((t) => placements[t.id] === t.correctLabelId).length;
 
   const place = (labelId, zoneId) => {
+    sound.drop();
     setPlacements((previous) => {
       const next = {};
       for (const [zone, label] of Object.entries(previous)) {
@@ -85,6 +89,7 @@ export default function DragDropGame({ mission, module, totalLevels, onComplete 
 
   /** Listeners are attached immediately (not in an effect) so fast flicks are never missed. */
   const startDrag = (event, labelId, fromZoneId = null) => {
+    if (!verified) sound.pickup();
     if (verified || event.button > 0) return;
     event.preventDefault();
     detachListeners();
@@ -131,6 +136,14 @@ export default function DragDropGame({ mission, module, totalLevels, onComplete 
   };
 
   const verify = () => setVerified(true);
+
+  // Checked by the player or by the clock: all right → chime, otherwise a gentle buzz.
+  useEffect(() => {
+    if (!verified) return;
+    if (correctCount === data.targets.length) sound.correct();
+    else sound.wrong();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [verified]);
   const draggingLabel = drag?.moved ? labelById[drag.labelId] : null;
 
   return (

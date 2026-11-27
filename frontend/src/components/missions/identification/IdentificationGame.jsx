@@ -17,8 +17,11 @@ const LENS_SIZE = 170;
 
 const GROUP_ICONS = { fungus: 'sprout', oomycete: 'droplet', bacterium: 'droplet', virus: 'globe', abiotic: 'sun' };
 
+import { useMissionSound } from '../sound/MissionSound.jsx';
+
 export default function IdentificationGame({ mission, module, totalLevels, onComplete }) {
   const data = mission.scenarioData;
+  const sound = useMissionSound();
   const viewportRef = useRef(null);
   const [zoomIndex, setZoomIndex] = useState(0);
   const [marks, setMarks] = useState([]); // every mark placed (sent for scoring)
@@ -69,6 +72,8 @@ export default function IdentificationGame({ mission, module, totalLevels, onCom
     }
     const mark = { id: `m${marks.length + 1}`, x: point.x, y: point.y, spotId: spotId ?? null };
     setMarks((previous) => [...previous, mark]);
+    if (spotId) sound.correct();
+    else sound.wrong();
     if (spotId) {
       const spot = data.symptomSpots.find((s) => s.id === spotId);
       setMessage({ tone: 'ok', text: `Symptom found: ${spot.description}.` });
@@ -82,6 +87,8 @@ export default function IdentificationGame({ mission, module, totalLevels, onCom
   const guess = (optionId) => {
     if (!allFound || identified || guesses.includes(optionId)) return;
     setGuesses((previous) => [...previous, optionId]);
+    if (optionId === data.correctPathogenId) sound.correct();
+    else sound.wrong();
     const option = data.pathogenOptions.find((p) => p.id === optionId);
     setMessage(
       optionId === data.correctPathogenId
@@ -207,7 +214,8 @@ export default function IdentificationGame({ mission, module, totalLevels, onCom
         </section>
 
         <section className={`id-pathogens ${allFound ? 'is-unlocked' : 'is-locked'}`}>
-          <h2>Identify the pathogen:</h2>
+          {/* Optional per-mission question; older missions keep the original wording. */}
+          <h2>{data.question ?? 'Identify the pathogen:'}</h2>
           {!allFound && (
             <p className="id-pathogens__lock"><Icon name="lock" size={14} /> Mark all {data.symptomSpots.length} symptoms to unlock identification</p>
           )}

@@ -1,5 +1,6 @@
 import { formatClock } from '../../utils/format.js';
 import Icon from '../common/Icon.jsx';
+import { useCountdownTicks } from './sound/MissionSound.jsx';
 
 /** Row of small status chips shown above a game (level, objectives, …). */
 export function HudChip({ icon, children, tone = 'default', className = '' }) {
@@ -15,6 +16,7 @@ export function HudChip({ icon, children, tone = 'default', className = '' }) {
  * Countdown ring. Turns amber under 40% and red + pulsing in the last 10 seconds.
  */
 export function CountdownTimer({ remaining, total, label = 'Time Left' }) {
+  useCountdownTicks(remaining);
   const ratio = total ? remaining / total : 0;
   const tone = remaining <= 10 ? 'danger' : ratio <= 0.4 ? 'warning' : 'ok';
   const radius = 22;

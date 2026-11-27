@@ -201,6 +201,7 @@
 .pathogen-card__thumb--virus { background: #5a7fb8; }
 .pathogen-card__thumb--oomycete { background: #4d8d8a; }
 .pathogen-card__thumb--abiotic { background: #9aa38f; }
+.pathogen-card__thumb--concept { background: #477258; }
 .pathogen-card__text { display: flex; flex-direction: column; min-width: 0; }
 .pathogen-card__text strong { font-size: var(--text-sm); }
 .pathogen-card__text em { font-size: var(--text-xs); color: var(--text-muted); }
@@ -442,3 +443,18 @@
 .leaf-confetti span { position: absolute; top: 0; left: var(--x); width: 12px; height: 18px; border-radius: 0 100% 0 100%; background: var(--green-500); opacity: 0; animation: leaf-fall 2.4s ease-in var(--delay) both; }
 .leaf-confetti span:nth-child(3n) { background: var(--gold-500); border-radius: 50%; width: 9px; height: 9px; }
 .leaf-confetti span:nth-child(4n) { background: var(--green-700); }
+
+/* "Play in 3D" switch shown above the 2D game when the device can run 3D. */
+.m3d-switch-3d { display: inline-flex; align-items: center; gap: 6px; align-self: flex-end; min-height: 36px; margin-bottom: var(--space-2); padding: 0 12px; border: 1px solid var(--forest); border-radius: 999px; background: transparent; color: var(--forest); font: inherit; font-size: var(--text-sm); font-weight: 600; cursor: pointer; }
+.m3d-switch-3d:hover { background: var(--forest); color: var(--white); }
+
+/* Mission sound: speaker (mute / unmute) with a small volume slider on wider screens. */
+.mission-sound { display: inline-flex; align-items: center; gap: 6px; }
+.mission-sound__btn { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--border); border-radius: 50%; background: var(--surface); color: var(--green-800); cursor: pointer; transition: background-color 150ms ease; }
+.mission-sound__btn:hover { background: var(--green-50); }
+.mission-sound__btn.is-muted { color: var(--ink-muted); }
+.mission-sound__btn:focus-visible { outline: 2px solid var(--forest); outline-offset: 2px; }
+.mission-sound__volume { width: 84px; accent-color: var(--green-700); cursor: pointer; }
+@media (max-width: 640px) {
+  .mission-sound__volume { display: none; }
+}

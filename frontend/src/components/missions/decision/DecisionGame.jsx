@@ -9,6 +9,7 @@ import Icon from '../../common/Icon.jsx';
 import FarmScene from '../../illustrations/FarmScene.jsx';
 import GuideCharacter from '../../illustrations/GuideCharacter.jsx';
 import { HudChip } from '../MissionHud.jsx';
+import { useMissionSound } from '../sound/MissionSound.jsx';
 
 function outcomeTone(choice, scenario) {
   const best = Math.max(...scenario.choices.map((c) => c.points));
@@ -38,6 +39,7 @@ function DataVisual({ visual }) {
 
 export default function DecisionGame({ mission, module, onComplete }) {
   const { scenarios, title } = mission.scenarioData;
+  const sound = useMissionSound();
   const [index, setIndex] = useState(0);
   const [choices, setChoices] = useState({});
   const scenario = scenarios[index];
@@ -49,6 +51,10 @@ export default function DecisionGame({ mission, module, onComplete }) {
   const choose = (choiceId) => {
     if (chosenId) return;
     setChoices((previous) => ({ ...previous, [scenario.id]: choiceId }));
+    const picked = outcomeTone(scenario.choices.find((c) => c.id === choiceId), scenario);
+    if (picked === 'best') sound.correct();
+    else if (picked === 'poor') sound.wrong();
+    else sound.resetStreak();
   };
 
   const advance = () => {

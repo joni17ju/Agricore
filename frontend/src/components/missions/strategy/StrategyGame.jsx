@@ -30,8 +30,11 @@ const PEST_MARKERS = [
 
 const impactLabel = (impact) => (impact >= 30 ? 'High eco impact' : impact >= 10 ? 'Moderate eco impact' : 'Low eco impact');
 
+import { useMissionSound } from '../sound/MissionSound.jsx';
+
 export default function StrategyGame({ mission, module, totalLevels, onComplete }) {
   const data = mission.scenarioData;
+  const sound = useMissionSound();
   const [pestId, setPestId] = useState('');
   const [tacticIds, setTacticIds] = useState([]);
   const [warning, setWarning] = useState('');
@@ -68,7 +71,11 @@ export default function StrategyGame({ mission, module, totalLevels, onComplete 
     const result = scoreMission({ gameType: GAME_TYPES.STRATEGY_MANAGEMENT, scenarioData: data, answers: { pestId, tacticIds } });
     setOutcome(result);
     setPhase('deploying');
-    setTimeout(() => setPhase('outcome'), DEPLOY_ANIMATION_MS);
+    setTimeout(() => {
+      setPhase('outcome');
+      if (result.isPassed) sound.correct();
+      else sound.wrong();
+    }, DEPLOY_ANIMATION_MS);
   };
 
   const cropSaved = outcome?.isPassed;

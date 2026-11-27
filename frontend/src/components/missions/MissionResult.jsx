@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { missionCode } from '../../utils/format.js';
+import { useMissionSound } from './sound/MissionSound.jsx';
 import Button from '../common/Button.jsx';
 import { CountUp, StatusPill } from '../common/Display.jsx';
 import Icon from '../common/Icon.jsx';
@@ -21,6 +23,17 @@ function nextStepLink(nextStep) {
 /** Result screen after a mission attempt: score, XP, badges, unlocks and feedback. */
 export default function MissionResult({ result, answers, mission, module, onRetry, isRetrying = false }) {
   const { isPassed, score, xpEarned, totalXP, level, leveledUp, newBadges, unlockedLessons, unlockedModule, moduleCleared, rankBefore, rankAfter } = result;
+  const sound = useMissionSound();
+
+  // The server's verdict: a fanfare for a pass (70% or more), a soft try-again tone otherwise,
+  // then a sparkle for each newly earned badge.
+  useEffect(() => {
+    if (isPassed) sound.victory();
+    else sound.fail();
+    const timer = newBadges?.length ? window.setTimeout(() => sound.badge(), 1100) : null;
+    return () => timer && window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result]);
   const feedback = describeFeedback({ gameType: missionGameType(module, mission), scenarioData: mission.scenarioData, breakdown: result.breakdown, answers });
   const next = nextStepLink(result.nextStep);
   // Passed: the same next step as the end of the lesson (next level, topic or module).

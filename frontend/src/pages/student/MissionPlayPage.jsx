@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Component, Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -19,6 +19,38 @@ import IdentificationGame from '../../components/missions/identification/Identif
 import MatchingGame from '../../components/missions/matching/MatchingGame.jsx';
 import DragDropGame from '../../components/missions/dragdrop/DragDropGame.jsx';
 import StrategyGame from '../../components/missions/strategy/StrategyGame.jsx';
+import { initialMissionMode, prefersReducedMotion, writePreference } from '../../components/missions3d/capability.js';
+import { MissionSoundControl, MissionSoundProvider, useMissionSound } from '../../components/missions/sound/MissionSound.jsx';
+
+/*
+ * 3D versions of the same five games, loaded only when a mission is played in
+ * 3D (three.js stays out of every other page). They send exactly the same
+ * answers as the 2D games, so the server scores them identically.
+ */
+const GAMES_3D = {
+  [GAME_TYPES.DECISION_MAKING]: lazy(() => import('../../components/missions3d/Decision3D.jsx')),
+  [GAME_TYPES.IDENTIFICATION]: lazy(() => import('../../components/missions3d/Identification3D.jsx')),
+  [GAME_TYPES.MATCHING]: lazy(() => import('../../components/missions3d/Matching3D.jsx')),
+  [GAME_TYPES.DRAG_AND_DROP]: lazy(() => import('../../components/missions3d/DragDrop3D.jsx')),
+  [GAME_TYPES.STRATEGY_MANAGEMENT]: lazy(() => import('../../components/missions3d/Strategy3D.jsx')),
+};
+
+/** If a 3D scene fails (lost graphics context, old driver), the 2D game takes over. */
+class Fallback2D extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { failed: false };
+  }
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(error) {
+    console.warn('[AgriCore] 3D mission failed, using the 2D game instead.', error?.message);
+  }
+  render() {
+    return this.state.failed ? this.props.fallback : this.props.children;
+  }
+}
 
 /** Each module's game type has its own, separate game component. */
 const GAMES = {
@@ -68,10 +100,20 @@ const ENDED_MESSAGES = {
   },
 };
 
+/** Sound exists only on this page: the provider wraps the mission screen and nothing else. */
 export default function MissionPlayPage() {
+  return (
+    <MissionSoundProvider>
+      <MissionPlayScreen />
+    </MissionSoundProvider>
+  );
+}
+
+function MissionPlayScreen() {
   const { missionId } = useParams();
   const { user } = useAuth();
   const toast = useToast();
+  const sound = useMissionSound();
   const { data, error, isLoading, reload } = useAsync(() => getMissionForStudent(user._id, missionId), [user._id, missionId]);
   const [phase, setPhase] = useState('intro');
   const [attemptKey, setAttemptKey] = useState(0);
@@ -79,6 +121,13 @@ export default function MissionPlayPage() {
   const [answers, setAnswers] = useState(null);
   const [ended, setEnded] = useState(null);
   const [isStarting, setIsStarting] = useState(false);
+  // 3D when the device can run it and the player has not chosen 2D.
+  const [{ mode, can3D }, setMissionMode] = useState(initialMissionMode);
+  const [calm] = useState(prefersReducedMotion);
+  const switchMode = (next) => {
+    writePreference(next === '3d' ? 'on' : 'off');
+    setMissionMode((current) => ({ ...current, mode: next }));
+  };
   const startedAt = useRef(0);
   // The server's id for the current play, and guards against double clicks.
   const attemptIdRef = useRef(null);
@@ -147,6 +196,7 @@ export default function MissionPlayPage() {
       attemptIdRef.current = started.attemptId;
       channelRef.current?.postMessage({ type: 'mission-started', missionId, tabId: TAB_ID });
       startedAt.current = Date.now();
+      sound.start();
       setEnded(null);
       setResult(null);
       setAttemptKey((key) => key + 1);
@@ -209,6 +259,7 @@ export default function MissionPlayPage() {
           <strong>{lesson.title}</strong>
         </nav>
         <div className="mission-topbar__right">
+          <MissionSoundControl />
           <XPPill xp={result?.totalXP ?? totalXP} prefix="" />
           <Avatar firstName={user.firstName} lastName={user.lastName} size={34} src={user.avatarUrl} />
         </div>
@@ -273,7 +324,25 @@ export default function MissionPlayPage() {
 
         {(phase === 'playing' || phase === 'submitting') && (
           <div className={`mission-stage ${phase === 'submitting' ? 'is-submitting' : ''}`}>
-            <Game key={attemptKey} mission={mission} module={module} totalLevels={totalLevels} onComplete={handleComplete} />
+            {mode === '3d' && can3D && GAMES_3D[gameType] ? (
+              <Fallback2D fallback={<Game key={attemptKey} mission={mission} module={module} totalLevels={totalLevels} onComplete={handleComplete} />}>
+                <Suspense fallback={<LoadingState label="Building the 3D field…" />}>
+                  {(() => {
+                    const Game3D = GAMES_3D[gameType];
+                    return <Game3D key={attemptKey} mission={mission} module={module} totalLevels={totalLevels} onComplete={handleComplete} calm={calm} onSwitch2D={() => switchMode('2d')} />;
+                  })()}
+                </Suspense>
+              </Fallback2D>
+            ) : (
+              <>
+                {can3D && (
+                  <button type="button" className="m3d-switch-3d" onClick={() => switchMode('3d')}>
+                    <Icon name="sparkles" size={15} /> Play in 3D
+                  </button>
+                )}
+                <Game key={attemptKey} mission={mission} module={module} totalLevels={totalLevels} onComplete={handleComplete} />
+              </>
+            )}
             {phase === 'submitting' && <LoadingState label="Scoring your mission…" />}
           </div>
         )}

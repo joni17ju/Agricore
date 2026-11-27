@@ -37,8 +37,11 @@ function OptionThumb({ imageKey }) {
   );
 }
 
+import { useMissionSound } from '../sound/MissionSound.jsx';
+
 export default function MatchingGame({ mission, module, totalLevels, onComplete }) {
   const data = mission.scenarioData;
+  const sound = useMissionSound();
   const [selections, setSelections] = useState({});
   const [finished, setFinished] = useState(null); // { timeRemaining, timedOut }
 
@@ -56,6 +59,8 @@ export default function MatchingGame({ mission, module, totalLevels, onComplete 
     if (finished || selections[column.key]) return;
     const next = { ...selections, [column.key]: optionId };
     setSelections(next);
+    if (optionId === column.correctOptionId) sound.correct();
+    else sound.wrong();
     if (data.columns.every((c) => next[c.key])) setFinished({ timeRemaining: remaining, timedOut: false });
   };
 
