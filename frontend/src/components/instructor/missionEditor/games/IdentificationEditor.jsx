@@ -12,7 +12,7 @@ import { clamp, nudge, stagePercent } from './stage.js';
 const RADIUS = { min: 2, max: 30, start: 7 };
 const MAX_SPOTS = 20;
 const MAX_PATHOGENS = 10;
-const GROUPS = ['fungus', 'bacterium', 'virus', 'oomycete', 'nematode', 'abiotic'];
+const GROUPS = ['fungus', 'bacterium', 'virus', 'oomycete', 'nematode', 'abiotic', 'concept'];
 
 export default function IdentificationEditor({ data, update, at }) {
   const spots = data.symptomSpots;
