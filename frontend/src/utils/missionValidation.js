@@ -23,7 +23,7 @@ export const MAX_XP_LIMIT = 500;
 export const TIMER_LIMITS = Object.freeze({ min: 10, max: 600 });
 
 /** Games whose student screen runs a countdown from timeLimitSeconds. */
-export const TIMED_GAME_TYPES = Object.freeze(['matching', 'drag-and-drop']);
+export const TIMED_GAME_TYPES = Object.freeze(['matching', 'drag-and-drop', 'inspection']);
 
 /** Largest serialised scenarioData accepted (characters). */
 export const MAX_SCENARIO_CHARS = 200_000;
@@ -347,12 +347,88 @@ function strategyManagement(c, data) {
   }
 }
 
+
+/** Optional microscope view of a finding: an image and the features to mark on it. */
+function inspectionMicrograph(c, mg, at, n) {
+  if (!isObject(mg)) {
+    c.error(at, `Finding ${n}'s micrograph is not readable.`);
+    return;
+  }
+  checkText(c, mg.image, `${at}.image`, `Finding ${n}'s micrograph image`, { required: false, max: TEXT_LONG });
+  checkText(c, mg.imageHiRes, `${at}.imageHiRes`, `Finding ${n}'s high-resolution micrograph`, { required: false, max: TEXT_LONG });
+  checkText(c, mg.credit, `${at}.credit`, `Finding ${n}'s micrograph credit`, { required: false, max: TEXT_LONG });
+  if (mg.fieldWidthUm !== undefined && !inRange(mg.fieldWidthUm, 1, 10000)) c.error(`${at}.fieldWidthUm`, 'The micrograph width must be between 1 and 10,000 µm.');
+  if (mg.focus !== undefined && !inRange(mg.focus, 15, 85)) c.error(`${at}.focus`, 'The sharp focus point must be between 15 and 85.');
+  if (!checkList(c, mg.features, `${at}.features`, `Finding ${n}'s microscope features`, { min: 1, max: 8, noun: 'features', tooFew: 'Add at least one feature to mark under the microscope.' })) return;
+  checkIds(c, mg.features, `${at}.features`, 'Feature');
+  mg.features.forEach((ft, j) => {
+    const fat = `${at}.features.${j}`;
+    if (!isObject(ft)) {
+      c.error(fat, `Feature ${j + 1} is not readable.`);
+      return;
+    }
+    checkText(c, ft.name, `${fat}.name`, `Feature ${j + 1}'s name`);
+    checkText(c, ft.description, `${fat}.description`, `Feature ${j + 1}'s description`, { required: false, max: TEXT_LONG });
+    checkPercent(c, ft.x, `${fat}.x`, `Feature ${j + 1}'s left position`);
+    checkPercent(c, ft.y, `${fat}.y`, `Feature ${j + 1}'s top position`);
+    checkPercent(c, ft.radius, `${fat}.radius`, `Feature ${j + 1}'s size`, { min: 2, max: 30 });
+    if (ft.minObjective !== undefined && ![4, 10, 40, 100].includes(ft.minObjective)) c.error(`${fat}.minObjective`, 'The objective must be 4, 10, 40 or 100.');
+  });
+}
+
+function inspection(c, data) {
+  checkText(c, data.title, 'title', 'The mission title');
+  if (!checkList(c, data.rounds, 'rounds', 'The rounds', { min: 1, max: 8, noun: 'rounds', tooFew: 'Add at least one round (one photo to inspect).' })) return;
+  checkIds(c, data.rounds, 'rounds', 'Round');
+  data.rounds.forEach((round, r) => {
+    const at = `rounds.${r}`;
+    if (!isObject(round)) {
+      c.error(at, `Round ${r + 1} is not readable.`);
+      return;
+    }
+    checkText(c, round.subject, `${at}.subject`, `Round ${r + 1}'s subject`);
+    checkText(c, round.image, `${at}.image`, `Round ${r + 1}'s photo`, { required: false, max: TEXT_LONG });
+    checkText(c, round.imageUltra, `${at}.imageUltra`, `Round ${r + 1}'s extra-large photo`, { required: false, max: TEXT_LONG });
+    if (round.photoWidthMm !== undefined && !inRange(round.photoWidthMm, 1, 2000)) c.error(`${at}.photoWidthMm`, `Round ${r + 1}'s photo width must be between 1 and 2,000 mm.`);
+    checkText(c, round.question, `${at}.question`, `Round ${r + 1}'s question`, { max: TEXT_LONG });
+    checkText(c, round.explanation, `${at}.explanation`, `Round ${r + 1}'s explanation`, { required: false, max: TEXT_LONG });
+    if (checkList(c, round.findings, `${at}.findings`, `Round ${r + 1}'s findings`, { min: 1, max: 12, noun: 'findings', tooFew: 'Add at least one finding to mark.' })) {
+      checkIds(c, round.findings, `${at}.findings`, 'Finding');
+      round.findings.forEach((f, i) => {
+        const fat = `${at}.findings.${i}`;
+        if (!isObject(f)) {
+          c.error(fat, `Finding ${i + 1} is not readable.`);
+          return;
+        }
+        checkText(c, f.name, `${fat}.name`, `Finding ${i + 1}'s name`);
+        checkText(c, f.description, `${fat}.description`, `Finding ${i + 1}'s description`, { required: false, max: TEXT_LONG });
+        checkPercent(c, f.x, `${fat}.x`, `Finding ${i + 1}'s left position`);
+        checkPercent(c, f.y, `${fat}.y`, `Finding ${i + 1}'s top position`);
+        checkPercent(c, f.radius, `${fat}.radius`, `Finding ${i + 1}'s size`, { min: 2, max: 30 });
+        if (f.minZoom !== undefined && !inRange(f.minZoom, 1, 20)) c.error(`${fat}.minZoom`, `Finding ${i + 1}'s magnification must be between 1× and 20×.`);
+        if (f.deep !== undefined && typeof f.deep !== 'boolean') c.error(`${fat}.deep`, `Finding ${i + 1}'s "deep" flag must be true or false.`);
+        checkText(c, f.clue, `${fat}.clue`, `Finding ${i + 1}'s clue`, { required: false, max: TEXT_LONG });
+        if (f.micrograph !== undefined && f.micrograph !== null) inspectionMicrograph(c, f.micrograph, `${fat}.micrograph`, i + 1);
+      });
+      if (!round.findings.some((f) => isObject(f) && f.required !== false)) c.error(`${at}.findings`, 'Mark at least one finding as required.');
+    }
+    if (checkList(c, round.choices, `${at}.choices`, `Round ${r + 1}'s answers`, { min: 2, max: 6, noun: 'answers', tooFew: 'Add at least two answers: the correct one and a wrong one.' })) {
+      const ids = checkIds(c, round.choices, `${at}.choices`, 'Answer');
+      round.choices.forEach((choice, i) => {
+        if (isObject(choice)) checkText(c, choice.label, `${at}.choices.${i}.label`, `Answer ${i + 1}'s label`);
+      });
+      if (!ids.has(round.correctChoiceId)) c.error(`${at}.correctChoiceId`, `Pick the correct answer for round ${r + 1}.`);
+    }
+  });
+}
+
 const VALIDATORS = {
   'decision-making': decisionMaking,
   identification,
   matching,
   'drag-and-drop': dragAndDrop,
   'strategy-management': strategyManagement,
+  inspection,
 };
 
 /**

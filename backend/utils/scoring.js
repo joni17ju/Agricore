@@ -163,12 +163,84 @@ function scoreStrategy(scenarioData, { pestId = null, tacticIds = [] }) {
   };
 }
 
+
+// ── Inspection (general engine) ──
+/**
+ * Each round: up to 50 points for the required findings marked (a mark counts
+ * when it falls inside a finding's circle) together with the required
+ * microscope features (a feature mark counts inside the feature's circle on
+ * that finding's micrograph), 50 for the right answer, minus a small penalty
+ * for each mark on nothing (leaf or microscope, capped at the round's tries)
+ * and for each hint. The mission score is the average of the rounds.
+ *
+ * A leaf mark also carries the magnification it was made at (zoom); it only
+ * counts for a finding at or above that finding's minZoom (default 2), so a
+ * symptom cannot be "found" before it can be seen.
+ *
+ * Answers: { rounds: { [roundId]: { marks: [{ x, y, zoom }], features: [{ findingId, x, y }], choiceId, hintsUsed } } }
+ */
+export const INSPECTION_DEFAULTS = Object.freeze({ wrongMarkPenalty: 5, hintPenalty: 5, triesPerRound: 5, minZoom: 2 });
+
+/** The magnification a finding needs before it can be seen and marked. */
+const findingMinZoom = (finding) => Number(finding.minZoom ?? INSPECTION_DEFAULTS.minZoom);
+/** A leaf mark counts for a finding only inside its circle and at (or above) its magnification. */
+const marksFinding = (finding, mark) => Math.hypot(mark.x - finding.x, mark.y - finding.y) <= finding.radius && mark.zoom >= findingMinZoom(finding) - 0.01;
+
+function scoreInspection(scenarioData, { rounds: answered = {} } = {}) {
+  const wrongMarkPenalty = Number(scenarioData.wrongMarkPenalty ?? INSPECTION_DEFAULTS.wrongMarkPenalty);
+  const hintPenalty = Number(scenarioData.hintPenalty ?? INSPECTION_DEFAULTS.hintPenalty);
+  const tries = Number(scenarioData.triesPerRound ?? INSPECTION_DEFAULTS.triesPerRound);
+  const results = scenarioData.rounds.map((round) => {
+    const answer = (answered && typeof answered === 'object' ? answered[round.id] : null) ?? {};
+    const marks = (Array.isArray(answer.marks) ? answer.marks : [])
+      .filter((m) => m && Number.isFinite(Number(m.x)) && Number.isFinite(Number(m.y)))
+      .slice(0, 50)
+      // The magnification the mark was made at; a mark without one counts as 1×.
+      .map((m) => ({ x: Number(m.x), y: Number(m.y), zoom: Number.isFinite(Number(m.zoom)) ? Number(m.zoom) : 1 }));
+    const required = round.findings.filter((f) => f.required !== false);
+    // A mark below a finding's magnification is on what still looks like healthy leaf: it does not count.
+    const foundIds = round.findings.filter((f) => marks.some((m) => marksFinding(f, m))).map((f) => f.id);
+    const misplacedLeaf = marks.filter((m) => !round.findings.some((f) => marksFinding(f, m))).length;
+    const foundRequired = required.filter((f) => foundIds.includes(f.id)).length;
+    // Microscope features, marked on each finding's micrograph.
+    const featureMarks = (Array.isArray(answer.features) ? answer.features : [])
+      .filter((m) => m && Number.isFinite(Number(m.x)) && Number.isFinite(Number(m.y)))
+      .slice(0, 50)
+      .map((m) => ({ findingId: String(m.findingId ?? ''), x: Number(m.x), y: Number(m.y) }));
+    let featuresRequired = 0;
+    let featuresFound = 0;
+    let misplacedFeatures = featureMarks.filter((m) => !round.findings.some((f) => f.id === m.findingId && f.micrograph?.features?.length)).length;
+    const foundFeatureIds = [];
+    for (const finding of round.findings) {
+      const features = finding.micrograph?.features ?? [];
+      if (!features.length) continue;
+      const own = featureMarks.filter((m) => m.findingId === finding.id);
+      const seen = findMarkedSpotIds(features, own);
+      const needed = features.filter((x) => x.required !== false);
+      featuresRequired += needed.length;
+      featuresFound += needed.filter((x) => seen.includes(x.id)).length;
+      misplacedFeatures += countMisplacedMarks(features, own);
+      foundFeatureIds.push(...seen.map((id) => `${finding.id}:${id}`));
+    }
+    const misplaced = Math.min(tries, misplacedLeaf + misplacedFeatures);
+    const totalRequired = required.length + featuresRequired;
+    const hintsUsed = Math.max(0, Math.min(totalRequired, Math.floor(Number(answer.hintsUsed) || 0)));
+    const correct = answer.choiceId === round.correctChoiceId;
+    const findingsPoints = totalRequired ? (50 * (foundRequired + featuresFound)) / totalRequired : 50;
+    const roundScore = clampScore(findingsPoints + (correct ? 50 : 0) - misplaced * wrongMarkPenalty - hintsUsed * hintPenalty);
+    return { roundId: round.id, foundRequired, required: required.length, foundIds, featuresFound, featuresRequired, foundFeatureIds, misplaced, hintsUsed, correct, choiceId: answer.choiceId ?? null, roundScore };
+  });
+  const score = results.length ? results.reduce((sum, r) => sum + r.roundScore, 0) / results.length : 0;
+  return { score: clampScore(score), breakdown: { rounds: results } };
+}
+
 const SCORERS = {
   [GAME_TYPES.DECISION_MAKING]: scoreDecisionMaking,
   [GAME_TYPES.IDENTIFICATION]: scoreIdentification,
   [GAME_TYPES.MATCHING]: scoreMatching,
   [GAME_TYPES.DRAG_AND_DROP]: scoreDragAndDrop,
   [GAME_TYPES.STRATEGY_MANAGEMENT]: scoreStrategy,
+  [GAME_TYPES.INSPECTION]: scoreInspection,
 };
 
 /**

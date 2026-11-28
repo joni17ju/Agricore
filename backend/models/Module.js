@@ -9,7 +9,7 @@ const { Schema } = mongoose;
  *
  * gameType picks which mission game the module uses.
  */
-export const GAME_TYPES = ['decision-making', 'identification', 'matching', 'drag-and-drop', 'strategy-management'];
+export const GAME_TYPES = ['decision-making', 'identification', 'matching', 'drag-and-drop', 'strategy-management', 'inspection'];
 
 const moduleSchema = new Schema(
   {

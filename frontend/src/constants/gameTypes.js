@@ -8,6 +8,8 @@ export const GAME_TYPES = Object.freeze({
   MATCHING: 'matching',
   DRAG_AND_DROP: 'drag-and-drop',
   STRATEGY_MANAGEMENT: 'strategy-management',
+  // A general engine: inspect a photo with a zoom scope, mark findings, then answer a question.
+  INSPECTION: 'inspection',
 });
 
 export const GAME_TYPE_INFO = Object.freeze({
@@ -16,8 +18,9 @@ export const GAME_TYPE_INFO = Object.freeze({
     shortDescription: 'Read a farm crisis scenario and choose the best of three decision cards.',
   },
   [GAME_TYPES.IDENTIFICATION]: {
-    label: 'Identification',
-    shortDescription: 'Inspect leaves with a zoom scope, mark symptoms, then identify the pathogen.',
+    // Shown as Module 2's game everywhere (module card, course map, mission screens, instructor lists).
+    label: 'Leaf Inspection',
+    shortDescription: 'Look over the leaf with a zoom scope, mark the symptoms you find, then identify the pathogen or cause.',
   },
   [GAME_TYPES.MATCHING]: {
     label: 'Matching',
@@ -30,6 +33,10 @@ export const GAME_TYPE_INFO = Object.freeze({
   [GAME_TYPES.STRATEGY_MANAGEMENT]: {
     label: 'Strategy & Management',
     shortDescription: 'Diagnose the pest problem and deploy the best combination of eco-friendly tactics.',
+  },
+  [GAME_TYPES.INSPECTION]: {
+    label: 'Inspection',
+    shortDescription: 'Look over the leaf with a zoom scope, mark the symptoms, look closer under the microscope, then identify the pathogen or cause.',
   },
 });
 

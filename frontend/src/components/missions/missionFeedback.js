@@ -92,6 +92,24 @@ function strategyFeedback(scenarioData, breakdown, answers) {
   ];
 }
 
+function inspectionFeedback(scenarioData, breakdown) {
+  return breakdown.rounds.flatMap((result, index) => {
+    const round = scenarioData.rounds.find((r) => r.id === result.roundId);
+    if (!round) return [];
+    const correct = round.choices.find((c) => c.id === round.correctChoiceId);
+    const chosen = round.choices.find((c) => c.id === result.choiceId);
+    const penalties = [
+      result.misplaced ? `${result.misplaced} mark(s) on nothing` : '',
+      result.hintsUsed ? `${result.hintsUsed} hint(s) used` : '',
+    ].filter(Boolean).join(', ');
+    return [{
+      ok: result.correct && result.foundRequired === result.required,
+      title: `Sample ${index + 1}: ${result.foundRequired} of ${result.required} findings${result.featuresRequired ? `, ${result.featuresFound} of ${result.featuresRequired} microscope features` : ''}, answered “${chosen?.label ?? 'no answer'}” (${result.roundScore}%)`,
+      detail: `${result.correct ? '' : `Correct answer: ${correct?.label}. `}${round.explanation ?? ''}${penalties ? ` (${penalties}.)` : ''}`,
+    }];
+  });
+}
+
 export function describeFeedback({ gameType, scenarioData, breakdown, answers }) {
   switch (gameType) {
     case GAME_TYPES.DECISION_MAKING:
@@ -104,6 +122,8 @@ export function describeFeedback({ gameType, scenarioData, breakdown, answers })
       return dragDropFeedback(scenarioData, breakdown);
     case GAME_TYPES.STRATEGY_MANAGEMENT:
       return strategyFeedback(scenarioData, breakdown, answers);
+    case GAME_TYPES.INSPECTION:
+      return breakdown?.rounds ? inspectionFeedback(scenarioData, breakdown) : [];
     default:
       return [];
   }
@@ -135,5 +155,10 @@ export const HOW_TO_PLAY = {
     'Read the field observations and diagnose the pest.',
     'Choose the required number of control tactics while watching the meters.',
     'Deploy a strategy that saves the crop and keeps an A+ environmental score.',
+  ],
+  [GAME_TYPES.INSPECTION]: [
+    'Look over the leaf with the zoom scope (mouse, finger or arrow keys) and mark each symptom you find. Wrong marks cost a try.',
+    'Look closer: open the microscope on a marked spot, choose an objective, turn the fine focus until it is sharp, and mark what you see.',
+    'When everything is marked, identify the pathogen or cause. Hints help but cost a little XP.',
   ],
 };

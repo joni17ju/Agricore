@@ -1,0 +1,429 @@
+{
+  "title": "Diagnose the Field Samples",
+  "instructions": "Look over each leaf with the zoom scope (1× to 20×) and mark the symptoms you find: some only show at high magnification. Then look closer under the microscope, focus it and mark what you see. Finally, identify what is causing the problem.",
+  "timeLimitSeconds": 600,
+  "triesPerRound": 5,
+  "wrongMarkPenalty": 5,
+  "hintPenalty": 5,
+  "rounds": [
+    {
+      "id": "r1",
+      "level": "Easy",
+      "subject": "Upper leaf of a stunted rice plant, whole field affected",
+      "image": "/images/inspection/module-2/round-1.jpg",
+      "imageHiRes": "/images/inspection/module-2/round-1@2x.jpg",
+      "credit": "Placeholder drawing — replace with your own photo (see docs/inspection-game.md)",
+      "placeholder": {
+        "shape": "narrow-leaf",
+        "color": "#8aa646"
+      },
+      "findings": [
+        {
+          "id": "f1",
+          "name": "Dusty brown spots",
+          "description": "Fine dusty brown spots on an upper leaf.",
+          "x": 30,
+          "y": 50,
+          "radius": 8,
+          "required": true,
+          "detail": "dust",
+          "micrograph": {
+            "image": "/images/inspection/module-2/micro/round-1-abiotic.jpg",
+            "imageHiRes": "/images/inspection/module-2/micro/round-1-abiotic@2x.jpg",
+            "credit": "Placeholder micrograph — replace with your own (see docs/inspection-game.md)",
+            "fieldWidthUm": 500,
+            "focus": 44,
+            "placeholder": {
+              "kind": "abiotic"
+            },
+            "features": [
+              {
+                "id": "m1",
+                "name": "Brown, dead cells",
+                "description": "Dead tissue (necrosis) in the dusty brown spot.",
+                "x": 42,
+                "y": 44,
+                "radius": 13,
+                "minObjective": 10,
+                "look": "dead-cells"
+              },
+              {
+                "id": "m2",
+                "name": "Green cells with no threads, spores or ooze",
+                "description": "No sign of a pest or pathogen on the plant.",
+                "x": 74,
+                "y": 70,
+                "radius": 12,
+                "minObjective": 10,
+                "look": "healthy-cells"
+              }
+            ]
+          },
+          "minZoom": 2,
+          "clue": "Look at the upper part of the leaf blade."
+        },
+        {
+          "id": "f2",
+          "name": "More dusty brown spots",
+          "description": "The same dusty spots, spread evenly — no spores, ooze or growth.",
+          "x": 67,
+          "y": 50,
+          "radius": 8,
+          "required": true,
+          "detail": "dust",
+          "minZoom": 3,
+          "clue": "There is more than one patch: scan the whole length of the leaf."
+        }
+      ],
+      "question": "What causes these symptoms?",
+      "choices": [
+        {
+          "id": "fungus",
+          "label": "Fungus",
+          "description": "Thread-like; spots, rusts, mildews; spreads by spores",
+          "icon": "fungus"
+        },
+        {
+          "id": "bacterium",
+          "label": "Bacterium",
+          "description": "Single-celled; leaf spots, blights, wilts; ooze in wet weather",
+          "icon": "bacterium"
+        },
+        {
+          "id": "virus",
+          "label": "Virus",
+          "description": "Particles inside cells; mottling, curling, stunting",
+          "icon": "virus"
+        },
+        {
+          "id": "abiotic",
+          "label": "Abiotic disorder",
+          "description": "Non-living cause; does not spread",
+          "icon": "abiotic"
+        }
+      ],
+      "correctChoiceId": "abiotic",
+      "explanation": "In rice, zinc deficiency shows as dusty brown spots on the upper leaves of stunted plants. Under the microscope the brown cells are dead, but there is no sign of a pest or pathogen — no threads, spores or ooze. Abiotic problems do not spread from plant to plant: the cause is non-living.",
+      "imageUltra": "/images/inspection/module-2/round-1@4x.jpg",
+      "photoWidthMm": 45
+    },
+    {
+      "id": "r2",
+      "level": "Medium",
+      "subject": "Mottled leaf from a stunted plant",
+      "image": "/images/inspection/module-2/round-2.jpg",
+      "imageHiRes": "/images/inspection/module-2/round-2@2x.jpg",
+      "credit": "Placeholder drawing — replace with your own photo (see docs/inspection-game.md)",
+      "placeholder": {
+        "shape": "broad-leaf",
+        "color": "#5c9a42"
+      },
+      "findings": [
+        {
+          "id": "f1",
+          "name": "Mosaic (discolouration)",
+          "description": "Light and dark green patches: mosaic or mottled leaves.",
+          "x": 40,
+          "y": 44,
+          "radius": 9,
+          "required": true,
+          "detail": "mosaic",
+          "micrograph": {
+            "image": "/images/inspection/module-2/micro/round-2-virus.jpg",
+            "imageHiRes": "/images/inspection/module-2/micro/round-2-virus@2x.jpg",
+            "credit": "Placeholder micrograph — replace with your own (see docs/inspection-game.md)",
+            "fieldWidthUm": 500,
+            "focus": 60,
+            "placeholder": {
+              "kind": "virus"
+            },
+            "features": [
+              {
+                "id": "m1",
+                "name": "Yellowed (chlorotic) cells",
+                "description": "Light patches: yellowing (chlorosis) of the leaf cells.",
+                "x": 30,
+                "y": 38,
+                "radius": 13,
+                "minObjective": 10,
+                "look": "pale-cells"
+              },
+              {
+                "id": "m2",
+                "name": "Dark green cells",
+                "description": "Dark green patches beside the pale ones make the mosaic.",
+                "x": 70,
+                "y": 64,
+                "radius": 13,
+                "minObjective": 10,
+                "look": "dark-cells"
+              }
+            ]
+          },
+          "minZoom": 3,
+          "clue": "Compare the colour of the leaf from side to side."
+        },
+        {
+          "id": "f2",
+          "name": "Mottled, curled area",
+          "description": "Mottling with curling and distortion of the leaf.",
+          "x": 63,
+          "y": 60,
+          "radius": 8,
+          "required": true,
+          "detail": "mosaic",
+          "minZoom": 5,
+          "deep": true,
+          "clue": "Check the lower half of the leaf, near the edge, at 5× or more."
+        }
+      ],
+      "question": "What causes these symptoms?",
+      "choices": [
+        {
+          "id": "fungus",
+          "label": "Fungus",
+          "description": "Thread-like; spots, rusts, mildews; spreads by spores",
+          "icon": "fungus"
+        },
+        {
+          "id": "bacterium",
+          "label": "Bacterium",
+          "description": "Single-celled; leaf spots, blights, wilts; ooze in wet weather",
+          "icon": "bacterium"
+        },
+        {
+          "id": "virus",
+          "label": "Virus",
+          "description": "Particles inside cells; mottling, curling, stunting",
+          "icon": "virus"
+        },
+        {
+          "id": "abiotic",
+          "label": "Abiotic disorder",
+          "description": "Non-living cause; does not spread",
+          "icon": "abiotic"
+        }
+      ],
+      "correctChoiceId": "virus",
+      "explanation": "Viruses are tiny particles that live inside plant cells and cause mottled, curled or stunted growth, and they are often spread by insects. Under the microscope the cells show light and dark (mosaic) patches but no fungal threads, spores or ooze — as in tungro-infected rice, the cause is a virus.",
+      "imageUltra": "/images/inspection/module-2/round-2@4x.jpg",
+      "photoWidthMm": 70
+    },
+    {
+      "id": "r3",
+      "level": "Hard",
+      "subject": "Rice leaf with spreading lesions",
+      "image": "/images/inspection/module-2/round-3.jpg",
+      "imageHiRes": "/images/inspection/module-2/round-3@2x.jpg",
+      "credit": "Placeholder drawing — replace with your own photo (see docs/inspection-game.md)",
+      "placeholder": {
+        "shape": "narrow-leaf",
+        "color": "#5f9a3c"
+      },
+      "findings": [
+        {
+          "id": "f1",
+          "name": "Leaf spot (necrosis)",
+          "description": "A lesion of dead tissue — necrosis, shown as leaf spots, blights, cankers or rots.",
+          "x": 32,
+          "y": 50,
+          "radius": 7,
+          "required": true,
+          "detail": "lesion",
+          "minZoom": 3,
+          "clue": "Scan the left half of the leaf."
+        },
+        {
+          "id": "f2",
+          "name": "Spore masses (a sign)",
+          "description": "Powdery spore masses on the lesion: something you see of the pathogen itself.",
+          "x": 61,
+          "y": 52,
+          "radius": 6,
+          "required": true,
+          "detail": "spores",
+          "micrograph": {
+            "image": "/images/inspection/module-2/micro/round-3-fungus.jpg",
+            "imageHiRes": "/images/inspection/module-2/micro/round-3-fungus@2x.jpg",
+            "credit": "Placeholder micrograph — replace with your own (see docs/inspection-game.md)",
+            "fieldWidthUm": 400,
+            "focus": 52,
+            "placeholder": {
+              "kind": "fungus"
+            },
+            "features": [
+              {
+                "id": "m1",
+                "name": "Fungal threads (mycelium)",
+                "description": "Thread-like fungal growth: fungi are thread-like organisms.",
+                "x": 30,
+                "y": 62,
+                "radius": 13,
+                "minObjective": 10,
+                "look": "hyphae"
+              },
+              {
+                "id": "m2",
+                "name": "Spores",
+                "description": "Fungi spread by spores. Spore masses are a sign: something you see of the pathogen itself.",
+                "x": 64,
+                "y": 36,
+                "radius": 11,
+                "minObjective": 40,
+                "look": "spores"
+              }
+            ]
+          },
+          "minZoom": 10,
+          "deep": true,
+          "clue": "A second lesion lies just right of the middle: its spore masses only show at 10× or more."
+        },
+        {
+          "id": "f3",
+          "name": "Yellowing around a young spot",
+          "description": "Discolouration (chlorosis) around a new lesion.",
+          "x": 82,
+          "y": 48,
+          "radius": 5,
+          "required": false,
+          "detail": "halo",
+          "minZoom": 5,
+          "clue": "Near the tip of the leaf."
+        }
+      ],
+      "question": "What causes these symptoms and signs?",
+      "choices": [
+        {
+          "id": "fungus",
+          "label": "Fungus",
+          "description": "Thread-like; spots, rusts, mildews; spreads by spores",
+          "icon": "fungus"
+        },
+        {
+          "id": "bacterium",
+          "label": "Bacterium",
+          "description": "Single-celled; leaf spots, blights, wilts; ooze in wet weather",
+          "icon": "bacterium"
+        },
+        {
+          "id": "virus",
+          "label": "Virus",
+          "description": "Particles inside cells; mottling, curling, stunting",
+          "icon": "virus"
+        },
+        {
+          "id": "abiotic",
+          "label": "Abiotic disorder",
+          "description": "Non-living cause; does not spread",
+          "icon": "abiotic"
+        }
+      ],
+      "correctChoiceId": "fungus",
+      "explanation": "Fungi are thread-like organisms that cause spots, rusts, mildews, rots and wilts, and they spread by spores. Under the microscope the lesion shows fungal threads (mycelium) and spores — signs of the pathogen — so the cause is a fungus, as in rice blast lesions.",
+      "imageUltra": "/images/inspection/module-2/round-3@4x.jpg",
+      "photoWidthMm": 45
+    },
+    {
+      "id": "r4",
+      "level": "Expert challenge",
+      "subject": "Rice leaf blighted from the tip after rain",
+      "image": "/images/inspection/module-2/round-4.jpg",
+      "imageHiRes": "/images/inspection/module-2/round-4@2x.jpg",
+      "credit": "Placeholder drawing — replace with your own photo (see docs/inspection-game.md)",
+      "placeholder": {
+        "shape": "narrow-leaf",
+        "color": "#6aa043"
+      },
+      "findings": [
+        {
+          "id": "f1",
+          "name": "Blight lesion (necrosis)",
+          "description": "Water-soaked, dying tissue spreading along the leaf.",
+          "x": 22,
+          "y": 49,
+          "radius": 8,
+          "required": true,
+          "detail": "water-soaked",
+          "minZoom": 2,
+          "clue": "Start from the leaf tip, on the left."
+        },
+        {
+          "id": "f2",
+          "name": "Bacterial ooze (a sign)",
+          "description": "A sticky or milky liquid on the lesion: a sign of bacteria.",
+          "x": 54,
+          "y": 47,
+          "radius": 6,
+          "required": true,
+          "detail": "ooze",
+          "micrograph": {
+            "image": "/images/inspection/module-2/micro/round-4-bacteria.jpg",
+            "imageHiRes": "/images/inspection/module-2/micro/round-4-bacteria@2x.jpg",
+            "credit": "Placeholder micrograph — replace with your own (see docs/inspection-game.md)",
+            "fieldWidthUm": 300,
+            "focus": 47,
+            "placeholder": {
+              "kind": "bacteria"
+            },
+            "features": [
+              {
+                "id": "m1",
+                "name": "Ooze streaming from the cut tissue",
+                "description": "Bacterial ooze: a sticky or milky liquid from cut or diseased tissue.",
+                "x": 34,
+                "y": 50,
+                "radius": 14,
+                "minObjective": 4,
+                "look": "ooze"
+              },
+              {
+                "id": "m2",
+                "name": "Single-celled bacteria",
+                "description": "Bacteria are single-celled organisms.",
+                "x": 72,
+                "y": 34,
+                "radius": 10,
+                "minObjective": 100,
+                "look": "bacteria"
+              }
+            ]
+          },
+          "minZoom": 20,
+          "deep": true,
+          "clue": "Ooze beads up near the middle of the leaf, at the edge of the dying tissue: only visible at 20×."
+        }
+      ],
+      "question": "What causes these symptoms and signs?",
+      "choices": [
+        {
+          "id": "fungus",
+          "label": "Fungus",
+          "description": "Thread-like; spots, rusts, mildews; spreads by spores",
+          "icon": "fungus"
+        },
+        {
+          "id": "bacterium",
+          "label": "Bacterium",
+          "description": "Single-celled; leaf spots, blights, wilts; ooze in wet weather",
+          "icon": "bacterium"
+        },
+        {
+          "id": "virus",
+          "label": "Virus",
+          "description": "Particles inside cells; mottling, curling, stunting",
+          "icon": "virus"
+        },
+        {
+          "id": "abiotic",
+          "label": "Abiotic disorder",
+          "description": "Non-living cause; does not spread",
+          "icon": "abiotic"
+        }
+      ],
+      "correctChoiceId": "bacterium",
+      "explanation": "Bacteria are single-celled organisms that cause leaf spots, blights, wilts and soft rots, especially in wet conditions. Bacterial ooze — a sticky or milky liquid from cut or diseased tissue — is a sign of bacteria, and under the microscope the single cells stream out of the cut tissue.",
+      "imageUltra": "/images/inspection/module-2/round-4@4x.jpg",
+      "photoWidthMm": 45
+    }
+  ]
+}

@@ -19,6 +19,7 @@ const GAME_ICONS = {
   matching: 'bug',
   'drag-and-drop': 'leaf',
   'strategy-management': 'target',
+  inspection: 'zoom-in',
 };
 
 export const gameIcon = (gameType) => GAME_ICONS[gameType] ?? 'target';

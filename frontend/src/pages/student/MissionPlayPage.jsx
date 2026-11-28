@@ -19,6 +19,7 @@ import IdentificationGame from '../../components/missions/identification/Identif
 import MatchingGame from '../../components/missions/matching/MatchingGame.jsx';
 import DragDropGame from '../../components/missions/dragdrop/DragDropGame.jsx';
 import StrategyGame from '../../components/missions/strategy/StrategyGame.jsx';
+import InspectionGame from '../../components/missions/inspection/InspectionGame.jsx';
 import { hasWebGL, prefersReducedMotion } from '../../components/missions3d/capability.js';
 import { MissionSoundControl, MissionSoundProvider, useMissionSound } from '../../components/missions/sound/MissionSound.jsx';
 
@@ -94,6 +95,8 @@ const GAMES = {
   [GAME_TYPES.MATCHING]: MatchingGame,
   [GAME_TYPES.DRAG_AND_DROP]: DragDropGame,
   [GAME_TYPES.STRATEGY_MANAGEMENT]: StrategyGame,
+  // Plain Canvas engine; it has no separate 3D version.
+  [GAME_TYPES.INSPECTION]: InspectionGame,
 };
 
 /*
@@ -382,6 +385,7 @@ function MissionPlayScreen() {
             ) : (
               <>
                 {GAMES_3D[gameType] && <SimpleViewNote reason="no-webgl" />}
+                {/* The inspection game is its own canvas game, with no 3D version. */}
                 <Game key={attemptKey} mission={mission} module={module} totalLevels={totalLevels} onComplete={handleComplete} />
               </>
             )}
