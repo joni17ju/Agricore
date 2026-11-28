@@ -17,6 +17,15 @@
  * The games keep their own markup; only the play shell and each game's
  * scenario element are positioned here. Desktop and tablet are unchanged.
  */
+
+/* While a mission is played (any screen): no pull-to-refresh, no overscroll
+   bounce, no double-tap zoom. Pinch-zoom of the page still works outside the
+   game area; the game areas themselves take every touch (touch-action: none). */
+html.is-mission-playing,
+html.is-mission-playing body { overscroll-behavior: none; }
+.mission-page--playing { touch-action: manipulation; }
+.mission-page--playing .mission-main { scroll-padding-bottom: 96px; }
+.mission-page--playing .insp__stage { touch-action: none; }
 @media (max-width: 768px), (max-height: 520px) {
   .mission-page--playing {
     height: 100vh;

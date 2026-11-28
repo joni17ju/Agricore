@@ -1,12 +1,15 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { ContactShadows, Sparkles } from '@react-three/drei';
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { graphicsTier, particleCount } from './capability.js';
 
 /**
  * The shared 3D stage for every mission: a low-poly field under a soft sky —
  * swaying crop rows, a few trees and a barn, drifting pollen — with soft
- * shadows and a capped pixel ratio so phones stay smooth.
+ * shadows and a capped pixel ratio. Phones and weak devices get a lighter
+ * setup (QUALITY below); rendering pauses while the tab is hidden, and a lost
+ * WebGL context is restored without losing the player's progress.
  *
  * Everything is built from simple shapes in code: there are no model files to
  * download and nothing copyrighted.
@@ -155,6 +158,38 @@ function CameraRig({ position, target }) {
   return null;
 }
 
+/** Quality settings per device tier (see capability.js). Desktop keeps the full scene. */
+const QUALITY = {
+  high: { dpr: [1, 1.5], antialias: true, shadows: true, sparkles: 36, perRow: 20, contactFrames: Infinity, fps: null },
+  medium: { dpr: [1, 1.5], antialias: false, shadows: false, sparkles: 14, perRow: 14, contactFrames: 1, fps: null },
+  low: { dpr: [1, 1], antialias: false, shadows: false, sparkles: 0, perRow: 10, contactFrames: 0, fps: 30 },
+};
+
+/** Renders at a fixed rate (frameloop "demand"), for weak devices. */
+function FrameLimiter({ fps }) {
+  const invalidate = useThree((state) => state.invalidate);
+  useEffect(() => {
+    const id = window.setInterval(() => invalidate(), 1000 / fps);
+    return () => window.clearInterval(id);
+  }, [fps, invalidate]);
+  return null;
+}
+
+/** True while the browser tab is hidden: rendering pauses then. */
+function usePageHidden() {
+  const [hidden, setHidden] = useState(() => document.hidden);
+  useEffect(() => {
+    const update = () => setHidden(document.hidden);
+    document.addEventListener('visibilitychange', update);
+    return () => document.removeEventListener('visibilitychange', update);
+  }, []);
+  return hidden;
+}
+
+const RESTORE_WAIT_MS = 3000;
+const MAX_RECOVERIES = 3;
+const RECOVERY_WINDOW_MS = 60000;
+
 export default function GameStage({
   mood = 'healthy',
   calm = false,
@@ -164,11 +199,59 @@ export default function GameStage({
   children,
   label = 'Mission scene',
 }) {
+  const quality = QUALITY[graphicsTier()];
+  const hidden = usePageHidden();
   const glRef = useRef(null);
+  const detachRef = useRef(null);
+  const restoreTimer = useRef(null);
+  // A new key remounts only the canvas (a fresh WebGL context); the game's own
+  // state lives in the component around this stage, so no progress is lost.
+  const [canvasKey, setCanvasKey] = useState(0);
+  const [restoring, setRestoring] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const recoveries = useRef(0);
+  const lastLoss = useRef(0);
+
+  const attach = (gl) => {
+    detachRef.current?.();
+    const canvas = gl.domElement;
+    const onLost = (event) => {
+      event.preventDefault(); // allows the browser to restore the context
+      // Only losses close together count toward giving up: a busy phone may drop
+      // the context now and then during a long game and should keep its 3D view.
+      if (Date.now() - lastLoss.current > RECOVERY_WINDOW_MS) recoveries.current = 0;
+      lastLoss.current = Date.now();
+      setRestoring(true);
+      window.clearTimeout(restoreTimer.current);
+      restoreTimer.current = window.setTimeout(() => {
+        // Not restored in time: start a new context, or give up after a few tries.
+        recoveries.current += 1;
+        detachRef.current?.();
+        detachRef.current = null;
+        if (recoveries.current > MAX_RECOVERIES) setFailed(true);
+        else {
+          setCanvasKey((key) => key + 1);
+          setRestoring(false);
+        }
+      }, RESTORE_WAIT_MS);
+    };
+    const onRestored = () => {
+      window.clearTimeout(restoreTimer.current);
+      setRestoring(false);
+    };
+    canvas.addEventListener('webglcontextlost', onLost);
+    canvas.addEventListener('webglcontextrestored', onRestored);
+    detachRef.current = () => {
+      canvas.removeEventListener('webglcontextlost', onLost);
+      canvas.removeEventListener('webglcontextrestored', onRestored);
+    };
+  };
 
   // Free the GPU memory as soon as the mission is left.
   useEffect(
     () => () => {
+      window.clearTimeout(restoreTimer.current);
+      detachRef.current?.();
       const gl = glRef.current;
       if (!gl) return;
       gl.dispose();
@@ -177,18 +260,27 @@ export default function GameStage({
     [],
   );
 
+  // Out of recoveries: let the page's error boundary switch to the 2D game.
+  if (failed) throw new Error('The 3D view could not be restored after the graphics context was lost.');
+
+  const limited = Boolean(quality.fps) && !calm;
+  const frameloop = hidden ? 'never' : calm || limited ? 'demand' : 'always';
+
   return (
     <div className="m3d-stage" role="img" aria-label={label}>
       <Canvas
-        shadows
-        dpr={[1, 1.5]}
-        frameloop={calm ? 'demand' : 'always'}
+        key={canvasKey}
+        shadows={quality.shadows}
+        dpr={quality.dpr}
+        frameloop={frameloop}
         camera={{ position: camera.position, fov: camera.fov, near: 0.1, far: 200 }}
-        gl={{ antialias: true, powerPreference: 'high-performance' }}
+        gl={{ antialias: quality.antialias, powerPreference: quality.antialias ? 'high-performance' : 'default' }}
         onCreated={({ gl }) => {
           glRef.current = gl;
+          attach(gl);
         }}
       >
+        {limited && !hidden && <FrameLimiter fps={quality.fps} />}
         <CameraRig position={camera.position} target={target} />
         <Sky mood={mood} />
         <fog attach="fog" args={['#eef1e6', 18, 48]} />
@@ -196,7 +288,7 @@ export default function GameStage({
         <directionalLight
           position={[6, 10, 6]}
           intensity={1.6}
-          castShadow
+          castShadow={quality.shadows}
           shadow-mapSize={[1024, 1024]}
           shadow-camera-left={-12}
           shadow-camera-right={12}
@@ -211,16 +303,22 @@ export default function GameStage({
           <planeGeometry args={[23, 13]} />
           <meshStandardMaterial color={mood === 'stressed' ? '#8a6f45' : '#7a5a37'} roughness={1} />
         </mesh>
-        {showCrops && <CropRows mood={mood} calm={calm} />}
+        {showCrops && <CropRows mood={mood} calm={calm} perRow={quality.perRow} />}
         <Tree position={[-12, 0, -9]} scale={1.3} />
         <Tree position={[-9.5, 0, -12]} />
         <Tree position={[11, 0, -10]} scale={1.2} />
         <Tree position={[13, 0, -6]} scale={0.9} />
         <Barn position={[8.5, 0, -12]} />
-        {!calm && <Sparkles count={36} scale={[18, 4, 10]} position={[0, 2.5, -2]} size={2.2} speed={0.35} color="#fff6c8" />}
-        <ContactShadows position={[0, 0.02, 0]} opacity={0.35} scale={20} blur={2.4} far={6} />
+        {!calm && quality.sparkles > 0 && <Sparkles count={quality.sparkles} scale={[18, 4, 10]} position={[0, 2.5, -2]} size={2.2} speed={0.35} color="#fff6c8" />}
+        {quality.contactFrames > 0 && <ContactShadows position={[0, 0.02, 0]} opacity={0.35} scale={20} blur={2.4} far={6} frames={quality.contactFrames} />}
         {children}
       </Canvas>
+      {restoring && (
+        <div className="m3d-restoring" role="status">
+          <span className="m3d-restoring__spinner" aria-hidden="true" />
+          Restoring the game…
+        </div>
+      )}
     </div>
   );
 }
@@ -229,7 +327,8 @@ export default function GameStage({
  * A short burst of particles where something good (or bad) just happened.
  * Re-keyed to replay. Purely visual.
  */
-export function Burst({ position = [0, 1, 0], color = '#ffd34d', count = 24, calm = false }) {
+export function Burst({ position = [0, 1, 0], color = '#ffd34d', count: requested = 24, calm = false }) {
+  const count = particleCount(requested);
   const group = useRef();
   const parts = useMemo(
     () =>

@@ -19,23 +19,52 @@ import IdentificationGame from '../../components/missions/identification/Identif
 import MatchingGame from '../../components/missions/matching/MatchingGame.jsx';
 import DragDropGame from '../../components/missions/dragdrop/DragDropGame.jsx';
 import StrategyGame from '../../components/missions/strategy/StrategyGame.jsx';
-import { initialMissionMode, prefersReducedMotion, writePreference } from '../../components/missions3d/capability.js';
+import { hasWebGL, prefersReducedMotion } from '../../components/missions3d/capability.js';
 import { MissionSoundControl, MissionSoundProvider, useMissionSound } from '../../components/missions/sound/MissionSound.jsx';
 
 /*
- * 3D versions of the same five games, loaded only when a mission is played in
- * 3D (three.js stays out of every other page). They send exactly the same
- * answers as the 2D games, so the server scores them identically.
+ * Every game with a 3D scene is played in 3D. The 3D code is loaded only on a
+ * mission page (three.js stays out of every other page), starting while the
+ * intro is on screen. The scenes send exactly the same answers as the 2D
+ * games, so the server scores them identically.
  */
-const GAMES_3D = {
-  [GAME_TYPES.DECISION_MAKING]: lazy(() => import('../../components/missions3d/Decision3D.jsx')),
-  [GAME_TYPES.IDENTIFICATION]: lazy(() => import('../../components/missions3d/Identification3D.jsx')),
-  [GAME_TYPES.MATCHING]: lazy(() => import('../../components/missions3d/Matching3D.jsx')),
-  [GAME_TYPES.DRAG_AND_DROP]: lazy(() => import('../../components/missions3d/DragDrop3D.jsx')),
-  [GAME_TYPES.STRATEGY_MANAGEMENT]: lazy(() => import('../../components/missions3d/Strategy3D.jsx')),
+const LOADERS_3D = {
+  [GAME_TYPES.DECISION_MAKING]: () => import('../../components/missions3d/Decision3D.jsx'),
+  [GAME_TYPES.IDENTIFICATION]: () => import('../../components/missions3d/Identification3D.jsx'),
+  [GAME_TYPES.MATCHING]: () => import('../../components/missions3d/Matching3D.jsx'),
+  [GAME_TYPES.DRAG_AND_DROP]: () => import('../../components/missions3d/DragDrop3D.jsx'),
+  [GAME_TYPES.STRATEGY_MANAGEMENT]: () => import('../../components/missions3d/Strategy3D.jsx'),
 };
+const GAMES_3D = Object.fromEntries(Object.entries(LOADERS_3D).map(([type, load]) => [type, lazy(load)]));
 
-/** If a 3D scene fails (lost graphics context, old driver), the 2D game takes over. */
+/** Shown while the 3D code downloads: a progress bar that fills as it loads. */
+function Loading3D() {
+  return (
+    <div className="m3d-loading" role="progressbar" aria-label="Loading the 3D game" aria-valuetext="Loading">
+      <strong>Loading the 3D game…</strong>
+      <span className="m3d-loading__bar"><span /></span>
+      <small>This takes a moment the first time, especially on mobile data.</small>
+    </div>
+  );
+}
+
+/** Why a mission is in the simple view: only for devices that cannot show 3D. */
+function SimpleViewNote({ reason }) {
+  return (
+    <p className="mission-simple-note" role="note">
+      <Icon name="info" size={15} />
+      {reason === 'crash'
+        ? 'The 3D view stopped working on this device, so the mission continues in the simple view. It plays and scores the same.'
+        : 'Your browser cannot show 3D graphics (WebGL is off or not supported), so this mission uses the simple view. It plays and scores the same.'}
+    </p>
+  );
+}
+
+/**
+ * The hidden fallback: if a 3D scene cannot run (its graphics context cannot
+ * be restored, an old driver), the 2D game takes over with a short note.
+ * There is no 2D/3D button.
+ */
 class Fallback2D extends Component {
   constructor(props) {
     super(props);
@@ -45,14 +74,20 @@ class Fallback2D extends Component {
     return { failed: true };
   }
   componentDidCatch(error) {
-    console.warn('[AgriCore] 3D mission failed, using the 2D game instead.', error?.message);
+    console.warn('[AgriCore] 3D mission failed, using the simple view instead.', error?.message);
   }
   render() {
-    return this.state.failed ? this.props.fallback : this.props.children;
+    if (!this.state.failed) return this.props.children;
+    return (
+      <>
+        <SimpleViewNote reason="crash" />
+        {this.props.fallback}
+      </>
+    );
   }
 }
 
-/** Each module's game type has its own, separate game component. */
+/** The 2D games are kept only for devices without WebGL (and the instructor's preview). */
 const GAMES = {
   [GAME_TYPES.DECISION_MAKING]: DecisionGame,
   [GAME_TYPES.IDENTIFICATION]: IdentificationGame,
@@ -121,13 +156,9 @@ function MissionPlayScreen() {
   const [answers, setAnswers] = useState(null);
   const [ended, setEnded] = useState(null);
   const [isStarting, setIsStarting] = useState(false);
-  // 3D when the device can run it and the player has not chosen 2D.
-  const [{ mode, can3D }, setMissionMode] = useState(initialMissionMode);
+  // Checked once: a device without WebGL gets the simple view automatically.
+  const [webgl] = useState(hasWebGL);
   const [calm] = useState(prefersReducedMotion);
-  const switchMode = (next) => {
-    writePreference(next === '3d' ? 'on' : 'off');
-    setMissionMode((current) => ({ ...current, mode: next }));
-  };
   const startedAt = useRef(0);
   // The server's id for the current play, and guards against double clicks.
   const attemptIdRef = useRef(null);
@@ -141,6 +172,21 @@ function MissionPlayScreen() {
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
+
+  // Start downloading the 3D scene while the intro is read, so Start opens it quickly.
+  const loadedGameType = data ? missionGameType(data.module, data.mission) : null;
+  useEffect(() => {
+    if (webgl && LOADERS_3D[loadedGameType]) LOADERS_3D[loadedGameType]().catch(() => {});
+  }, [webgl, loadedGameType]);
+
+  // While playing: no pull-to-refresh or overscroll bounce (see mission-phone.css).
+  const isPlaying = phase === 'playing' || phase === 'submitting';
+  useEffect(() => {
+    if (!isPlaying) return undefined;
+    const root = document.documentElement;
+    root.classList.add('is-mission-playing');
+    return () => root.classList.remove('is-mission-playing');
+  }, [isPlaying]);
 
   useEffect(() => {
     setPhase('intro');
@@ -324,22 +370,18 @@ function MissionPlayScreen() {
 
         {(phase === 'playing' || phase === 'submitting') && (
           <div className={`mission-stage ${phase === 'submitting' ? 'is-submitting' : ''}`}>
-            {mode === '3d' && can3D && GAMES_3D[gameType] ? (
-              <Fallback2D fallback={<Game key={attemptKey} mission={mission} module={module} totalLevels={totalLevels} onComplete={handleComplete} />}>
-                <Suspense fallback={<LoadingState label="Building the 3D field…" />}>
+            {GAMES_3D[gameType] && webgl ? (
+              <Fallback2D key={attemptKey} fallback={<Game key={attemptKey} mission={mission} module={module} totalLevels={totalLevels} onComplete={handleComplete} />}>
+                <Suspense fallback={<Loading3D />}>
                   {(() => {
                     const Game3D = GAMES_3D[gameType];
-                    return <Game3D key={attemptKey} mission={mission} module={module} totalLevels={totalLevels} onComplete={handleComplete} calm={calm} onSwitch2D={() => switchMode('2d')} />;
+                    return <Game3D key={attemptKey} mission={mission} module={module} totalLevels={totalLevels} onComplete={handleComplete} calm={calm} />;
                   })()}
                 </Suspense>
               </Fallback2D>
             ) : (
               <>
-                {can3D && (
-                  <button type="button" className="m3d-switch-3d" onClick={() => switchMode('3d')}>
-                    <Icon name="sparkles" size={15} /> Play in 3D
-                  </button>
-                )}
+                {GAMES_3D[gameType] && <SimpleViewNote reason="no-webgl" />}
                 <Game key={attemptKey} mission={mission} module={module} totalLevels={totalLevels} onComplete={handleComplete} />
               </>
             )}

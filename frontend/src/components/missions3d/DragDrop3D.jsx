@@ -75,7 +75,18 @@ function Tag({ label, home, dragPos, placedAt, selected, verified, onDown }) {
   );
 }
 
-export default function DragDrop3D({ mission, module, onComplete, calm, onSwitch2D }) {
+/** Where a dragged tag goes: under the mouse, or lifted above a finger so it stays visible. */
+const dragPoint = (e) => [e.point.x, e.point.y + (e.pointerType === 'touch' ? 0.45 : 0), BOARD.z + 0.25];
+/** A short buzz on phones that support it: a clear "picked up" / "dropped" feel. */
+const buzz = (ms) => {
+  try {
+    navigator.vibrate?.(ms);
+  } catch {
+    // Not allowed here; the sound and the animation still play.
+  }
+};
+
+export default function DragDrop3D({ mission, module, onComplete, calm }) {
   const data = mission.scenarioData;
   const [started, setStarted] = useState(false);
   const [placements, setPlacements] = useState({});
@@ -112,6 +123,7 @@ export default function DragDrop3D({ mission, module, onComplete, calm, onSwitch
     });
     setSelected(null);
     sound.drop();
+    buzz(15);
     pop('Placed', 'neutral');
   };
 
@@ -169,8 +181,8 @@ export default function DragDrop3D({ mission, module, onComplete, calm, onSwitch
       kicker={`Module ${module.moduleNumber} · Drag and drop`}
       title={data.title}
       started={started}
+      landscapeHint
       onStart={() => setStarted(true)}
-      onSwitch2D={onSwitch2D}
       steps={[
         `Look at the ${data.specimen.group.toLowerCase()} weed: ${data.specimen.commonName}.`,
         'Drag each label onto its numbered ring — or tap a label, then a ring. Some labels do not belong.',
@@ -189,7 +201,7 @@ export default function DragDrop3D({ mission, module, onComplete, calm, onSwitch
             <mesh
               position={[0, BOARD.y, BOARD.z]}
               onPointerMove={(e) => {
-                if (dragRef.current) setDrag({ ...dragRef.current, pos: [e.point.x, e.point.y, BOARD.z + 0.25] });
+                if (dragRef.current) setDrag({ ...dragRef.current, pos: dragPoint(e) });
               }}
             >
               <planeGeometry args={[BOARD.size, BOARD.size]} />
@@ -200,7 +212,7 @@ export default function DragDrop3D({ mission, module, onComplete, calm, onSwitch
               position={[0, 2, BOARD.z + 0.01]}
               visible={false}
               onPointerMove={(e) => {
-                if (dragRef.current) setDrag({ ...dragRef.current, pos: [e.point.x, e.point.y, BOARD.z + 0.25] });
+                if (dragRef.current) setDrag({ ...dragRef.current, pos: dragPoint(e) });
               }}
             >
               <planeGeometry args={[14, 8]} />
@@ -228,6 +240,7 @@ export default function DragDrop3D({ mission, module, onComplete, calm, onSwitch
                   onDown={() => {
                     if (!started) return;
                     sound.pickup();
+                    buzz(10);
                     setSelected((s) => (s === label.id ? null : label.id));
                     setDrag({ labelId: label.id, pos: null });
                   }}

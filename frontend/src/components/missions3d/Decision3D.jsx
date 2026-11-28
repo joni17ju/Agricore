@@ -90,7 +90,7 @@ function Visitors({ kind, calm }) {
   );
 }
 
-export default function Decision3D({ mission, module, onComplete, calm, onSwitch2D }) {
+export default function Decision3D({ mission, module, onComplete, calm }) {
   const { scenarios, title } = mission.scenarioData;
   const [started, setStarted] = useState(false);
   const [index, setIndex] = useState(0);
@@ -135,8 +135,8 @@ export default function Decision3D({ mission, module, onComplete, calm, onSwitch
       kicker={`Module ${module.moduleNumber} · Decision`}
       title={title}
       started={started}
+      landscapeHint
       onStart={() => setStarted(true)}
-      onSwitch2D={onSwitch2D}
       steps={[
         'Read the farm situation.',
         'Pick one of the decision signboards in the field (or the matching button).',

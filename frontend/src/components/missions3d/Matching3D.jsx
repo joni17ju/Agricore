@@ -79,7 +79,7 @@ function Crate({ option, columnIndex, row, state, onPick, calm }) {
   );
 }
 
-export default function Matching3D({ mission, module, onComplete, calm, onSwitch2D }) {
+export default function Matching3D({ mission, module, onComplete, calm }) {
   const data = mission.scenarioData;
   const [started, setStarted] = useState(false);
   const [selections, setSelections] = useState({});
@@ -128,8 +128,8 @@ export default function Matching3D({ mission, module, onComplete, calm, onSwitch
       kicker={`Module ${module.moduleNumber} · Matching`}
       title={data.title}
       started={started}
+      landscapeHint
       onStart={() => setStarted(true)}
-      onSwitch2D={onSwitch2D}
       steps={[
         'Study the target pest and its hint.',
         `Pick one crate in each of the ${data.columns.length} rows: ${data.columns.map((c) => c.title).join(', ')}.`,

@@ -29,6 +29,12 @@ function boardPoint(xPct, yPct) {
   return local.add(BOARD.center);
 }
 
+/** Keeps the camera's focus on the board, so a touch pan cannot drift into empty space. */
+const clampToBoard = (v) => {
+  const half = new THREE.Vector3(BOARD.width / 2, BOARD.height / 2, BOARD.height / 2);
+  return v.clone().max(BOARD.center.clone().sub(half)).min(BOARD.center.clone().add(half));
+};
+
 function ZoomCamera({ zoom, focus, calm }) {
   const { camera } = useThree();
   const look = useRef(BOARD.center.clone());
@@ -89,7 +95,7 @@ function Jar({ option, x, state, onPick }) {
   );
 }
 
-export default function Identification3D({ mission, module, onComplete, calm, onSwitch2D }) {
+export default function Identification3D({ mission, module, onComplete, calm }) {
   const data = mission.scenarioData;
   const [started, setStarted] = useState(false);
   const [zoomIndex, setZoomIndex] = useState(0);
@@ -128,6 +134,10 @@ export default function Identification3D({ mission, module, onComplete, calm, on
   const leafTexture = useSvgTexture(<LeafSpecimen specimenKey={data.specimenKey} spots={data.symptomSpots} />, [800, 600], data.specimenKey);
 
   const pointOnLeaf = (event) => ({ x: event.uv.x * 100, y: (1 - event.uv.y) * 100 });
+  // Touch: one finger drags the zoomed leaf like a map (the grabbed point stays
+  // under the finger); a tap marks. A mouse simply aims the magnifier.
+  const grab = useRef(null);
+  const isMouse = (event) => (event.nativeEvent?.pointerType ?? 'mouse') === 'mouse';
 
   const mark = (point) => {
     if (!started || identified || finale) return;
@@ -180,11 +190,10 @@ export default function Identification3D({ mission, module, onComplete, calm, on
 
   return (
     <Shell3D
-      kicker={`Module ${module.moduleNumber} · Identification`}
+      kicker={`Module ${module.moduleNumber} · Leaf inspection`}
       title={data.title}
       started={started}
       onStart={() => setStarted(true)}
-      onSwitch2D={onSwitch2D}
       steps={[
         `Zoom to ${data.minZoomToMark}x or more with the zoom buttons.`,
         'Tap each symptom on the leaf to mark it. Marks on healthy tissue cost points.',
@@ -218,16 +227,36 @@ export default function Identification3D({ mission, module, onComplete, calm, on
             <mesh
               onClick={(e) => {
                 e.stopPropagation();
+                // A drag that pans the view is not a tap.
+                if (e.delta > 12) return;
                 const p = pointOnLeaf(e);
                 setFocus(boardPoint(p.x, p.y));
                 mark(p);
               }}
+              onPointerDown={(e) => {
+                if (isMouse(e) || zoom === 1) return;
+                const p = pointOnLeaf(e);
+                grab.current = boardPoint(p.x, p.y);
+              }}
+              onPointerUp={() => {
+                grab.current = null;
+              }}
               onPointerMove={(e) => {
                 const p = pointOnLeaf(e);
-                setLens(boardPoint(p.x, p.y));
-                if (zoom > 1) setFocus(boardPoint(p.x, p.y));
+                const under = boardPoint(p.x, p.y);
+                setLens(under);
+                if (zoom === 1) return;
+                if (isMouse(e)) setFocus(under);
+                else if (grab.current) {
+                  // Read the grabbed point now: the updater runs later, possibly after the finger lifts.
+                  const shift = grab.current.clone().sub(under);
+                  setFocus((current) => clampToBoard(current.clone().add(shift)));
+                }
               }}
-              onPointerOut={() => setLens(null)}
+              onPointerOut={() => {
+                grab.current = null;
+                setLens(null);
+              }}
             >
               <planeGeometry args={[BOARD.width, BOARD.height]} />
               {leafTexture ? <meshStandardMaterial map={leafTexture} roughness={0.7} /> : <meshStandardMaterial color="#e8f0dc" />}

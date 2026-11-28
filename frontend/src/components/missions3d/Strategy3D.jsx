@@ -5,6 +5,7 @@ import Button from '../common/Button.jsx';
 import Icon from '../common/Icon.jsx';
 import { ProgressBar } from '../common/Progress.jsx';
 import GameStage, { Anchor, Burst } from './GameStage.jsx';
+import { particleCount } from './capability.js';
 import Shell3D, { useFinale, useXpPops } from './Shell3D.jsx';
 import { computeStrategyMeters, scoreMission } from '../../utils/scoring.js';
 import { GAME_TYPES } from '../../constants/gameTypes.js';
@@ -82,7 +83,7 @@ function Tool({ tactic, x, z, selected, disabled, onPick }) {
   );
 }
 
-export default function Strategy3D({ mission, module, onComplete, calm, onSwitch2D }) {
+export default function Strategy3D({ mission, module, onComplete, calm }) {
   const data = mission.scenarioData;
   const [started, setStarted] = useState(false);
   const [pestId, setPestId] = useState('');
@@ -127,7 +128,6 @@ export default function Strategy3D({ mission, module, onComplete, calm, onSwitch
       title={data.title}
       started={started}
       onStart={() => setStarted(true)}
-      onSwitch2D={onSwitch2D}
       steps={[
         'Read the field observations and diagnose the pest.',
         `Choose ${required} control tactics from the tool shelf. Keep resource use low and the environmental score high.`,
@@ -139,7 +139,7 @@ export default function Strategy3D({ mission, module, onComplete, calm, onSwitch
       stage={
         <>
         <GameStage mood={saved ? 'healthy' : phase === 'outcome' ? 'stressed' : 'stressed'} calm={calm} camera={{ position: [0, 5.2, 10.5], fov: 46 }} target={[0, 1.2, 0.5]} label={`${data.crop ?? 'Crop'} field with a pest problem`}>
-          <Swarm count={calm ? 18 : 34} calm={calm} fleeing={saved} />
+          <Swarm count={calm ? 18 : particleCount(34)} calm={calm} fleeing={saved} />
           {/* Tool shelf */}
           <mesh position={[0, 0.5, 2.9]} castShadow receiveShadow>
             <boxGeometry args={[cols * 1.6 + 0.4, 0.14, 2.6]} />

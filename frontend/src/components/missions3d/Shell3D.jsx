@@ -10,6 +10,9 @@ import { useCountdownTicks, useMissionSound } from '../missions/sound/MissionSou
  * game starts, a heads-up display (progress, timer, streak or lives), XP
  * pop-ups, and a victory or retry animation before the result screen.
  *
+ * `landscapeHint` shows a small, dismissible "rotate your phone" tip on
+ * phones held upright, for scenes that are much easier to read sideways.
+ *
  * The 3D scene goes in `stage`; `panel` holds the same choices as plain
  * buttons, so the game works with a keyboard, a screen reader or a very small
  * screen as well as by tapping the 3D objects.
@@ -43,12 +46,13 @@ export default function Shell3D({
   panel,
   pops = [],
   finale = null,
-  onSwitch2D,
+  landscapeHint = false,
   started,
   onStart,
 }) {
   const startRef = useRef(null);
   useCountdownTicks(hud.timeLeft, started && !finale);
+  const [hintClosed, setHintClosed] = useState(false);
   useEffect(() => {
     if (!started) startRef.current?.focus();
   }, [started]);
@@ -84,11 +88,6 @@ export default function Shell3D({
               ))}
             </span>
           )}
-          {onSwitch2D && (
-            <button type="button" className="m3d__switch" onClick={onSwitch2D}>
-              <Icon name="layers" size={15} /> 2D view
-            </button>
-          )}
         </div>
       </header>
 
@@ -100,6 +99,15 @@ export default function Shell3D({
               <span key={p.id} className={`m3d__pop is-${p.tone}`}>{p.text}</span>
             ))}
           </div>
+          {landscapeHint && started && !hintClosed && !finale && (
+            // Shown only on a phone held upright (CSS), never blocking: the game plays either way.
+            <div className="m3d__rotate" role="note">
+              <Icon name="refresh" size={15} /> Rotate your phone for a better view
+              <button type="button" onClick={() => setHintClosed(true)} aria-label="Hide this tip">
+                <Icon name="x" size={14} />
+              </button>
+            </div>
+          )}
           {finale && (
             <div className={`m3d__finale is-${finale.passed ? 'win' : 'retry'}`} role="status">
               <Icon name={finale.passed ? 'trophy' : 'refresh'} size={40} />
