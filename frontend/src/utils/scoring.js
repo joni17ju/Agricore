@@ -195,10 +195,12 @@ function scoreInspection(scenarioData, { rounds: answered = {} } = {}) {
       .slice(0, 50)
       // The magnification the mark was made at; a mark without one counts as 1×.
       .map((m) => ({ x: Number(m.x), y: Number(m.y), zoom: Number.isFinite(Number(m.zoom)) ? Number(m.zoom) : 1 }));
-    const required = round.findings.filter((f) => f.required !== false);
+    // Decoys look like a symptom but are not one: a mark on a decoy is a mark on nothing.
+    const real = round.findings.filter((f) => !f.decoy);
+    const required = real.filter((f) => f.required !== false);
     // A mark below a finding's magnification is on what still looks like healthy leaf: it does not count.
-    const foundIds = round.findings.filter((f) => marks.some((m) => marksFinding(f, m))).map((f) => f.id);
-    const misplacedLeaf = marks.filter((m) => !round.findings.some((f) => marksFinding(f, m))).length;
+    const foundIds = real.filter((f) => marks.some((m) => marksFinding(f, m))).map((f) => f.id);
+    const misplacedLeaf = marks.filter((m) => !real.some((f) => marksFinding(f, m))).length;
     const foundRequired = required.filter((f) => foundIds.includes(f.id)).length;
     // Microscope features, marked on each finding's micrograph.
     const featureMarks = (Array.isArray(answer.features) ? answer.features : [])

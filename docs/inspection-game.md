@@ -130,7 +130,21 @@ animations, sway, parallax and particles are off.
 - `minZoom` (1–20, default 2): the magnification the finding needs to be seen
   and marked. `deep: true` marks a challenge finding (shown as "Needs N×").
   `clue`: a short pointer used by the hint, so every finding stays fair.
+- **Two-layer photos** (optional, per round): `baseImage` is a healthy-looking
+  version of the photo, shown at 1×; `revealImage` is the original diseased
+  photo, with exactly the same pixel size and alignment. Inside the scope the
+  original is blended over the base around each finding with a soft circular
+  mask (the finding's x, y and radius): nothing below the finding's
+  `minZoom`, about a third at it, fully a little above it. Outside the
+  findings the base stays, so the disease cannot be seen at 1×. Optional
+  `baseImageHiRes` / `revealImageHiRes` (e.g. `round-1-reveal@2x.jpg`) are used
+  for deep zoom. With only `image` (one photo) the game works as before.
+- **Decoys**: `"decoy": true` (with `"required": false`) marks something that
+  looks like a symptom but is not one. It is not listed in the notebook; a
+  mark on it is a wrong mark (it costs a try, and the server counts it as a
+  mark on nothing) and shows `decoyMessage`.
 - Round `level` (optional): a label such as "Easy" or "Expert challenge".
+  `creditTodo` (optional) is a note for authors and is not shown in the game.
   `photoWidthMm`: how wide the photo is in real life (for the scale bar,
   default 50). `imageUltra`: an extra-large photo for 10×–20× (by default the
   game tries `round-N@4x.jpg` next to `round-N@2x.jpg`).
@@ -179,7 +193,7 @@ before.
 
 | Round | Level | Sample (cause) | Findings and the zoom they need |
 |---|---|---|---|
-| r1 | Easy | Rice leaf, zinc deficiency (abiotic) | dusty brown spots 2×, more spots 3× |
+| r1 | Easy | Tomato leaf, late blight (oomycete, *Phytophthora infestans*) — real two-layer photo | large dead area 2×, lesion beside the midrib 3×, lower lesion 3×, spore masses at the lesion edge **20×** (deep, microscope detail); decoy: pale trail on the left edge |
 | r2 | Medium | Mosaic leaf (virus) | mosaic 3×, mottled curled area **5×** (deep) |
 | r3 | Hard | Rice blast-like lesions (fungus) | leaf spot 3×, optional yellowing 5×, spore masses **10×** (deep) |
 | r4 | Expert challenge | Bacterial blight (bacterium) | blight lesion 2×, bacterial ooze **20×** (deep, seen as microscope detail) |
@@ -214,6 +228,9 @@ nothing is submitted.
   `"x": 31.5, "y": 49.8, "minZoom": 5` (the suggested minZoom is the current
   magnification, rounded down to 1, 2, 3, 5, 10 or 20). "Preview: 1× 5× 10×
   20×" buttons show the leaf as a player would see it at that magnification.
+  On a two-layer round, "Blink compare" flips the whole photo (and the scope)
+  between the base and the original, to check that they line up; decoys are
+  labelled "decoy".
 - In the microscope: every feature's circle is drawn with its id, x/y and
   minimum objective; a click shows and copies the micrograph's
   `"x": …, "y": …`. Focus and objective limits do not apply.

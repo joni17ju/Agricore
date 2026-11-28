@@ -391,6 +391,11 @@ function inspection(c, data) {
     checkText(c, round.subject, `${at}.subject`, `Round ${r + 1}'s subject`);
     checkText(c, round.image, `${at}.image`, `Round ${r + 1}'s photo`, { required: false, max: TEXT_LONG });
     checkText(c, round.imageUltra, `${at}.imageUltra`, `Round ${r + 1}'s extra-large photo`, { required: false, max: TEXT_LONG });
+    // Two-layer photos: a healthy-looking base and the original photo, same size and alignment.
+    for (const key of ['baseImage', 'baseImageHiRes', 'revealImage', 'revealImageHiRes']) {
+      checkText(c, round[key], `${at}.${key}`, `Round ${r + 1}'s ${key}`, { required: false, max: TEXT_LONG });
+    }
+    if (Boolean(round.baseImage) !== Boolean(round.revealImage)) c.error(`${at}.revealImage`, `Round ${r + 1} needs both a base image and a reveal image (or neither).`);
     if (round.photoWidthMm !== undefined && !inRange(round.photoWidthMm, 1, 2000)) c.error(`${at}.photoWidthMm`, `Round ${r + 1}'s photo width must be between 1 and 2,000 mm.`);
     checkText(c, round.question, `${at}.question`, `Round ${r + 1}'s question`, { max: TEXT_LONG });
     checkText(c, round.explanation, `${at}.explanation`, `Round ${r + 1}'s explanation`, { required: false, max: TEXT_LONG });
@@ -410,9 +415,12 @@ function inspection(c, data) {
         if (f.minZoom !== undefined && !inRange(f.minZoom, 1, 20)) c.error(`${fat}.minZoom`, `Finding ${i + 1}'s magnification must be between 1× and 20×.`);
         if (f.deep !== undefined && typeof f.deep !== 'boolean') c.error(`${fat}.deep`, `Finding ${i + 1}'s "deep" flag must be true or false.`);
         checkText(c, f.clue, `${fat}.clue`, `Finding ${i + 1}'s clue`, { required: false, max: TEXT_LONG });
+        if (f.decoy !== undefined && typeof f.decoy !== 'boolean') c.error(`${fat}.decoy`, `Finding ${i + 1}'s "decoy" flag must be true or false.`);
+        if (f.decoy === true && f.required !== false) c.error(`${fat}.required`, `Finding ${i + 1} is a decoy, so it cannot be required (set "required": false).`);
+        checkText(c, f.decoyMessage, `${fat}.decoyMessage`, `Finding ${i + 1}'s decoy message`, { required: false, max: TEXT_LONG });
         if (f.micrograph !== undefined && f.micrograph !== null) inspectionMicrograph(c, f.micrograph, `${fat}.micrograph`, i + 1);
       });
-      if (!round.findings.some((f) => isObject(f) && f.required !== false)) c.error(`${at}.findings`, 'Mark at least one finding as required.');
+      if (!round.findings.some((f) => isObject(f) && f.required !== false && !f.decoy)) c.error(`${at}.findings`, 'Mark at least one finding as required.');
     }
     if (checkList(c, round.choices, `${at}.choices`, `Round ${r + 1}'s answers`, { min: 2, max: 6, noun: 'answers', tooFew: 'Add at least two answers: the correct one and a wrong one.' })) {
       const ids = checkIds(c, round.choices, `${at}.choices`, 'Answer');

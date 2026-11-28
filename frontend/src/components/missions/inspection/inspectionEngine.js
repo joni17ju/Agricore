@@ -45,6 +45,7 @@ const ICONS = {
   abiotic: '<path d="M12 3v10"/><path d="M8 17a4 4 0 1 0 8 0c0-2-4-6-4-6s-4 4-4 6Z"/><path d="M3 21h18"/>',
   insect: '<ellipse cx="12" cy="13" rx="4" ry="6"/><path d="M12 7V4M8 10l-4-2M16 10l4-2M8 14H4M16 14h4M8 18l-3 2M16 18l3 2"/>',
   weed: '<path d="M12 21V9"/><path d="M12 13c-4 0-6-3-6-6 3 0 6 2 6 6ZM12 11c4 0 6-3 6-6-3 0-6 2-6 6Z"/>',
+  oomycete: '<path d="M12 3c3 4 5 6.5 5 9a5 5 0 0 1-10 0c0-2.5 2-5 5-9Z"/><path d="M5 20c2-1.5 3-1.5 5 0M14 20c2-1.5 3-1.5 5 0"/>',
   default: '<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>',
 };
 const icon = (key) => `<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[key] ?? ICONS.default}</svg>`;
@@ -117,7 +118,7 @@ function paintPlaceholder(round) {
   // At 1× the leaf looks almost healthy: only a very faint, soft change of colour where
   // something is wrong, enough to make the player want to zoom in. The symptoms
   // themselves are drawn in the scope, at their magnification.
-  for (const f of round.findings ?? []) {
+  for (const f of (round.findings ?? []).filter((x) => !x.decoy)) {
     const cx = (f.x / 100) * w;
     const cy = (f.y / 100) * h;
     const r = (f.radius / 100) * w * 1.6;
@@ -325,6 +326,8 @@ export function createInspectionGame(container, options) {
       w = h * aspect;
     }
     photo = { x: (width - w) / 2, y: (height - h) / 2, w, h };
+    // Exposed for calibration notes and automated checks (canvas pixels).
+    canvas.dataset.photo = [photo.x, photo.y, photo.w, photo.h].map((v) => v.toFixed(1)).join(',');
   };
   const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(resize) : null;
   observer?.observe(stage);
@@ -341,6 +344,18 @@ export function createInspectionGame(container, options) {
     say.timer = setTimeout(() => toast.classList.remove('is-visible'), 2200);
   };
   const preview = () => (scoreAnswers ? scoreAnswers(answers) : null);
+  let layerCanvas = null;
+  let maskCanvas = null;
+  /**
+   * How much of the original photo shows around a finding: nothing below its minZoom,
+   * a soft 35% at it, fully a little above (at once at the top of the range, or with reduced motion).
+   */
+  const layerReveal = (z, need) => {
+    if (z < need - 0.01) return 0;
+    const span = Math.min(need * 0.25, ZOOM_MAX - need);
+    if (reducedMotion || span < 0.05) return 1;
+    return clamp(0.35 + (0.65 * (z - need)) / span, 0, 1);
+  };
   const micrographOf = (f) => (f?.micrograph?.features?.length ? f.micrograph : null);
   const featureKey = (finding, feature) => `${finding.id}:${feature.id}`;
   const requiredFeatures = (r) =>
@@ -377,6 +392,7 @@ export function createInspectionGame(container, options) {
     const foundCount = [...state.found].filter((id) => required.some((f) => f.id === id)).length + reqFeatures.filter(({ finding, feature }) => state.featuresFound.has(featureKey(finding, feature))).length;
     const totalCount = required.length + reqFeatures.length;
     const notebook = r.findings
+      .filter((f) => !f.decoy)
       .map((f, i) => {
         const done = state.found.has(f.id);
         const micro = micrographOf(f);
@@ -422,6 +438,7 @@ export function createInspectionGame(container, options) {
       ${state.phase === 'inspect' && !inMicro() ? `
         <label class="insp__zoom"><span>Magnification <strong>${formatZoom(state.zoom)}</strong></span><input type="range" min="0" max="100" step="1" value="${zoomToSlider(state.zoom)}" aria-label="Magnification, 1× to 20×" aria-valuetext="${formatZoom(state.zoom)}" data-zoom></label>
         ${calibrate ? `<div class="insp__preview" role="group" aria-label="Preview at zoom">Preview: ${[1, 5, 10, 20].map((z) => `<button type="button" class="insp__btn" data-preview="${z}">${z}×</button>`).join('')}</div>` : ''}
+        ${calibrate && r.baseImage && r.revealImage ? `<button type="button" class="insp__btn insp__btn--micro" data-blink aria-pressed="${Boolean(state.blink)}">Blink compare: showing ${state.blink ? 'reveal (original)' : 'base (healthy)'}</button>` : ''}
         <div class="insp__buttons">
           <button type="button" class="insp__btn insp__btn--primary" data-mark>Mark at crosshair</button>
           <button type="button" class="insp__btn" data-hint>Hint (−XP)</button>
@@ -717,6 +734,19 @@ export function createInspectionGame(container, options) {
   const prepareRound = async () => {
     const r = round();
     if (!r || state.images[r.id]) return;
+    if (r.baseImage && r.revealImage) {
+      // Two layers of the same size: the healthy-looking base is what the player sees;
+      // the original photo is blended in around each finding inside the scope.
+      const [base, baseHi, revealHi] = await Promise.all([loadImage(r.baseImage), base0(r.baseImageHiRes), base0(r.revealImageHiRes)]);
+      const reveal = revealHi ?? (await loadImage(r.revealImage));
+      if (state.destroyed) return;
+      if (base && reveal) {
+        state.images[r.id] = { base, hi: baseHi ?? base, ultra: null, reveal, twoLayer: true, isPlaceholder: false };
+        layoutPhoto();
+        requestDraw();
+        return;
+      }
+    }
     // An extra-large @4× photo, when there is one, keeps 10×–20× sharp.
     const ultraSrc = r.imageUltra ?? (r.imageHiRes?.includes('@2x') ? r.imageHiRes.replace('@2x', '@4x') : null);
     const [base, hi] = await Promise.all([loadImage(r.image), loadImage(r.imageHiRes)]);
@@ -779,7 +809,7 @@ export function createInspectionGame(container, options) {
       g.fillStyle = '#fffdf6';
       g.fillRect(-photo.w / 2 - 8, -photo.h / 2 - 8, photo.w + 16, photo.h + 16);
       g.shadowColor = 'transparent';
-      g.drawImage(imgs.base, -photo.w / 2, -photo.h / 2, photo.w, photo.h);
+      g.drawImage(state.blink && imgs.reveal ? imgs.reveal : imgs.base, -photo.w / 2, -photo.h / 2, photo.w, photo.h);
       g.restore();
 
       // Found findings: glowing rings.
@@ -841,7 +871,7 @@ export function createInspectionGame(container, options) {
           g.stroke();
           g.fillStyle = '#2b6cb0';
           g.font = 'bold 13px system-ui';
-          g.fillText(`${f.id} (${f.x}, ${f.y}) ≥${formatZoom(minZoomOf(f))}`, p.x + 6, p.y - 6);
+          g.fillText(`${f.id}${f.decoy ? ' decoy' : ''} (${f.x}, ${f.y}) ≥${formatZoom(minZoomOf(f))}`, p.x + 6, p.y - 6);
           g.restore();
         }
       }
@@ -852,7 +882,7 @@ export function createInspectionGame(container, options) {
         const R = lensRadius();
         const z = state.zoom;
         // The sharpest photo available (@4×, @2×, then the normal one).
-        const hi = imgs.ultra ?? imgs.hi;
+        const hi = state.blink && imgs.reveal ? imgs.reveal : imgs.ultra ?? imgs.hi;
         const hw = hi.naturalWidth || hi.width;
         const hh = hi.naturalHeight || hi.height;
         // Past the photo's own resolution the picture would only get blurrier:
@@ -881,13 +911,63 @@ export function createInspectionGame(container, options) {
           g.fillRect(center.x - R, center.y - R, R * 2, R * 2);
           g.globalAlpha = 1;
         }
+        // Two-layer rounds: around each finding the original photo is blended over the
+        // healthy base with a soft circular mask, from the finding's minZoom upwards.
+        if (imgs.twoLayer && !state.blink) {
+          const box = Math.ceil(R * 2);
+          const px = Math.ceil(box * dpr);
+          layerCanvas = layerCanvas ?? document.createElement('canvas');
+          maskCanvas = maskCanvas ?? document.createElement('canvas');
+          for (const c of [layerCanvas, maskCanvas]) {
+            if (c.width !== px) c.width = px;
+            if (c.height !== px) c.height = px;
+          }
+          const mg = maskCanvas.getContext('2d');
+          mg.setTransform(dpr, 0, 0, dpr, 0, 0);
+          mg.clearRect(0, 0, box, box);
+          let any = false;
+          for (const f of r.findings) {
+            const a = layerReveal(z, minZoomOf(f));
+            if (a <= 0) continue;
+            const mx = (f.x / 100 - state.scope.x) * photo.w * z + R;
+            const my = (f.y / 100 - state.scope.y) * photo.h * z + R;
+            const fr = (f.radius / 100) * photo.w * z;
+            if (Math.hypot(mx - R, my - R) >= R + fr * 1.2) continue;
+            const grad = mg.createRadialGradient(mx, my, fr * 0.55, mx, my, fr * 1.15);
+            grad.addColorStop(0, `rgba(0,0,0,${a})`);
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+            mg.fillStyle = grad;
+            mg.beginPath();
+            mg.arc(mx, my, fr * 1.15, 0, Math.PI * 2);
+            mg.fill();
+            any = true;
+          }
+          if (any) {
+            const rv = imgs.reveal;
+            const rw = rv.naturalWidth || rv.width;
+            const rh = rv.naturalHeight || rv.height;
+            const lg = layerCanvas.getContext('2d');
+            lg.setTransform(dpr, 0, 0, dpr, 0, 0);
+            lg.globalCompositeOperation = 'source-over';
+            lg.clearRect(0, 0, box, box);
+            lg.imageSmoothingQuality = 'high';
+            const rsw = ((2 * R) / z / photo.w) * rw;
+            const rsh = ((2 * R) / z / photo.h) * rh;
+            lg.drawImage(rv, state.scope.x * rw - rsw / 2, state.scope.y * rh - rsh / 2, rsw, rsh, 0, 0, box, box);
+            lg.globalCompositeOperation = 'destination-in';
+            lg.setTransform(1, 0, 0, 1, 0, 0);
+            lg.drawImage(maskCanvas, 0, 0);
+            lg.globalCompositeOperation = 'source-over';
+            g.drawImage(layerCanvas, center.x - R, center.y - R, box, box);
+          }
+        }
         // Each finding shows only at its magnification, fading in as the player zooms
         // (at once with reduced motion). Below it, it looks like healthy leaf.
         let placeholderDetail = false;
         const revealed = [];
         for (const f of r.findings) {
           const need = minZoomOf(f);
-          const reveal = reducedMotion ? (z >= need - 0.01 ? 1 : 0) : clamp((z - need * 0.82) / (need * 0.18), 0, 1);
+          const reveal = imgs.twoLayer ? layerReveal(z, need) : reducedMotion ? (z >= need - 0.01 ? 1 : 0) : clamp((z - need * 0.82) / (need * 0.18), 0, 1);
           if (reveal <= 0) continue;
           const dx = (f.x / 100 - state.scope.x) * photo.w * z;
           const dy = (f.y / 100 - state.scope.y) * photo.h * z;
@@ -901,7 +981,8 @@ export function createInspectionGame(container, options) {
           if (micrographOf(f) && !micro && beyond > 0) loadMicro(f);
           g.save();
           g.globalAlpha = reveal * (micro ? 1 - beyond * 0.5 : 1);
-          drawDetail(g, f, center.x + dx, center.y + dy, dr, t);
+          // With real photos the lesion itself is in the reveal layer: no drawn detail.
+          if (!imgs.twoLayer) drawDetail(g, f, center.x + dx, center.y + dy, dr, t);
           if (micro && beyond > 0) {
             // Past the photo's resolution, the spot turns into its micrograph.
             // Centred on the micrograph's first feature (e.g. the ooze), so it sits right on the spot.
@@ -915,12 +996,12 @@ export function createInspectionGame(container, options) {
             g.drawImage(micro.image, center.x + dx - (anchor.x / 100) * size, center.y + dy - (anchor.y / 100) * size, size, size);
           }
           g.restore();
-          if (imgs.isPlaceholder || micro?.isPlaceholder || !micro) placeholderDetail = true;
+          if (imgs.isPlaceholder || micro?.isPlaceholder || (!micro && !imgs.twoLayer)) placeholderDetail = true;
           if (!reducedMotion) animating = true;
         }
         // Which findings show under the lens right now (for calibration notes and automated checks).
         canvas.dataset.revealed = revealed.join(',');
-        if (placeholderDetail && imgs.isPlaceholder) {
+        if (placeholderDetail && (imgs.isPlaceholder || imgs.twoLayer)) {
           g.fillStyle = 'rgba(31, 81, 54, 0.75)';
           g.font = `600 ${Math.max(10, Math.round(R * 0.07))}px system-ui`;
           g.textAlign = 'center';
@@ -1063,8 +1144,9 @@ export function createInspectionGame(container, options) {
     ans.marks.push({ x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10, zoom });
     // Below its magnification a finding looks like healthy leaf, so a mark there finds nothing.
     const visible = (f) => Math.hypot(x - f.x, y - f.y) <= f.radius && zoom >= minZoomOf(f) - 0.01;
-    const hit = r.findings.find((f) => !state.found.has(f.id) && visible(f));
-    const already = r.findings.find((f) => state.found.has(f.id) && visible(f));
+    const hit = r.findings.find((f) => !f.decoy && !state.found.has(f.id) && visible(f));
+    const already = r.findings.find((f) => !f.decoy && state.found.has(f.id) && visible(f));
+    const decoy = r.findings.find((f) => f.decoy && Math.hypot(x - f.x, y - f.y) <= f.radius);
     const p = photoPoint(fx, fy);
     if (hit) {
       state.found.add(hit.id);
@@ -1092,7 +1174,8 @@ export function createInspectionGame(container, options) {
       state.wrongMarks.push({ x: fx, y: fy, born: performance.now() });
       state.shakeUntil = performance.now() + 300;
       onSound('wrong');
-      say(state.triesLeft > 0 ? `Nothing there. ${state.triesLeft} ${state.triesLeft === 1 ? 'try' : 'tries'} left.` : 'Out of tries.', 'error');
+      const left = state.triesLeft > 0 ? `${state.triesLeft} ${state.triesLeft === 1 ? 'try' : 'tries'} left.` : 'Out of tries.';
+      say(decoy ? `${decoy.decoyMessage ?? 'That is not a symptom of this disease.'} ${left}` : state.triesLeft > 0 ? `Nothing there. ${left}` : left, 'error');
       checkPhaseAdvance();
     }
     renderHud();
@@ -1367,7 +1450,12 @@ export function createInspectionGame(container, options) {
     else if (target.hasAttribute('data-next')) nextRound();
     else if (target.hasAttribute('data-mark')) markAt(state.scopeTarget.x, state.scopeTarget.y);
     else if (target.hasAttribute('data-hint')) takeHint();
-    else if (target.dataset.preview) {
+    else if (target.hasAttribute('data-blink')) {
+      // Calibration: flip between the healthy base and the original photo to check the alignment.
+      state.blink = !state.blink;
+      renderSide();
+      requestDraw();
+    } else if (target.dataset.preview) {
       // Calibration: see the leaf as a player would at this magnification.
       state.pointerInside = true;
       setZoom(Number(target.dataset.preview));

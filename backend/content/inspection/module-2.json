@@ -9,74 +9,114 @@
     {
       "id": "r1",
       "level": "Easy",
-      "subject": "Upper leaf of a stunted rice plant, whole field affected",
-      "image": "/images/inspection/module-2/round-1.jpg",
-      "imageHiRes": "/images/inspection/module-2/round-1@2x.jpg",
-      "credit": "Placeholder drawing — replace with your own photo (see docs/inspection-game.md)",
+      "subject": "Tomato leaf after cool, wet nights",
+      "baseImage": "/images/inspection/module-2/round-1-base.jpg",
+      "revealImage": "/images/inspection/module-2/round-1-reveal.jpg",
+      "credit": "Tomato late blight foliar lesions, Wikimedia Commons, [author and licence: to be filled in]. Healthy version edited with AI.",
+      "creditTodo": "TODO: replace \"[author and licence: to be filled in]\" in \"credit\" with the Wikimedia Commons author and licence of the original photo (round-1-reveal.jpg).",
+      "photoWidthMm": 100,
       "placeholder": {
-        "shape": "narrow-leaf",
-        "color": "#8aa646"
+        "shape": "broad-leaf",
+        "color": "#5f9a3c"
       },
       "findings": [
         {
           "id": "f1",
-          "name": "Dusty brown spots",
-          "description": "Fine dusty brown spots on an upper leaf.",
-          "x": 30,
-          "y": 50,
-          "radius": 8,
+          "name": "Large dead area (necrosis, blight)",
+          "description": "Brown, dead tissue spreading from the leaf stem: necrosis, shown as a blight.",
+          "x": 62,
+          "y": 33,
+          "radius": 9,
+          "minZoom": 2,
           "required": true,
-          "detail": "dust",
+          "clue": "Start near the leaf stem, at the top right of the leaf."
+        },
+        {
+          "id": "f2",
+          "name": "Dark lesion beside the midrib",
+          "description": "A dark brown lesion of dead tissue (necrosis), with discolouration around it.",
+          "x": 43,
+          "y": 50,
+          "radius": 6,
+          "minZoom": 3,
+          "required": true,
+          "clue": "Follow the midrib down to the middle of the leaf."
+        },
+        {
+          "id": "f3",
+          "name": "Lower dark lesion",
+          "description": "Another dark lesion: the blight is spreading down the leaf.",
+          "x": 42,
+          "y": 69,
+          "radius": 6,
+          "minZoom": 3,
+          "required": true,
+          "clue": "Look at the lower half of the leaf, just left of the midrib."
+        },
+        {
+          "id": "d1",
+          "name": "Pale trail on the leaf edge",
+          "decoy": true,
+          "required": false,
+          "decoyMessage": "That is not a late blight symptom: it looks like a leaf-miner track or a tear.",
+          "x": 29,
+          "y": 46,
+          "radius": 4,
+          "minZoom": 3
+        },
+        {
+          "id": "f4",
+          "name": "Spore masses at the lesion edge (a sign)",
+          "description": "Spore masses where the dead tissue meets green leaf: something you see of the pathogen itself.",
+          "x": 67,
+          "y": 43,
+          "radius": 3,
+          "minZoom": 20,
+          "deep": true,
+          "required": true,
+          "clue": "At the lower edge of the large dead area, where it meets green leaf. It only shows at 20×, as microscope detail.",
           "micrograph": {
-            "image": "/images/inspection/module-2/micro/round-1-abiotic.jpg",
-            "imageHiRes": "/images/inspection/module-2/micro/round-1-abiotic@2x.jpg",
+            "image": "/images/inspection/module-2/micro/round-1-oomycete.jpg",
+            "imageHiRes": "/images/inspection/module-2/micro/round-1-oomycete@2x.jpg",
             "credit": "Placeholder micrograph — replace with your own (see docs/inspection-game.md)",
-            "fieldWidthUm": 500,
-            "focus": 44,
+            "fieldWidthUm": 400,
+            "focus": 52,
             "placeholder": {
-              "kind": "abiotic"
+              "kind": "fungus"
             },
             "features": [
               {
                 "id": "m1",
-                "name": "Brown, dead cells",
-                "description": "Dead tissue (necrosis) in the dusty brown spot.",
-                "x": 42,
-                "y": 44,
+                "name": "Threads (mycelium) in the lesion",
+                "description": "Thread-like growth of the pathogen inside the dead tissue.",
+                "x": 30,
+                "y": 62,
                 "radius": 13,
                 "minObjective": 10,
-                "look": "dead-cells"
+                "look": "hyphae"
               },
               {
                 "id": "m2",
-                "name": "Green cells with no threads, spores or ooze",
-                "description": "No sign of a pest or pathogen on the plant.",
-                "x": 74,
-                "y": 70,
-                "radius": 12,
-                "minObjective": 10,
-                "look": "healthy-cells"
+                "name": "Spore masses (sporangia)",
+                "description": "Spore masses at the edge of the lesion: a sign of the pathogen.",
+                "x": 64,
+                "y": 36,
+                "radius": 11,
+                "minObjective": 40,
+                "look": "spores"
               }
             ]
-          },
-          "minZoom": 2,
-          "clue": "Look at the upper part of the leaf blade."
-        },
-        {
-          "id": "f2",
-          "name": "More dusty brown spots",
-          "description": "The same dusty spots, spread evenly — no spores, ooze or growth.",
-          "x": 67,
-          "y": 50,
-          "radius": 8,
-          "required": true,
-          "detail": "dust",
-          "minZoom": 3,
-          "clue": "There is more than one patch: scan the whole length of the leaf."
+          }
         }
       ],
-      "question": "What causes these symptoms?",
+      "question": "Which pathogen group causes this disease?",
       "choices": [
+        {
+          "id": "oomycete",
+          "label": "Oomycete",
+          "description": "Water mold; spreads in cool, wet weather",
+          "icon": "oomycete"
+        },
         {
           "id": "fungus",
           "label": "Fungus",
@@ -102,10 +142,8 @@
           "icon": "abiotic"
         }
       ],
-      "correctChoiceId": "abiotic",
-      "explanation": "In rice, zinc deficiency shows as dusty brown spots on the upper leaves of stunted plants. Under the microscope the brown cells are dead, but there is no sign of a pest or pathogen — no threads, spores or ooze. Abiotic problems do not spread from plant to plant: the cause is non-living.",
-      "imageUltra": "/images/inspection/module-2/round-1@4x.jpg",
-      "photoWidthMm": 45
+      "correctChoiceId": "oomycete",
+      "explanation": "This is late blight of tomato. Its pathogen, Phytophthora infestans, is an oomycete (water mold): the pathogen is the organism, late blight is the disease it causes (Lesson 2.2). Oomycetes are an important pathogen group of their own, apart from the true fungi (Lesson 2.3). The symptoms are necrosis and blight — dead brown tissue spreading through the leaf — and the sign is the spore masses at the edge of the lesions."
     },
     {
       "id": "r2",
